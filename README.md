@@ -42,3 +42,7 @@ O backend precisa permitir CORS para o endereço do frontend. O endereço `trycl
 ## Organização
 
 Mantida a estrutura padrão do Vite: `src/App.tsx`, `src/main.tsx`, `src/index.css`, `vite.config.ts`. Acesso HTTP e tipos em `src/api.ts`.
+
+## Tema
+
+Interface submarina inspirada no universo da Fenda do Biquíni, com paleta oceânica, bolhas e elementos tropicais. Layout mobile-first com filtros roláveis e formulários responsivos.
