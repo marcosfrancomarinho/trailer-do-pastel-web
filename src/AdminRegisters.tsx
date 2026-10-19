@@ -6,7 +6,7 @@ import type { Addition, Category } from './api'
 type Section = 'product' | 'addition' | 'user'
 type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
 const inputClass = 'mt-2 w-full rounded-xl border border-cyan-200 bg-white px-4 py-3 outline-cyan-400'
-const labelClass = 'block text-sm font-bold text-[#164766]'
+const labelClass = 'block text-sm font-bold text-[#143b50]'
 
 export default function AdminRegisters({ token, section, onProductCreated }: Props) {
   const [categories, setCategories] = useState<Category[]>([])
@@ -63,9 +63,9 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
   }
 
   return <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-    <p className="text-xs font-black tracking-widest text-[#087eaf]">GERENCIAMENTO</p>
+    <p className="text-xs font-black tracking-widest text-[#008b9e]">GERENCIAMENTO</p>
     <h2 className="mt-2 text-2xl font-black">{section === "product" ? "Cadastrar produto" : section === "addition" ? "Cadastrar adicional" : "Cadastrar usuário"}</h2>
-    <p className="mt-2 text-sm text-[#487b93]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
+    <p className="mt-2 text-sm text-[#557383]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
     <form onSubmit={e => void handleSubmit(e)} className="grid gap-5 sm:grid-cols-2">
       <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : 'Nome do produto'}
         <input className={inputClass} required value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
@@ -89,15 +89,15 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
               </select>
             </label>
             <fieldset className="sm:col-span-2">
-              <legend className="mb-3 text-sm font-bold text-[#164766]">Adicionais permitidos (opcional)</legend>
+              <legend className="mb-3 text-sm font-bold text-[#143b50]">Adicionais permitidos (opcional)</legend>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-cyan-100 p-3 text-sm">
                   <span><input type="checkbox" disabled={!a.available} checked={additionIds.includes(a.id)}
                     onChange={e => setAdditionIds(ids => e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))}
                     className="mr-2 accent-[#0079b6]" />{a.name}</span>
-                  <span className="text-[#487b93]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
+                  <span className="text-[#557383]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
                 </label>)}
-                {additions.length === 0 && <p className="text-sm text-[#487b93]">Ainda não há adicionais cadastrados.</p>}
+                {additions.length === 0 && <p className="text-sm text-[#557383]">Ainda não há adicionais cadastrados.</p>}
               </div>
             </fieldset>
           </>}
@@ -108,7 +108,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
         </>}
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error}</p>}
       {success && <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-700 sm:col-span-2">{success}</p>}
-      <button disabled={saving} type="submit" className="rounded-full bg-[#ffd339] px-7 py-3 font-extrabold text-[#104365] disabled:opacity-60 sm:col-span-2">
+      <button disabled={saving} type="submit" className="rounded-full bg-[#ffc629] px-7 py-3 font-extrabold text-[#113548] disabled:opacity-60 sm:col-span-2">
         {saving ? 'Salvando...' : section === 'product' ? 'Cadastrar produto' : section === 'addition' ? 'Cadastrar adicional' : 'Cadastrar usuário'}
       </button>
     </form>
