@@ -1,76 +1,44 @@
-# React + TypeScript + Vite
+# Trailer do Pastel — Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend em React 19, TypeScript, Vite 8 e Tailwind CSS 4.
 
-Currently, two official plugins are available:
+## Rodar localmente
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+yarn install
+cp .env.example .env
+yarn dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Em `.env`, configure `VITE_API_URL` com a URL do backend, sem barra final. Para testar no notebook com o backend na porta 3000, use `http://localhost:3000`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Funcionalidades
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Cardápio com categorias, busca e disponibilidade: `GET /categories` e `GET /products`.
+- Personalização por produto: `GET /products/:productId/additions`.
+- Carrinho e envio real dos pedidos: `POST /orders`.
+- Confirmação do pedido e token salvo no navegador (a consulta de status ainda depende de rota futura).
+- Login e visualização de pedidos pendentes: `POST /login` e `GET /orders/pending`.
 
+O frontend não simula confirmação de pagamento nem atualização de status. Não contém cadastro público de administradores.
+
+## Comandos
+
+```bash
+yarn dev
+yarn build
+yarn lint
 ```
-# trailer-do-pastel-web
+
+O backend precisa permitir CORS para o endereço do frontend. O endereço `trycloudflare.com` é temporário; configure uma URL estável para produção.
+
+## Pendências do backend
+
+- `GET /orders/tracking/:token` para acompanhamento atualizado.
+- `PATCH /orders/:id/status` para controlar o preparo.
+- Restringir autenticação e autorização nas rotas administrativas.
+- Validar se adicionais enviados no pedido estão associados ao produto.
+
+## Organização
+
+Mantida a estrutura padrão do Vite: `src/App.tsx`, `src/main.tsx`, `src/index.css`, `vite.config.ts`. Acesso HTTP e tipos em `src/api.ts`.
