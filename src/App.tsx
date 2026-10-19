@@ -33,6 +33,7 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
   const [adminSection, setAdminSection] = useState<AdminSection>('orders')
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [pending, setPending] = useState<PendingOrder[]>([])
   const [adminBusy, setAdminBusy] = useState(false)
   const [adminError, setAdminError] = useState('')
@@ -147,17 +148,25 @@ export default function App() {
     {view === 'tracking' && <main className="mx-auto max-w-3xl px-4 py-16"><p className="font-black tracking-widest text-[#087eaf]">ACOMPANHAMENTO</p><h1 className="mt-3 text-4xl font-black">Meu pedido</h1>{order ? <div className="mt-8 rounded-3xl bg-white p-7 shadow-sm"><div className="mb-4 flex items-center justify-between"><span className="text-sm text-[#487b93]">Pedido #{order.id.slice(0,8)}</span><span className="rounded-full bg-amber-100 px-3 py-2 text-sm font-bold text-amber-800">{order.status}</span></div><p className="text-xl font-extrabold">Pedido recebido!</p><p className="mt-2 text-[#487b93]">Seu pedido foi enviado para a pastelaria. Guarde o código abaixo.</p><div className="mt-5 break-all rounded-xl bg-[#e8faff] p-4 font-mono text-sm">{order.trackingToken}</div><p className="mt-5 font-black">Total confirmado: {brl(order.total)}</p><p className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">A consulta automática de status estará disponível quando o backend implementar GET /orders/tracking/:token. Por enquanto, esta tela mostra o estado retornado na criação.</p></div> : <div className="mt-8 rounded-3xl bg-white p-10 text-center">Você ainda não fez nenhum pedido neste navegador. <button className="font-bold text-[#087eaf]" onClick={() => go('menu')}>Ver cardápio</button></div>}</main>}
     {view === 'admin' && <main className="mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#087eaf]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffd339] py-3 font-bold text-[#104365]">Entrar</button></form> :
       <div className="mt-8 grid min-w-0 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-        <aside aria-label="Menu administrativo" className="h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24">
+        <div className="md:hidden">
+          <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
+            aria-expanded={adminMenuOpen} aria-controls="admin-navigation" onClick={() => setAdminMenuOpen(open => !open)}
+            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-cyan-200 bg-white px-4 py-3 font-bold text-[#164766] shadow-sm">
+            <span className="flex items-center gap-3"><span aria-hidden="true" className="text-xl">{adminMenuOpen ? '✕' : '☰'}</span> Menu administrativo</span>
+            <span className="text-xs text-[#487b93]">{adminSection === 'orders' ? 'Pedidos' : adminSection === 'product' ? 'Produtos' : adminSection === 'addition' ? 'Adicionais' : 'Usuários'}</span>
+          </button>
+        </div>
+        <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#487b93]">Gerenciamento</p>
-          <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-1" aria-label="Seções do painel">
+          <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
             {([['orders', '📋', 'Pedidos'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ['user', '👤', 'Usuários']] as const).map(([key, icon, label]) =>
-              <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError('') }}
+              <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffe16a] text-[#164766] shadow-sm' : 'text-[#356f91] hover:bg-cyan-50')}>
                 <span aria-hidden="true">{icon}</span><span>{label}</span>
               </button>)}
           </nav>
           <button type="button" className="mt-3 w-full rounded-xl border border-cyan-200 px-3 py-3 text-sm font-bold text-[#164766] hover:bg-cyan-50"
-            onClick={() => {setAdminToken(''); setPending([]); setAdminSection('orders')}}>Sair do painel</button>
+            onClick={() => {setAdminToken(''); setPending([]); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
           {adminSection === 'orders' ? <>
