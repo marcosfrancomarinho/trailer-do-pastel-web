@@ -1,0 +1,127 @@
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { api } from './api'
+import type { Addition, Category } from './api'
+
+type Section = 'product' | 'addition' | 'user'
+type Props = { token: string; onProductCreated: () => Promise<void> }
+const inputClass = 'mt-2 w-full rounded-xl border border-orange-200 bg-white px-4 py-3 outline-orange-400'
+const labelClass = 'block text-sm font-bold text-[#5c3b29]'
+
+export default function AdminRegisters({ token, onProductCreated }: Props) {
+  const [section, setSection] = useState<Section>('product')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [additions, setAdditions] = useState<Addition[]>([])
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [price, setPrice] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [additionIds, setAdditionIds] = useState<string[]>([])
+  const [password, setPassword] = useState('')
+  const [available, setAvailable] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+
+  async function loadOptions() {
+    try {
+      const [cats, adds] = await Promise.all([
+        api<Category[]>('/categories'),
+        api<Addition[]>('/additions'),
+      ])
+      setCategories(cats)
+      setAdditions(adds)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar categorias e adicionais.')
+    }
+  }
+  useEffect(() => { void loadOptions() }, [])
+
+  function changeSection(next: Section) {
+    setSection(next); setName(''); setPassword(''); setPrice(''); setDescription('')
+    setAdditionIds([]); setError(''); setSuccess('')
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSaving(true); setError(''); setSuccess('')
+    const path = section === 'product' ? '/products' : section === 'addition' ? '/additions' : '/users'
+    const body = section === 'product'
+      ? { name: name.trim(), description: description.trim(), price, categoryId, additionIds, available }
+      : section === 'addition'
+        ? { name: name.trim(), price, available }
+        : { name: name.trim(), password }
+    try {
+      await api<{ id: string }>(path, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: JSON.stringify(body),
+      })
+      setSuccess(section === 'product' ? 'Produto cadastrado com sucesso!' : section === 'addition' ? 'Adicional cadastrado com sucesso!' : 'Usuário cadastrado com sucesso!')
+      setName(''); setPassword(''); setPrice(''); setDescription(''); setAdditionIds([]); setAvailable(true)
+      if (section === 'product') await onProductCreated()
+      if (section === 'addition') await loadOptions()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao realizar cadastro.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+    <p className="text-xs font-black tracking-widest text-[#e96924]">GERENCIAMENTO</p>
+    <h2 className="mt-2 text-2xl font-black">Novos cadastros</h2>
+    <p className="mt-2 text-sm text-[#806b5a]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
+    <div className="my-6 flex flex-wrap gap-2">
+      {([['product', 'Produtos'], ['addition', 'Adicionais'], ['user', 'Usuários']] as const).map(([key, label]) =>
+        <button key={key} type="button" onClick={() => changeSection(key)}
+          className={'rounded-full px-5 py-2 text-sm font-bold ' + (section === key ? 'bg-[#e96924] text-white' : 'bg-orange-50 text-[#854627]')}>{label}</button>)}
+    </div>
+    <form onSubmit={e => void handleSubmit(e)} className="grid gap-5 sm:grid-cols-2">
+      <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : 'Nome do produto'}
+        <input className={inputClass} required value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
+      </label>
+      {section === 'user'
+        ? <label className={labelClass}>Senha
+          <input className={inputClass} type="password" autoComplete="new-password" required minLength={8} value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
+        </label>
+        : <>
+          <label className={labelClass}>Preço (R$)
+            <input className={inputClass} type="number" step="0.01" min="0.01" required value={price} onChange={e => setPrice(e.target.value)} placeholder="12.50" />
+          </label>
+          {section === 'product' && <>
+            <label className={labelClass}>Descrição
+              <input className={inputClass} required value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex.: Pastel de carne com temperos" />
+            </label>
+            <label className={labelClass}>Categoria
+              <select className={inputClass} required value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                <option value="">Selecione uma categoria</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+            <fieldset className="sm:col-span-2">
+              <legend className="mb-3 text-sm font-bold text-[#5c3b29]">Adicionais permitidos (opcional)</legend>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-orange-100 p-3 text-sm">
+                  <span><input type="checkbox" disabled={!a.available} checked={additionIds.includes(a.id)}
+                    onChange={e => setAdditionIds(ids => e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))}
+                    className="mr-2 accent-orange-600" />{a.name}</span>
+                  <span className="text-[#806b5a]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
+                </label>)}
+                {additions.length === 0 && <p className="text-sm text-[#806b5a]">Ainda não há adicionais cadastrados.</p>}
+              </div>
+            </fieldset>
+          </>}
+          <label className="flex items-center gap-3 text-sm font-bold sm:col-span-2">
+            <input type="checkbox" checked={available} onChange={e => setAvailable(e.target.checked)} className="accent-orange-600" />
+            Disponível no cardápio
+          </label>
+        </>}
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error}</p>}
+      {success && <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-700 sm:col-span-2">{success}</p>}
+      <button disabled={saving} type="submit" className="rounded-full bg-[#e96924] px-7 py-3 font-extrabold text-white disabled:opacity-60 sm:col-span-2">
+        {saving ? 'Salvando...' : section === 'product' ? 'Cadastrar produto' : section === 'addition' ? 'Cadastrar adicional' : 'Cadastrar usuário'}
+      </button>
+    </form>
+  </section>
+}
