@@ -55,3 +55,12 @@
 @media(max-width:767px){.hero-inner{padding-top:36px;padding-bottom:44px;gap:16px}.hero-illustration{min-height:230px}.hero-ring{width:min(65vw,270px);border-width:6px;box-shadow:0 0 0 6px #ffdd32,0 8px 0 6px #074d70}.hero-sticker{right:5%;bottom:0}.hero-pastel{font-size:50px}.menu-section,.inner-page{padding-left:16px;padding-right:16px}.menu-product-card>div:first-child{height:135px}.service-strip{gap:6px 12px;padding:12px;font-size:11px}.hero-headline{font-size:clamp(46px,12.6vw,68px)}.restaurant-header .brand-letters{font-size:18px}.restaurant-header .brand-symbol{width:38px;height:38px;font-size:22px}.cart-header-button{padding:6px 8px}.cart-header-button span{display:none}}
 @media(max-width:359px){.restaurant-topline{font-size:8px}.brand-letters{font-size:16px!important}.hero-headline{font-size:41px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
+/* Personagem no destaque principal */
+.spongebob-stage{isolation:isolate;min-height:370px;align-self:stretch}
+.spongebob-backdrop{position:absolute;width:min(94%,390px);aspect-ratio:1;border:8px solid #073c65;border-radius:50%;background:radial-gradient(circle at 42% 36%,#9bf3f7 0,#47d2e8 64%,#0a97bf 100%);box-shadow:0 0 0 8px #ffde36,0 14px 0 8px #0a6288;overflow:hidden}
+.spongebob-backdrop span{position:absolute;color:#eac3e9;opacity:.7;font-size:85px}.spongebob-backdrop span:nth-child(1){top:1%;left:4%}.spongebob-backdrop span:nth-child(2){right:1%;bottom:9%;color:#fff6a2}.spongebob-backdrop span:nth-child(3){top:20%;right:20%;color:#fff;font-size:55px}
+.spongebob-character{position:relative;z-index:2;max-width:min(75%,325px);max-height:390px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(7px 9px 0 #07365985);transition:transform .2s}
+.spongebob-stage:hover .spongebob-character{transform:rotate(-2deg) scale(1.02)}
+.spongebob-stage .hero-sticker{z-index:3;right:0;bottom:2%}
+@media(max-width:767px){.spongebob-stage{min-height:300px}.spongebob-character{max-height:285px}.spongebob-backdrop{width:min(80%,275px)}}
