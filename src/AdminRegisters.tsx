@@ -4,12 +4,11 @@ import { api } from './api'
 import type { Addition, Category } from './api'
 
 type Section = 'product' | 'addition' | 'user'
-type Props = { token: string; onProductCreated: () => Promise<void> }
+type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
 const inputClass = 'mt-2 w-full rounded-xl border border-cyan-200 bg-white px-4 py-3 outline-cyan-400'
 const labelClass = 'block text-sm font-bold text-[#164766]'
 
-export default function AdminRegisters({ token, onProductCreated }: Props) {
-  const [section, setSection] = useState<Section>('product')
+export default function AdminRegisters({ token, section, onProductCreated }: Props) {
   const [categories, setCategories] = useState<Category[]>([])
   const [additions, setAdditions] = useState<Addition[]>([])
   const [name, setName] = useState('')
@@ -36,11 +35,6 @@ export default function AdminRegisters({ token, onProductCreated }: Props) {
     }
   }
   useEffect(() => { void loadOptions() }, [])
-
-  function changeSection(next: Section) {
-    setSection(next); setName(''); setPassword(''); setPrice(''); setDescription('')
-    setAdditionIds([]); setError(''); setSuccess('')
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -70,13 +64,8 @@ export default function AdminRegisters({ token, onProductCreated }: Props) {
 
   return <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
     <p className="text-xs font-black tracking-widest text-[#087eaf]">GERENCIAMENTO</p>
-    <h2 className="mt-2 text-2xl font-black">Novos cadastros</h2>
+    <h2 className="mt-2 text-2xl font-black">{section === "product" ? "Cadastrar produto" : section === "addition" ? "Cadastrar adicional" : "Cadastrar usuário"}</h2>
     <p className="mt-2 text-sm text-[#487b93]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
-    <div className="my-6 flex flex-wrap gap-2">
-      {([['product', 'Produtos'], ['addition', 'Adicionais'], ['user', 'Usuários']] as const).map(([key, label]) =>
-        <button key={key} type="button" onClick={() => changeSection(key)}
-          className={'rounded-full px-5 py-2 text-sm font-bold ' + (section === key ? 'bg-[#ffd339] text-[#104365]' : 'bg-[#e8faff] text-[#225c88]')}>{label}</button>)}
-    </div>
     <form onSubmit={e => void handleSubmit(e)} className="grid gap-5 sm:grid-cols-2">
       <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : 'Nome do produto'}
         <input className={inputClass} required value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
