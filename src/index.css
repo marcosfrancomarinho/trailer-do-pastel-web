@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 :root{font-family:"Trebuchet MS",ui-sans-serif,system-ui,sans-serif;color:#102e46;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px;background:#f3f8fa}button{cursor:pointer}button:disabled{cursor:not-allowed}:focus-visible{outline:3px solid #ffbf1d;outline-offset:3px}
@@ -64,3 +65,14 @@
 .spongebob-stage:hover .spongebob-character{transform:rotate(-2deg) scale(1.02)}
 .spongebob-stage .hero-sticker{z-index:3;right:0;bottom:2%}
 @media(max-width:767px){.spongebob-stage{min-height:300px}.spongebob-character{max-height:285px}.spongebob-backdrop{width:min(80%,275px)}}
+
+/* Letreiro do ponto comercial: letras amarelas, encorpadas e contorno azul. */
+.restaurant-app{font-family:'Nunito',ui-sans-serif,system-ui,sans-serif}
+.brand-letters,.hero-headline,.menu-section h2,.inner-page h1,.restaurant-app .menu-product-card h3{font-family:'Luckiest Guy',Impact,'Arial Black',sans-serif;font-weight:400;letter-spacing:.015em}
+.brand-letters{font-size:clamp(18px,2.25vw,29px);line-height:.87;letter-spacing:.025em;-webkit-text-stroke:1.4px #06375e;text-shadow:2px 3px 0 #06375e}
+.brand-letters small{font-family:'Luckiest Guy',Impact,sans-serif;font-size:.55em;-webkit-text-stroke:.7px #06375e}
+.hero-headline{letter-spacing:.015em;line-height:1.06;-webkit-text-stroke:1.6px #073d64;text-shadow:4px 5px 0 #073d64}
+.hero-headline span{letter-spacing:.02em;-webkit-text-stroke:1.8px #073d64}
+.menu-section h2,.inner-page h1{letter-spacing:.005em}
+.restaurant-app .menu-product-card h3{font-size:1.55rem;line-height:1.18}
+@media(max-width:639px){.hero-headline{font-size:clamp(42px,11.2vw,66px)}.brand-letters{font-size:19px}}
