@@ -5,8 +5,8 @@ import type { Addition, Category } from './api'
 
 type Section = 'product' | 'addition' | 'user'
 type Props = { token: string; onProductCreated: () => Promise<void> }
-const inputClass = 'mt-2 w-full rounded-xl border border-orange-200 bg-white px-4 py-3 outline-orange-400'
-const labelClass = 'block text-sm font-bold text-[#5c3b29]'
+const inputClass = 'mt-2 w-full rounded-xl border border-cyan-200 bg-white px-4 py-3 outline-cyan-400'
+const labelClass = 'block text-sm font-bold text-[#164766]'
 
 export default function AdminRegisters({ token, onProductCreated }: Props) {
   const [section, setSection] = useState<Section>('product')
@@ -69,13 +69,13 @@ export default function AdminRegisters({ token, onProductCreated }: Props) {
   }
 
   return <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-    <p className="text-xs font-black tracking-widest text-[#e96924]">GERENCIAMENTO</p>
+    <p className="text-xs font-black tracking-widest text-[#087eaf]">GERENCIAMENTO</p>
     <h2 className="mt-2 text-2xl font-black">Novos cadastros</h2>
-    <p className="mt-2 text-sm text-[#806b5a]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
+    <p className="mt-2 text-sm text-[#487b93]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
     <div className="my-6 flex flex-wrap gap-2">
       {([['product', 'Produtos'], ['addition', 'Adicionais'], ['user', 'Usuários']] as const).map(([key, label]) =>
         <button key={key} type="button" onClick={() => changeSection(key)}
-          className={'rounded-full px-5 py-2 text-sm font-bold ' + (section === key ? 'bg-[#e96924] text-white' : 'bg-orange-50 text-[#854627]')}>{label}</button>)}
+          className={'rounded-full px-5 py-2 text-sm font-bold ' + (section === key ? 'bg-[#ffd339] text-[#104365]' : 'bg-[#e8faff] text-[#225c88]')}>{label}</button>)}
     </div>
     <form onSubmit={e => void handleSubmit(e)} className="grid gap-5 sm:grid-cols-2">
       <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : 'Nome do produto'}
@@ -100,26 +100,26 @@ export default function AdminRegisters({ token, onProductCreated }: Props) {
               </select>
             </label>
             <fieldset className="sm:col-span-2">
-              <legend className="mb-3 text-sm font-bold text-[#5c3b29]">Adicionais permitidos (opcional)</legend>
+              <legend className="mb-3 text-sm font-bold text-[#164766]">Adicionais permitidos (opcional)</legend>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-orange-100 p-3 text-sm">
+                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-cyan-100 p-3 text-sm">
                   <span><input type="checkbox" disabled={!a.available} checked={additionIds.includes(a.id)}
                     onChange={e => setAdditionIds(ids => e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))}
-                    className="mr-2 accent-orange-600" />{a.name}</span>
-                  <span className="text-[#806b5a]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
+                    className="mr-2 accent-[#0079b6]" />{a.name}</span>
+                  <span className="text-[#487b93]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
                 </label>)}
-                {additions.length === 0 && <p className="text-sm text-[#806b5a]">Ainda não há adicionais cadastrados.</p>}
+                {additions.length === 0 && <p className="text-sm text-[#487b93]">Ainda não há adicionais cadastrados.</p>}
               </div>
             </fieldset>
           </>}
           <label className="flex items-center gap-3 text-sm font-bold sm:col-span-2">
-            <input type="checkbox" checked={available} onChange={e => setAvailable(e.target.checked)} className="accent-orange-600" />
+            <input type="checkbox" checked={available} onChange={e => setAvailable(e.target.checked)} className="accent-[#0079b6]" />
             Disponível no cardápio
           </label>
         </>}
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error}</p>}
       {success && <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-700 sm:col-span-2">{success}</p>}
-      <button disabled={saving} type="submit" className="rounded-full bg-[#e96924] px-7 py-3 font-extrabold text-white disabled:opacity-60 sm:col-span-2">
+      <button disabled={saving} type="submit" className="rounded-full bg-[#ffd339] px-7 py-3 font-extrabold text-[#104365] disabled:opacity-60 sm:col-span-2">
         {saving ? 'Salvando...' : section === 'product' ? 'Cadastrar produto' : section === 'addition' ? 'Cadastrar adicional' : 'Cadastrar usuário'}
       </button>
     </form>
