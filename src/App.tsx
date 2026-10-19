@@ -134,14 +134,10 @@ export default function App() {
               <span className="hero-kicker">★ Recheio de verdade<br/>★ Feito na hora</span>
             </div>
           </div>
-          <div className="hero-illustration" aria-label="Ilustração de um trailer amarelo de pastéis com bolhas submarinas">
-            <div className="hero-ring">
-              <span className="hero-bubble bubble-one" aria-hidden="true"/><span className="hero-bubble bubble-two" aria-hidden="true"/>
-              <span className="truck-roof"/><div className="truck-box"><span className="truck-sign">TRAILER DO PASTEL</span><span className="truck-window">🥟 <span>🥟</span></span></div>
-              <div className="truck-cabin"><span className="truck-glass"/></div><div className="truck-base"/><span className="truck-wheel wheel-one"/><span className="truck-wheel wheel-two"/>
-              <span className="hero-pastel" aria-hidden="true">🥟</span>
-            </div>
-            <div className="hero-sticker">O MAIS<br/><strong>CROCANTE!</strong></div>
+          <div className="hero-illustration spongebob-stage" aria-label="Bob Esponja em destaque no cardápio">
+            <div className="spongebob-backdrop" aria-hidden="true"><span>✿</span><span>✿</span><span>○</span></div>
+            <img className="spongebob-character" src="https://commons.wikimedia.org/wiki/Special:FilePath/SpongeBob_SquarePants_character.png" alt="Bob Esponja sorrindo" />
+            <div className="hero-sticker">PASTEL<br/><strong>DO FUNDO DO MAR!</strong></div>
           </div>
         </div>
       </section>
