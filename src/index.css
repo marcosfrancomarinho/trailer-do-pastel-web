@@ -1,24 +1,26 @@
 @import "tailwindcss";
-:root { font-family: "Trebuchet MS", ui-sans-serif, system-ui, sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+:root { font-family: "Trebuchet MS", ui-sans-serif, system-ui, sans-serif; color: #173546; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; min-width: 320px; background: #f8f5eb; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #087eaf; outline-offset: 3px; }
-.ocean-app { position: relative; isolation: isolate; background-image: radial-gradient(circle at 9% 16%, #fff8 0 5px, transparent 6px), radial-gradient(circle at 87% 35%, #fff8 0 10px, transparent 11px), radial-gradient(circle at 15% 71%, #fff7 0 7px, transparent 8px), linear-gradient(180deg, #b8f3fa 0%, #dff9ff 58%, #b6ecf4 100%); }
-.ocean-app > * { position: relative; }
-.ocean-app header { z-index: 30; }
-.ocean-app > section:first-of-type { background-image: radial-gradient(circle at 86% 18%, transparent 0 12px, #ffffff90 13px 15px, transparent 16px), radial-gradient(circle at 15% 75%, transparent 0 8px, #ffffff70 9px 11px, transparent 12px), linear-gradient(120deg, #91dce7, #c4f7f5 65%, #8bd7e5); }
-.ocean-app > section:first-of-type::before { content: "✿"; position: absolute; top: 12%; left: 60%; font-size: clamp(55px, 8vw, 105px); color: #f9e777; opacity: .45; transform: rotate(18deg); pointer-events: none; }
-.ocean-app > section:first-of-type::after { content: "✿"; position: absolute; bottom: 10%; right: 4%; font-size: clamp(70px, 10vw, 130px); color: #eaa5ca; opacity: .5; pointer-events: none; }
-.ocean-app article { transition: transform .2s ease, box-shadow .2s ease; }
-.ocean-app input, .ocean-app select { max-width: 100%; }
-@media (max-width: 639px) {
- .ocean-app header > div { padding: 12px 14px; }
- .ocean-app main { padding-left: 16px; padding-right: 16px; }
- .ocean-app button { touch-action: manipulation; }
- .ocean-app main .grid { min-width: 0; }
- .ocean-app article { min-width: 0; }
- .ocean-app h1 { overflow-wrap: anywhere; }
-}
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .ocean-app article { transition: none; } }
+:focus-visible { outline: 3px solid #ff6f4a; outline-offset: 3px; }
+.restaurant-app { background: #f8f5eb; color: #173546; }
+.restaurant-app > div:first-child { background: #072f47; color: #fff5dc; }
+.restaurant-app header { z-index: 30; border-bottom: 4px solid #ffc629; background: #fffdf6f5; box-shadow: 0 6px 28px #072f4714; }
+.restaurant-app > section:first-of-type { position: relative; background: #0a8294; background-image: radial-gradient(circle at 85% 22%, transparent 0 13px, #ffffff40 14px 17px, transparent 18px), radial-gradient(circle at 12% 80%, transparent 0 9px, #ffffff40 10px 12px, transparent 13px), linear-gradient(130deg, #08788d, #09a5ae); isolation: isolate; }
+.restaurant-app > section:first-of-type::before { content: "✿"; position: absolute; top: 4%; right: 12%; font-size: clamp(85px, 14vw, 200px); line-height: 1; color: #ffd451; opacity: .28; transform: rotate(22deg); pointer-events: none; }
+.restaurant-app > section:first-of-type::after { content: "✿"; position: absolute; bottom: 0; left: 4%; font-size: clamp(65px, 10vw, 130px); color: #ff836e; opacity: .45; pointer-events: none; }
+.restaurant-app > section:first-of-type h1 { color: #ffffff; text-shadow: 0 3px 0 #064b62; }
+.restaurant-app > section:first-of-type h1 span { color: #ffde73 !important; }
+.restaurant-app > section:first-of-type p { color: #ecffff; }
+.restaurant-app > section:first-of-type div > div > div:first-child { color: #ffe598; }
+.restaurant-app > section:first-of-type button { background: #ffc629; color: #163545; box-shadow: 0 7px 0 #c88319; }
+.restaurant-app article { border: 1px solid #dce7e5; border-bottom: 5px solid #ffc629; background: white; box-shadow: 0 10px 28px #0c33400b; transition: transform .2s ease, box-shadow .2s ease; }
+.restaurant-app article:hover { box-shadow: 0 18px 34px #0c33401e; }
+.restaurant-app article button, .restaurant-app form button[type="submit"] { font-weight: 800; }
+.restaurant-app input, .restaurant-app select { max-width: 100%; }
+.restaurant-app input:focus, .restaurant-app select:focus { border-color: #008b9e; }
+.restaurant-app main { min-width: 0; }
+@media(max-width:767px) { .restaurant-app main { padding-left: 16px; padding-right: 16px; } .restaurant-app button { touch-action: manipulation; } .restaurant-app h1 { overflow-wrap: anywhere; } .restaurant-app article { min-width: 0; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .restaurant-app article { transition:none; } }
