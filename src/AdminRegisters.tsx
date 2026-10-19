@@ -5,7 +5,7 @@ import type { Addition, Category } from './api'
 
 type Section = 'product' | 'addition' | 'user'
 type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
-const inputClass = 'mt-2 w-full rounded-xl border border-cyan-200 bg-white px-4 py-3 outline-cyan-400'
+const inputClass = 'mt-2 w-full rounded-xl border-2 border-[#9ec9d9] bg-white px-4 py-3 outline-cyan-400'
 const labelClass = 'block text-sm font-bold text-[#143b50]'
 
 export default function AdminRegisters({ token, section, onProductCreated }: Props) {
@@ -62,7 +62,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
     }
   }
 
-  return <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+  return <section className="mt-0 rounded-3xl border-2 border-[#0b4063] bg-white p-5 shadow-[5px_6px_0_#0b4063] sm:p-7">
     <p className="text-xs font-black tracking-widest text-[#008b9e]">GERENCIAMENTO</p>
     <h2 className="mt-2 text-2xl font-black">{section === "product" ? "Cadastrar produto" : section === "addition" ? "Cadastrar adicional" : "Cadastrar usuário"}</h2>
     <p className="mt-2 text-sm text-[#557383]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
