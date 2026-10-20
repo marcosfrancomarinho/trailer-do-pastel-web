@@ -147,10 +147,33 @@ export default function App() {
         <div className="my-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="category-filters flex max-w-full gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible"><button onClick={() => setFilter('all')} className={'shrink-0 whitespace-nowrap rounded-full px-5 py-2 text-sm font-bold ' + (filter === 'all' ? 'bg-[#ffc629] text-[#113548]' : 'bg-white text-[#416476]')}>Todos</button>{categories.map(c => <button key={c.id} onClick={() => setFilter(c.id)} className={'rounded-full px-5 py-2 text-sm font-bold ' + (filter === c.id ? 'bg-[#ffc629] text-[#113548]' : 'bg-white text-[#416476]')}>{c.name}</button>)}</div><input aria-label="Buscar produto" placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="w-full rounded-full border border-cyan-100 bg-white px-5 py-3 outline-cyan-400 sm:w-64"/></div>
         {error && <div role="alert" className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error} <button onClick={() => void loadCatalog()} className="underline">Tentar novamente</button></div>}
         {loading ? <div className="py-20 text-center">Carregando o cardápio...</div> : visible.length === 0 ? <div className="py-20 text-center">Nenhum produto encontrado.</div> :
-        <div className="product-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{visible.map((p, i) => <article key={p.id} className="menu-product-card overflow-hidden">
-          <div className={'relative flex h-48 items-center justify-center ' + (i % 3 === 0 ? 'bg-[#00a8b8]' : i % 3 === 1 ? 'bg-[#ffd25b]' : 'bg-[#ff8c64]')}><span className="product-emoji text-8xl drop-shadow-lg">{categories.find(c => c.id === p.categoryId)?.name.toLowerCase().includes("suco") ? "🧃" : categories.find(c => c.id === p.categoryId)?.name.toLowerCase().includes("refrigerante") ? "🥤" : "🥟"}</span><span className="absolute left-4 top-4 rounded-full bg-white/85 px-3 py-1 text-[10px] font-black tracking-wider text-[#16435b]">{p.available ? 'FEITO NA HORA' : 'INDISPONÍVEL'}</span></div>
-          <div className="p-5"><p className="text-xs font-bold uppercase tracking-wide text-[#008b9e]">{categories.find(c => c.id === p.categoryId)?.name || 'Especial'}</p><h3 className="mt-2 text-xl font-black">{p.name}</h3><p className="mt-2 min-h-12 text-sm text-[#557383]">{p.description}</p><div className="mt-5 flex items-center justify-between"><strong className="text-xl">{brl(p.price)}</strong><button disabled={!p.available} onClick={() => void choose(p)} className="add-product-button h-12 w-12 rounded-full text-2xl font-bold disabled:bg-gray-300" aria-label={'Selecionar ' + p.name}>+</button></div></div>
-        </article>)}</div>}
+        <div className="product-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visible.map(p => {
+          const category = categories.find(c => c.id === p.categoryId)?.name || 'Especial'
+          const drink = /suco|refrigerante|bebida/i.test(category)
+          const juice = /suco/i.test(category)
+          return <article key={p.id} className={'menu-product-card wooden-product-card ' + (!p.available ? 'product-unavailable ' : '') + (drink ? 'drink-product-card' : 'pastel-product-card')}>
+            <div className="wooden-card-top">
+              <span className="wood-nail" aria-hidden="true">●</span>
+              <span className="wooden-category">{category}</span>
+              <span className="wood-nail" aria-hidden="true">●</span>
+            </div>
+            <div className="product-art-area">
+              <span className="product-art-flower" aria-hidden="true">✿</span>
+              <span className="product-art-icon" role="img" aria-label={juice ? 'Suco' : drink ? 'Refrigerante' : 'Pastel'}>{juice ? '🧃' : drink ? '🥤' : '🥟'}</span>
+              <span className={'product-availability ' + (!p.available ? 'is-unavailable' : '')}>{p.available ? (drink ? 'GELADINHO' : 'FEITO NA HORA') : 'INDISPONÍVEL'}</span>
+            </div>
+            <div className="product-card-body">
+              <h3>{p.name}</h3>
+              <p className="product-card-description">{p.description}</p>
+              <div className="product-card-bottom">
+                <div className="product-price"><small>A PARTIR DE</small><strong>{brl(p.price)}</strong></div>
+                <button type="button" disabled={!p.available} onClick={() => void choose(p)} className="product-add-action" aria-label={'Adicionar ' + p.name}>
+                  <span aria-hidden="true">+</span><span>Adicionar</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        })}</div>}
       </main>
     </>}
     {view === 'cart' && <main className="inner-page mx-auto max-w-5xl px-4 py-12"><button className="mb-6 text-sm font-bold text-[#008b9e]" onClick={() => go('menu')}>← Voltar ao cardápio</button><h1 className="mb-8 text-4xl font-black">Seu carrinho</h1>
