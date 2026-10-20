@@ -107,17 +107,16 @@ export default function App() {
     } catch (err) { setAdminError(err instanceof Error ? err.message : 'Não foi possível entrar'); setAdminBusy(false) }
   }
   return <div className="restaurant-app min-h-screen overflow-x-hidden">
-    <div className="restaurant-topline">🍍 SABOR E DIVERSÃO DIRETO DO FUNDO DO MAR <span aria-hidden="true">✦</span> FEITO NA HORA</div>
     <header className="restaurant-header sticky top-0 z-30">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:py-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2.5 md:py-3">
         <button className="brand-mark flex items-center gap-3 text-left" onClick={() => go('menu')} aria-label="Trailer do Pastel - ir ao cardápio">
-          <span className="brand-symbol" aria-hidden="true">🍍</span><span className="brand-letters">TRAILER <small>DO</small><br/>PASTEL</span>
+          <span className="brand-symbol" aria-hidden="true">🍍</span><span className="brand-letters">TRAILER DO PASTEL</span>
         </button>
         <nav className="hidden gap-2 text-sm font-bold sm:flex" aria-label="Navegação principal">
           <button onClick={() => go('menu')} className={view === 'menu' ? 'nav-active' : ''}>Cardápio</button>
           <button onClick={() => go('tracking')} className={view === 'tracking' ? 'nav-active' : ''}>Meu pedido</button>
         </nav>
-        <button onClick={() => go('cart')} className="cart-header-button">🛒 <span>Carrinho</span> <b>{cartCount}</b></button>
+        <button onClick={() => go('cart')} className="cart-header-button" aria-label={'Abrir carrinho com ' + cartCount + ' itens'}>🛒 <span className="hidden sm:inline">Carrinho</span>{cartCount > 0 && <b>{cartCount}</b>}</button>
       </div>
     </header>
     {view === 'menu' && <>
