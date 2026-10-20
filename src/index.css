@@ -104,3 +104,16 @@
 .product-unavailable .product-art-icon{filter:grayscale(1)}
 @media(max-width:639px){.wooden-product-card{display:grid;grid-template-columns:112px minmax(0,1fr);grid-template-rows:32px minmax(146px,auto);border-radius:14px!important;box-shadow:3px 4px 0 #073b62!important}.wooden-card-top{grid-column:1/-1;height:32px}.wooden-category{font-size:13px}.product-art-area{height:auto;min-height:150px;border-bottom:0;border-right:3px solid #073b62}.product-art-icon{font-size:62px}.product-art-flower{font-size:55px}.product-availability{left:4px;top:7px;padding:3px 4px;font-size:7px}.product-card-body{min-height:0;padding:12px}.product-card-body h3{font-size:19px}.product-card-description{margin-top:5px;font-size:11px;line-height:1.4}.product-card-bottom{gap:5px;margin-top:8px;padding-top:8px}.product-price strong{font-size:18px}.product-price small{font-size:7px}.product-add-action{width:38px;min-width:38px;height:38px;min-height:38px;justify-content:center;padding:0;border-radius:10px;box-shadow:2px 2px 0 #073b62}.product-add-action span:last-child{display:none}.product-add-action span:first-child{font-size:25px}}
 @media(max-width:359px){.wooden-product-card{grid-template-columns:96px minmax(0,1fr)}.product-card-body h3{font-size:17px}.product-price strong{font-size:16px}}
+
+/* Header compacto: marca e ações sem faixa promocional ou sombras pesadas */
+.restaurant-header{background:#0ab7dd;border-bottom:2px solid #073b62;box-shadow:none}
+.restaurant-header .brand-mark{gap:9px}
+.restaurant-header .brand-symbol{width:35px;height:35px;border:0;border-radius:9px;background:#ffcf2e;font-size:21px;box-shadow:none}
+.restaurant-header .brand-letters{font-size:clamp(17px,2vw,21px);line-height:1;letter-spacing:.01em;-webkit-text-stroke:.7px #083b64;text-shadow:1px 2px 0 #083b64;white-space:nowrap}
+.restaurant-header nav{gap:4px}
+.restaurant-header nav button{padding:8px 11px;border:0;border-radius:9px;background:transparent;font-size:13px}
+.restaurant-header nav button.nav-active,.restaurant-header nav button:hover{background:#ffdd48}
+.restaurant-header .cart-header-button{min-height:36px;padding:7px 10px;border:0;border-radius:9px;box-shadow:none;gap:6px;font-size:13px}
+.restaurant-header .cart-header-button b{min-width:19px;height:19px;font-size:11px}
+@media(max-width:639px){.restaurant-header .brand-symbol{width:31px;height:31px;font-size:19px}.restaurant-header .brand-letters{font-size:16px;letter-spacing:0}.restaurant-header .cart-header-button{min-height:36px;padding:6px 9px}}
+@media(max-width:359px){.restaurant-header .brand-letters{font-size:14px}.restaurant-header .brand-mark{gap:5px}}
