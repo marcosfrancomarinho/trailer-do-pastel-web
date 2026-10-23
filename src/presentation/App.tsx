@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
+import { cartTotal, toOrderPayload } from '../domain/cart'
 import { readOrders } from '../infrastructure/storage/order-storage'
 import { trackOrder, updateOrderStatus } from '../application/order-service'
 import SiteHeader from './components/SiteHeader'
@@ -8,7 +9,7 @@ import SiteFooter from './components/SiteFooter'
 import ProductCard from './components/ProductCard'
 import AdminManage from './components/AdminManage'
 import AdminRegisters from './components/organisms/AdminRegisters'
-import type { Addition, Category, CreatedOrder, OrderPayload, PendingOrder, Product } from '../api'
+import type { Addition, Category, CreatedOrder, PendingOrder, Product } from '../api'
 
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
@@ -56,8 +57,7 @@ export default function App() {
     (filter === 'all' || p.categoryId === filter) &&
     (p.name + ' ' + p.description).toLowerCase().includes(search.toLowerCase())
   ), [products, filter, search])
-  const total = cart.reduce((sum, item) => sum + item.quantity * (Number(item.product.price) +
-    item.additions.reduce((n, a) => n + Number(a.addition.price) * a.quantity, 0)), 0)
+  const total = cartTotal(cart)
   const cartCount = cart.reduce((n, item) => n + item.quantity, 0)
   function go(next: View) { setView(next); setError(''); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   async function choose(product: Product) {
@@ -83,13 +83,8 @@ export default function App() {
     event.preventDefault()
     if (!cart.length || sending) return
     setSending(true); setError('')
-    const body: OrderPayload = {
-      customerName: customerName.trim(), customerPhone: customerPhone.trim(),
-      items: cart.map(item => ({ productId: item.product.id, quantity: item.quantity,
-        additions: item.additions.map(a => ({ additionId: a.addition.id, quantity: a.quantity })) }))
-    }
     try {
-      const result = await restaurant.createOrder(body)
+      const result = await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart))
       setOrders(restaurant.recentOrders())
       setCart([]); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
