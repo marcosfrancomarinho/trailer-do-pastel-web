@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { api } from '../../../infrastructure/http/api-client'
+import { restaurant } from '../../../application/container'
 import type { Addition, Category } from '../../../domain/models'
 
 type Section = 'product' | 'addition' | 'user' | 'category'
@@ -25,8 +25,8 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
   async function loadOptions() {
     try {
       const [cats, adds] = await Promise.all([
-        api<Category[]>('/categories'),
-        api<Addition[]>('/additions'),
+        restaurant.listRecords('categories') as Promise<Category[]>,
+        restaurant.listRecords('additions') as Promise<Addition[]>,
       ])
       setCategories(cats)
       setAdditions(adds)
@@ -46,11 +46,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
         ? { name: name.trim(), price, available }
         : section === 'category' ? { name: name.trim() } : { name: name.trim(), password }
     try {
-      await api<{ id: string }>(path, {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: JSON.stringify(body),
-      })
+      await restaurant.createRecord(path.slice(1) as 'products' | 'additions' | 'categories' | 'users', token, body)
       setSuccess(section === 'product' ? 'Produto cadastrado com sucesso!' : section === 'addition' ? 'Adicional cadastrado com sucesso!' : section === 'category' ? 'Categoria cadastrada com sucesso!' : 'Usuário cadastrado com sucesso!')
       setName(''); setPassword(''); setPrice(''); setDescription(''); setAdditionIds([]); setAvailable(true)
       if (section === 'product' || section === 'category') await onProductCreated()
