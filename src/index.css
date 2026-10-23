@@ -360,3 +360,69 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 @media(min-width:480px){.action-dialog-actions{flex-direction:row}.action-dialog-actions button{flex:1}}
 @media(max-width:420px){.action-dialog-panel{padding:24px 18px 20px}.action-dialog-panel h2{font-size:20px}}
 @media print{.action-dialog-backdrop{display:none!important}}
+
+
+/* Catálogo compacto: categoria e ilustração deixam de dominar o card. */
+.restaurant-app .product-grid{gap:14px}
+.restaurant-app .wooden-product-card{border-width:2px!important;border-radius:15px!important;box-shadow:0 3px 0 #041b2b!important;transition:transform .15s ease}
+.restaurant-app .wooden-product-card:hover{box-shadow:0 5px 0 #041b2b!important}
+.restaurant-app .menu-product-card>.wooden-card-top,
+.restaurant-app .menu-product-card:nth-child(3n+2)>.wooden-card-top,
+.restaurant-app .menu-product-card:nth-child(3n+3)>.wooden-card-top{
+  height:34px!important;min-height:34px;padding:0 12px;
+  background:#15384e!important;border-bottom:1px solid #38637a;
+}
+.restaurant-app .wooden-category{font-size:12px;line-height:1;letter-spacing:.05em;color:#ffdf86;text-shadow:none}
+.restaurant-app .wood-nail{font-size:7px}
+.restaurant-app .wooden-product-card .product-art-area{height:104px;min-height:104px;border-bottom:1px solid #37637b}
+.restaurant-app .wooden-product-card .product-art-icon{font-size:52px;filter:none}
+.restaurant-app .wooden-product-card .product-art-flower{font-size:39px;opacity:.25}
+.restaurant-app .wooden-product-card .product-art-area img{max-height:88px;object-fit:contain}
+.restaurant-app .wooden-product-card .product-availability{top:8px;left:9px;border-width:1px;padding:4px 7px;font-size:9px}
+.restaurant-app .wooden-product-card .product-card-body{min-height:0;padding:13px;gap:0}
+.restaurant-app .wooden-product-card .product-card-body h3{
+  font-size:19px;line-height:1.17;overflow-wrap:anywhere;
+}
+.restaurant-app .wooden-product-card .product-card-description{
+  flex:none;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;min-height:0;margin-top:5px;font-size:12px;line-height:1.35;
+}
+.restaurant-app .wooden-product-card .product-card-bottom{margin-top:12px;padding-top:10px;gap:10px;border-top-width:1px}
+.restaurant-app .wooden-product-card .product-price strong{font-size:22px}
+.restaurant-app .wooden-product-card .product-price small{font-size:9px}
+.restaurant-app .wooden-product-card .product-add-action{
+  min-height:42px;padding:7px 10px;box-shadow:none;border-width:1px;
+}
+
+/* No celular o card vira uma linha: miniatura, nome, valor e ação. */
+@media(max-width:639px){
+  .restaurant-app .product-grid{gap:10px}
+  .restaurant-app .wooden-product-card{
+    display:grid;grid-template-columns:91px minmax(0,1fr);
+    grid-template-rows:25px auto;align-items:stretch;
+  }
+  .restaurant-app .menu-product-card>.wooden-card-top,
+  .restaurant-app .menu-product-card:nth-child(3n+2)>.wooden-card-top,
+  .restaurant-app .menu-product-card:nth-child(3n+3)>.wooden-card-top{
+    grid-column:1/-1;height:25px!important;min-height:25px;padding:0 9px;
+  }
+  .restaurant-app .wooden-category{font-size:11px}
+  .restaurant-app .wooden-product-card .product-art-area{
+    height:auto;min-height:0;border-right:1px solid #37637b;border-bottom:0;
+  }
+  .restaurant-app .wooden-product-card .product-art-icon{font-size:43px}
+  .restaurant-app .wooden-product-card .product-art-area img{max-height:76px}
+  .restaurant-app .wooden-product-card .product-art-flower{display:none}
+  .restaurant-app .wooden-product-card .product-availability{top:5px;left:4px;padding:3px;font-size:6px}
+  .restaurant-app .wooden-product-card .product-card-body{padding:10px;min-width:0}
+  .restaurant-app .wooden-product-card .product-card-body h3{font-size:16px;line-height:1.15}
+  .restaurant-app .wooden-product-card .product-card-description{font-size:11px;margin-top:3px;-webkit-line-clamp:1}
+  .restaurant-app .wooden-product-card .product-card-bottom{margin-top:7px;padding-top:7px;gap:6px}
+  .restaurant-app .wooden-product-card .product-price strong{font-size:18px}
+  .restaurant-app .wooden-product-card .product-price small{font-size:8px}
+  .restaurant-app .wooden-product-card .product-add-action{
+    width:40px;min-width:40px;height:40px;min-height:40px;
+    justify-content:center;padding:0;
+  }
+  .restaurant-app .wooden-product-card .product-add-action span:last-child{display:none}
+}
