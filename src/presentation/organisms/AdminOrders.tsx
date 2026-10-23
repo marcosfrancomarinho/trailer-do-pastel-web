@@ -86,7 +86,7 @@ function OrderCard({
         </div>
 
         <p className="text-sm text-slate-300">
-          {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} · {new Date(order.createdAt).toLocaleString('pt-BR')}
+          {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} · {new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}
         </p>
 
         <div className="flex flex-col gap-2 sm:flex-row">
