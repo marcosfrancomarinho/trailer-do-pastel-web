@@ -491,3 +491,28 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   .restaurant-app .admin-register-form{gap:20px!important}
   .restaurant-app .admin-register-form fieldset{padding:14px!important}
 }
+
+
+/* Pedido pronto: destaque verde-esmeralda de leitura imediata. */
+.customer-orders-page .customer-order-card.customer-order-ready{
+  border:2px solid #42ce8c!important;
+  background:linear-gradient(135deg,#133e35 0%,#102f34 100%)!important;
+  box-shadow:0 0 0 1px #276b53,0 7px 20px rgba(20,130,82,.23)!important;
+}
+.customer-order-ready .customer-order-number,
+.customer-order-ready .customer-card-bottom strong{color:#f6fff9!important}
+.customer-order-ready .customer-order-status.customer-status-ready{
+  display:inline-flex;align-items:center;gap:6px;width:fit-content;
+  border:1px solid #75ecb0!important;border-radius:999px;
+  background:#b9f7d3!important;color:#074b30!important;
+  padding:7px 12px;font-size:13px;font-weight:900;
+}
+.customer-order-ready .customer-ready-hint{
+  display:block;margin-top:9px;color:#c5ffdf!important;
+  font-size:13px;line-height:1.45;font-weight:800;
+}
+.customer-dialog.customer-dialog-ready{border:2px solid #43cd8b!important}
+.customer-dialog .customer-detail-status.customer-detail-ready{
+  background:#144534!important;border:1px solid #4bcc8b!important;
+}
+.customer-dialog .customer-detail-status.customer-detail-ready strong{color:#b7ffd3!important}
