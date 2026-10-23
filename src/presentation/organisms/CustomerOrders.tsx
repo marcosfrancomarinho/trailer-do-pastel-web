@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SavedCustomerOrder } from '../../domain/models'
 import { brl } from '../../api'
+import { useActionDialog } from '../molecules/ActionDialog'
 
 type Props = {
   orders: SavedCustomerOrder[]
@@ -116,12 +117,19 @@ function CustomerOrderDetails({
 
 export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null)
+  const { confirm, notify, dialog } = useActionDialog()
   const selected = orders.find(order => order.trackingToken === selectedToken)
 
-  function remove(order: SavedCustomerOrder) {
-    if (!window.confirm('Excluir este pedido salvo neste dispositivo? O pedido na pastelaria não será cancelado.')) return
+  async function remove(order: SavedCustomerOrder) {
+    const approved = await confirm({
+      title: 'Excluir pedido salvo?',
+      message: 'Este pedido será removido somente deste dispositivo. Ele continuará registrado na pastelaria.',
+      confirmLabel: 'Excluir do dispositivo',
+    })
+    if (!approved) return
     onRemove(order.trackingToken)
     setSelectedToken(null)
+    notify({ title: 'Pedido removido', message: 'O pedido foi removido deste dispositivo.', tone: 'success' })
   }
 
   return (
@@ -157,7 +165,7 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
                 </button>
                 <div className="customer-card-footer">
                   <button type="button" onClick={() => onRefresh(order.trackingToken)}>Atualizar status</button>
-                  <button type="button" onClick={() => remove(order)}>Excluir</button>
+                  <button type="button" onClick={() => { void remove(order) }}>Excluir</button>
                 </div>
               </article>
             )
@@ -170,9 +178,10 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
           order={selected}
           status={statuses[selected.trackingToken] ?? selected.status}
           onClose={() => setSelectedToken(null)}
-          onRemove={() => remove(selected)}
+          onRemove={() => { void remove(selected) }}
         />
       )}
+      {dialog}
     </main>
   )
 }
