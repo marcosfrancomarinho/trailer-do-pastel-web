@@ -104,26 +104,77 @@ export default function App() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
     finally { setSending(false) }
   }
-  // Poll somente enquanto a tela está aberta; nunca sobrepõe requisições.
+  // Consulta apenas enquanto o cliente acompanha o pedido com a aba visível.
+  // Ao sair da tela ou colocar o navegador em segundo plano, cancela requests e timers.
   useEffect(() => {
     if (view !== 'tracking' || orders.length === 0) return
+
     let active = true
+    let pageHidden = false
     let timer: ReturnType<typeof setTimeout> | undefined
+    let controller: AbortController | null = null
+
+    const stop = () => {
+      if (timer !== undefined) clearTimeout(timer)
+      timer = undefined
+      controller?.abort()
+      controller = null
+    }
+
     const refresh = async () => {
+      if (!active || pageHidden || document.visibilityState !== 'visible' || controller) return
+
+      const request = new AbortController()
+      controller = request
+
       try {
-        const responses = await Promise.allSettled(orders.map(o => trackOrder(o.trackingToken)))
-        if (!active) return
+        const responses = await Promise.allSettled(
+          orders.map(order => trackOrder(order.trackingToken, request.signal))
+        )
+        if (!active || pageHidden || request.signal.aborted || document.visibilityState !== 'visible') return
+
         const next: Record<string, string> = {}
-        responses.forEach((r, i) => {
-          if (r.status === 'fulfilled') next[orders[i].trackingToken] = r.value.status
+        responses.forEach((response, index) => {
+          if (response.status === 'fulfilled') next[orders[index].trackingToken] = response.value.status
         })
         setStatuses(previous => ({ ...previous, ...next }))
       } finally {
-        if (active) timer = setTimeout(() => { void refresh() }, 5000)
+        if (controller !== request) return
+        controller = null
+        if (active && !pageHidden && document.visibilityState === 'visible') {
+          timer = setTimeout(() => { void refresh() }, 5000)
+        }
       }
     }
-    void refresh()
-    return () => { active = false; if (timer !== undefined) clearTimeout(timer) }
+
+    const resume = () => {
+      if (!active || pageHidden || document.visibilityState !== 'visible') return
+      if (timer !== undefined) clearTimeout(timer)
+      timer = undefined
+      if (!controller) void refresh()
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') stop()
+      else resume()
+    }
+    const onPageHide = () => { pageHidden = true; stop() }
+    const onPageShow = () => { pageHidden = false; resume() }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', onPageHide)
+    window.addEventListener('pageshow', onPageShow)
+    window.addEventListener('focus', resume)
+    resume()
+
+    return () => {
+      active = false
+      stop()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', onPageHide)
+      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('focus', resume)
+    }
   }, [view, orders])
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
