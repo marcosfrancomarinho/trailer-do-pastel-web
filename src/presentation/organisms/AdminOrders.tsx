@@ -262,7 +262,7 @@ export default function AdminOrders({ token }: { token: string }) {
     try {
       await restaurant.updateOrderStatus(token, id, status)
       await refresh()
-      notify({ title: 'Pedido atualizado', message: 'A situação do pedido foi alterada com sucesso.', tone: 'success' })
+
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Falha ao alterar status.'
       setError(message)
