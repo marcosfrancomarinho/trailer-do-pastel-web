@@ -16,6 +16,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
   const [additionIds, setAdditionIds] = useState<string[]>([])
   const [password, setPassword] = useState('')
   const [available, setAvailable] = useState(true)
@@ -43,7 +44,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
     setSaving(true); setError(''); setSuccess('')
     const path = section === 'product' ? '/products' : section === 'addition' ? '/additions' : section === 'category' ? '/categories' : '/users'
     const body = section === 'product'
-      ? { name: name.trim(), description: description.trim(), price, categoryId, additionIds, available }
+      ? { name: name.trim(), description: description.trim(), price, categoryId, imageUrl: imageUrl.trim() || null, additionIds, available }
       : section === 'addition'
         ? { name: name.trim(), price, available }
         : section === 'category' ? { name: name.trim() } : { name: name.trim(), password }
@@ -51,7 +52,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
       await restaurant.createRecord(path.slice(1) as 'products' | 'additions' | 'categories' | 'users', token, body)
       setSuccess(section === 'product' ? 'Produto cadastrado com sucesso!' : section === 'addition' ? 'Adicional cadastrado com sucesso!' : section === 'category' ? 'Categoria cadastrada com sucesso!' : 'Usuário cadastrado com sucesso!')
       notify({ title: 'Cadastro realizado', message: 'As informações foram cadastradas com sucesso.', tone: 'success' })
-      setName(''); setPassword(''); setPrice(''); setDescription(''); setAdditionIds([]); setAvailable(true)
+      setName(''); setPassword(''); setPrice(''); setDescription(''); setImageUrl(''); setAdditionIds([]); setAvailable(true)
       if (section === 'product' || section === 'category') await onProductCreated()
       if (section === 'addition') await loadOptions()
     } catch (err) {
@@ -88,6 +89,9 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
                 <option value="">Selecione uma categoria</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+            </label>
+            <label className={labelClass + ' sm:col-span-2'}>URL da imagem (opcional)
+              <input className={inputClass} type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://exemplo.com/imagem.jpg" />
             </label>
             <fieldset className="min-w-0 rounded-2xl border border-[#37637b] bg-[#16384c] p-4 sm:col-span-2 sm:p-5">
               <legend className="mb-3 text-sm font-bold text-white">Adicionais permitidos (opcional)</legend>
