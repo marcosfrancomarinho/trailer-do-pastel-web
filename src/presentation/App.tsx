@@ -13,11 +13,6 @@ import type { Addition, Category, CreatedOrder, OrderPayload, PendingOrder, Prod
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
 type AdminSection = 'orders' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
-const savedOrder = (): CreatedOrder | null => {
-  try { const raw = localStorage.getItem('pastel-order'); return raw ? JSON.parse(raw) as CreatedOrder : null }
-  catch { return null }
-}
-
 export default function App() {
   const [view, setView] = useState<View>('menu')
   const [products, setProducts] = useState<Product[]>([])
@@ -35,7 +30,6 @@ export default function App() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [sending, setSending] = useState(false)
-  const [order, setOrder] = useState<CreatedOrder | null>(savedOrder)
   const [orders, setOrders] = useState<CreatedOrder[]>(readOrders)
   const [statuses, setStatuses] = useState<Record<string, string>>({})
   const [statusBusy, setStatusBusy] = useState('')
@@ -97,7 +91,7 @@ export default function App() {
     try {
       const result = await restaurant.createOrder(body)
       setOrders(restaurant.recentOrders())
-      setOrder(result); setCart([]); go('tracking')
+      setCart([]); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
     finally { setSending(false) }
   }
@@ -115,6 +109,11 @@ export default function App() {
     const timer = window.setInterval(() => { void update() }, 15000)
     return () => { active = false; window.clearInterval(timer) }
   }, [view, orders])
+  useEffect(() => {
+    if (view !== 'admin' || !adminToken || adminSection !== 'orders') return
+    const timer = window.setInterval(() => { void restaurant.pendingOrders(adminToken).then(setPending).catch(() => {}) }, 15000)
+    return () => window.clearInterval(timer)
+  }, [view, adminToken, adminSection])
   async function changeStatus(id: string, status: string) {
     setStatusBusy(id); setAdminError('')
     try {
