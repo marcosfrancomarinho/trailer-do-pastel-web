@@ -239,11 +239,10 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }
 
-  const testSound = async () => {
+  const unlockSound = async () => {
     try {
       await alertRef.current?.enable()
       setSoundReady(true)
-      alertRef.current?.play()
     } catch {
       setSoundReady(false)
       notify({ title: 'Áudio bloqueado', message: 'Confira o volume do dispositivo e a permissão de som do site.', tone: 'error' })
@@ -418,15 +417,6 @@ export default function AdminOrders({ token }: { token: string }) {
           >
             {soundEnabled ? '🔔 Som ativado' : '🔕 Ativar som'}
           </button>
-          {soundEnabled && (
-            <button
-              type="button"
-              onClick={() => { void testSound() }}
-              className="min-h-11 rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white"
-            >
-              🔊 Testar som
-            </button>
-          )}
           <button
             type="button"
             onClick={() => { void refresh() }}
@@ -438,9 +428,9 @@ export default function AdminOrders({ token }: { token: string }) {
       </div>
 
       {soundEnabled && !soundReady && (
-        <button type="button" onClick={() => { void testSound() }}
+        <button type="button" onClick={() => { void unlockSound() }}
           className="w-full rounded-xl border border-amber-300 bg-[#4b3d1b] px-4 py-3 text-left text-sm font-bold text-white">
-          🔇 Som ainda não liberado pelo navegador. Toque aqui para ativar e testar o alerta.
+          🔇 Som ainda não liberado pelo navegador. Toque aqui para liberar o áudio.
         </button>
       )}
 
