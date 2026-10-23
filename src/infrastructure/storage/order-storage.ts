@@ -1,15 +1,39 @@
-import type { CreatedOrder } from '../../domain/models'
+import type { SavedCustomerOrder } from '../../domain/models'
+
 const KEY = 'pastel-orders'
-export function readOrders(): CreatedOrder[] {
+const LEGACY_KEY = 'pastel-order'
+
+export function readOrders(): SavedCustomerOrder[] {
   try {
-    const stored = JSON.parse(localStorage.getItem(KEY) || '[]') as unknown
-    if (Array.isArray(stored) && stored.length) return stored.filter((x): x is CreatedOrder => Boolean(x && typeof x === 'object' && 'trackingToken' in x))
-    const legacy = localStorage.getItem('pastel-order')
-    return legacy ? [JSON.parse(legacy) as CreatedOrder] : []
-  } catch { return [] }
+    const stored = JSON.parse(localStorage.getItem(KEY) || 'null') as unknown
+    if (Array.isArray(stored)) {
+      return stored.filter((value): value is SavedCustomerOrder =>
+        Boolean(value && typeof value === 'object' && 'trackingToken' in value))
+    }
+
+    // Migração única: não resgata o pedido legado depois que o usuário o excluiu.
+    const legacy = localStorage.getItem(LEGACY_KEY)
+    if (!legacy) return []
+    const parsed = JSON.parse(legacy) as SavedCustomerOrder
+    const migrated = parsed?.trackingToken ? [parsed] : []
+    localStorage.setItem(KEY, JSON.stringify(migrated))
+    localStorage.removeItem(LEGACY_KEY)
+    return migrated
+  } catch {
+    return []
+  }
 }
-export function saveOrder(order: CreatedOrder): CreatedOrder[] {
-  const all = [order, ...readOrders().filter(p => p.trackingToken !== order.trackingToken)]
+
+export function saveOrder(order: SavedCustomerOrder): SavedCustomerOrder[] {
+  const all = [order, ...readOrders().filter(saved => saved.trackingToken !== order.trackingToken)]
   localStorage.setItem(KEY, JSON.stringify(all))
   return all
+}
+
+/** Apaga apenas o histórico deste navegador, nunca o pedido do servidor. */
+export function removeOrder(trackingToken: string): SavedCustomerOrder[] {
+  const remaining = readOrders().filter(order => order.trackingToken !== trackingToken)
+  localStorage.setItem(KEY, JSON.stringify(remaining))
+  localStorage.removeItem(LEGACY_KEY)
+  return remaining
 }
