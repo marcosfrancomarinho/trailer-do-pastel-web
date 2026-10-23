@@ -433,3 +433,18 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 .customer-pickup-notice p{margin-top:7px;color:#fff;font-size:14px;font-weight:700;line-height:1.55}
 .customer-pickup-detail{margin:14px 0 0}
 @media(max-width:639px){.customer-pickup-notice{padding:14px}.customer-pickup-notice strong{font-size:15px}}
+
+/* Navegação do cliente no celular: acesso persistente ao cardápio e aos pedidos. */
+@media(max-width:639px){
+  .mobile-shop-nav{position:fixed;z-index:35;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:9px 9px calc(9px + env(safe-area-inset-bottom,0px));background:#071b2e;border-top:2px solid #47788f;box-shadow:0 -4px 16px #0007}
+  .mobile-shop-nav button{position:relative;display:flex;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:12px;color:#e9f7fd;font-size:11px;font-weight:900;line-height:1.2}
+  .mobile-shop-nav button.mobile-shop-active{background:#ffca28;color:#09283b}
+  .mobile-shop-icon{font-size:22px;line-height:1}
+  .mobile-cart-count{position:absolute;top:2px;right:12px;display:grid;place-items:center;min-width:18px;height:18px;border-radius:50%;background:#f7ddd9;color:#66232a;font-size:10px}
+  .restaurant-app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .restaurant-app .product-customizer-modal{padding-bottom:env(safe-area-inset-bottom,0px)}
+}
+.product-customizer-modal,.product-customizer-modal h2,.product-customizer-modal h3,.product-customizer-modal strong,.product-customizer-modal span{color:#f8fcff}
+.product-customizer-modal .text-\[\#102b40\]{color:#102b40}
+.product-customizer-modal .bg-\[\#ffdc86\]{color:#102b40}
+.product-customizer-modal .bg-\[\#ffca28\]{color:#102b40}
