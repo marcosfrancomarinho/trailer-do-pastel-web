@@ -149,9 +149,11 @@ export default function AdminOrders({ token }: { token: string }) {
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
   const [dateText, setDateText] = useState(() => toBrazilianDate(todayRestaurantDate()))
   const [dateError, setDateError] = useState('')
-  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
   const [newOrderCount, setNewOrderCount] = useState(0)
   const alertRef = useRef<OrderAlert | null>(null)
+  const soundEnabledRef = useRef(soundEnabled)
+  soundEnabledRef.current = soundEnabled
   const seenPendingRef = useRef<Set<string>>(new Set())
   const seenDateRef = useRef('')
   const { confirm, notify, dialog } = useActionDialog()
@@ -175,7 +177,7 @@ export default function AdminOrders({ token }: { token: string }) {
       const added = filtered.filter(order => !seenPendingRef.current.has(order.id))
       if (added.length > 0 && date === todayRestaurantDate()) {
         setNewOrderCount(previous => previous + added.length)
-        alertRef.current?.play()
+        if (soundEnabledRef.current) alertRef.current?.play()
       }
       for (const id of ids) seenPendingRef.current.add(id)
     }
@@ -191,9 +193,30 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }, [])
 
+  // Preferência ligada por padrão. Libera o AudioContext na primeira interação
+  // do administrador, conforme as regras de autoplay dos navegadores.
+  useEffect(() => {
+    if (!soundEnabled) return
+    const unlock = () => {
+      void alertRef.current?.enable().then(() => {
+        document.removeEventListener('pointerdown', unlock)
+        document.removeEventListener('keydown', unlock)
+      }).catch(() => {
+        // O próximo gesto do usuário fará uma nova tentativa.
+      })
+    }
+    document.addEventListener('pointerdown', unlock)
+    document.addEventListener('keydown', unlock)
+    return () => {
+      document.removeEventListener('pointerdown', unlock)
+      document.removeEventListener('keydown', unlock)
+    }
+  }, [soundEnabled])
+
   const toggleSound = async () => {
     if (soundEnabled) {
       setSoundEnabled(false)
+      window.localStorage.setItem('admin-order-sound', 'off')
       alertRef.current?.close()
       alertRef.current = new OrderAlert()
       return
@@ -201,6 +224,7 @@ export default function AdminOrders({ token }: { token: string }) {
     try {
       await alertRef.current?.enable()
       setSoundEnabled(true)
+      window.localStorage.setItem('admin-order-sound', 'on')
       alertRef.current?.play()
     } catch {
       notify({
