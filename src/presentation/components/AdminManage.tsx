@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { api } from '../../infrastructure/http/api-client'
+import { restaurant } from '../../application/container'
 import { brl } from '../../api'
 import type { Product, Addition, Category } from '../../domain/models'
 type Kind = 'product' | 'addition' | 'category'
@@ -25,7 +25,7 @@ export default function AdminManage({kind, token, refreshCatalog}: Props) {
   const path=kind==='product'?'/products':kind==='addition'?'/additions':'/categories'
   async function reload() {
     try {
-      const [data,cats,adds]=await Promise.all([api<Item[]>(path),api<Category[]>('/categories'),api<Addition[]>('/additions')])
+      const [data,cats,adds]=await Promise.all([restaurant.listRecords(path.slice(1) as 'products' | 'additions' | 'categories') as Promise<Item[]>,restaurant.listRecords('categories') as Promise<Category[]>,restaurant.listRecords('additions') as Promise<Addition[]>])
       setItems(data);setCategories(cats);setAdditions(adds)
     } catch(e){setError(e instanceof Error?e.message:'Erro ao carregar cadastros.')}
   }
@@ -35,7 +35,7 @@ export default function AdminManage({kind, token, refreshCatalog}: Props) {
     if('price' in item){setPrice(item.price);setAvailable(item.available)}
     if('description' in item){
       setDescription(item.description);setCategoryId(item.categoryId);setImageUrl(item.imageUrl||'')
-      try {const extras=await api<Addition[]>('/products/'+encodeURIComponent(item.id)+'/additions');setAdditionIds(extras.map(a=>a.id))}
+      try {const extras=await restaurant.additions(item.id);setAdditionIds(extras.map(a=>a.id))}
       catch(e){setError(e instanceof Error?e.message:'Erro ao consultar adicionais.')}
     }
   }
@@ -44,7 +44,7 @@ export default function AdminManage({kind, token, refreshCatalog}: Props) {
     setBusy(true);setError('');setMessage('')
     const body=kind==='category'?{name}:kind==='addition'?{name,price,available}:{name,description,price,available,categoryId,imageUrl:imageUrl.trim()||null,additionIds}
     try {
-      await api(path+'/'+encodeURIComponent(editing),{method:'PATCH',headers:{Authorization:'Bearer '+token},body:JSON.stringify(body)})
+      await restaurant.updateRecord(path.slice(1) as 'products' | 'additions' | 'categories', editing, token, body)
       setEditing(null);setMessage('Cadastro atualizado!');await reload();await refreshCatalog()
     }catch(e){setError(e instanceof Error?e.message:'Erro ao salvar.')}finally{setBusy(false)}
   }
@@ -52,7 +52,7 @@ export default function AdminManage({kind, token, refreshCatalog}: Props) {
     if(!window.confirm('Excluir '+item.name+'? Esta ação não pode ser desfeita.'))return
     setBusy(true);setError('');setMessage('')
     try{
-      await api(path+'/'+encodeURIComponent(item.id),{method:'DELETE',headers:{Authorization:'Bearer '+token}})
+      await restaurant.removeRecord(path.slice(1) as 'products' | 'additions' | 'categories', item.id, token)
       setMessage('Cadastro excluído.');setEditing(null);await reload();await refreshCatalog()
     }catch(e){setError(e instanceof Error?e.message:'Não foi possível excluir. Talvez o registro esteja em uso.')}finally{setBusy(false)}
   }
