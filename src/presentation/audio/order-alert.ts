@@ -1,4 +1,4 @@
-/** Toque curto gerado no próprio navegador, sem arquivos de áudio externos. */
+/** Alerta forte de novos pedidos, sintetizado localmente pelo Web Audio API. */
 export class OrderAlert {
   private context: AudioContext | null = null
 
@@ -14,19 +14,22 @@ export class OrderAlert {
     if (!context || context.state !== 'running') return
 
     const now = context.currentTime
-    for (const [index, frequency] of [660, 880, 1046].entries()) {
-      const start = now + index * 0.16
-      const oscillator = context.createOscillator()
-      const volume = context.createGain()
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(frequency, start)
-      volume.gain.setValueAtTime(0.0001, start)
-      volume.gain.exponentialRampToValueAtTime(0.2, start + 0.018)
-      volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.14)
-      oscillator.connect(volume)
-      volume.connect(context.destination)
-      oscillator.start(start)
-      oscillator.stop(start + 0.15)
+    // Duas sequências de campainha, com ataque rápido e harmônicos.
+    for (const [index, frequency] of [880, 740, 880, 740, 1046, 880].entries()) {
+      const start = now + index * 0.2
+      for (const [harmonic, gain] of [[1, 0.26], [2, 0.09]] as const) {
+        const oscillator = context.createOscillator()
+        const volume = context.createGain()
+        oscillator.type = 'square'
+        oscillator.frequency.setValueAtTime(frequency * harmonic, start)
+        volume.gain.setValueAtTime(0.0001, start)
+        volume.gain.exponentialRampToValueAtTime(gain, start + 0.012)
+        volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.17)
+        oscillator.connect(volume)
+        volume.connect(context.destination)
+        oscillator.start(start)
+        oscillator.stop(start + 0.18)
+      }
     }
   }
 
