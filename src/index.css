@@ -426,3 +426,10 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   }
   .restaurant-app .wooden-product-card .product-add-action span:last-child{display:none}
 }
+
+/* Aviso de retirada do pedido: leitura fácil no celular. */
+.customer-pickup-notice{margin:0 0 20px;padding:15px 17px;border:2px solid #ffca28;border-radius:14px;background:#183d53;color:#f8fcff}
+.customer-pickup-notice strong{display:block;color:#ffe083;font-size:16px;font-weight:900;line-height:1.35}
+.customer-pickup-notice p{margin-top:7px;color:#fff;font-size:14px;font-weight:700;line-height:1.55}
+.customer-pickup-detail{margin:14px 0 0}
+@media(max-width:639px){.customer-pickup-notice{padding:14px}.customer-pickup-notice strong{font-size:15px}}
