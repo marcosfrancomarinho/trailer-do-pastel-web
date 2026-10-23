@@ -130,13 +130,13 @@ export default function App() {
             <p className="hero-description">Pastéis crocantes, recheios caprichados e muita diversão. Escolha seus favoritos e faça seu pedido!</p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <button onClick={() => document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' })} className="restaurant-primary">VER CARDÁPIO <span aria-hidden="true">↗</span></button>
-              <span className="hero-kicker">★ Recheio de verdade<br/>★ Feito na hora</span>
+              <span className="hero-kicker">★ Recheios caprichados<br/>★ Variedade de sabores</span>
             </div>
           </div>
           <div className="hero-illustration spongebob-stage" aria-label="Bob Esponja em destaque no cardápio">
             <div className="spongebob-backdrop" aria-hidden="true"><span>✿</span><span>✿</span><span>○</span></div>
             <img className="spongebob-character" src="https://commons.wikimedia.org/wiki/Special:FilePath/SpongeBob_SquarePants_character.png" alt="Bob Esponja sorrindo" />
-            <div className="hero-sticker">PASTEL<br/><strong>DO FUNDO DO MAR!</strong></div>
+            <div className="hero-sticker">PASTÉIS<br/><strong>DO FUNDO DO MAR!</strong></div>
           </div>
         </div>
       </section>
@@ -158,8 +158,8 @@ export default function App() {
             </div>
             <div className="product-art-area">
               <span className="product-art-flower" aria-hidden="true">✿</span>
-              <span className="product-art-icon" role="img" aria-label={juice ? 'Suco' : drink ? 'Refrigerante' : 'Pastel'}>{juice ? '🧃' : drink ? '🥤' : '🥟'}</span>
-              <span className={'product-availability ' + (!p.available ? 'is-unavailable' : '')}>{p.available ? (drink ? 'GELADINHO' : 'FEITO NA HORA') : 'INDISPONÍVEL'}</span>
+              <span className="product-art-icon" role="img" aria-label={juice ? 'Suco' : drink ? 'Refrigerante' : 'Pastéis'}>{juice ? '🧃' : drink ? '🥤' : '🥟'}</span>
+              <span className={'product-availability ' + (!p.available ? 'is-unavailable' : '')}>{p.available ? (drink ? 'GELADINHO' : 'DISPONÍVEL') : 'INDISPONÍVEL'}</span>
             </div>
             <div className="product-card-body">
               <h3>{p.name}</h3>
