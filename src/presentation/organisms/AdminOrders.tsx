@@ -5,6 +5,7 @@ import { brl } from '../../api'
 import { todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 import OrderReceipt from './OrderReceipt'
+import { useActionDialog } from '../molecules/ActionDialog'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
@@ -103,9 +104,7 @@ function OrderCard({
             <button
               type="button"
               disabled={busy}
-              onClick={() => {
-                if (window.confirm('Cancelar este pedido?')) void onStatusChange(order.id, 'CANCELED')
-              }}
+              onClick={() => void onStatusChange(order.id, 'CANCELED')}
               className="rounded-xl border border-red-300 bg-[#512832] px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
             >
               Cancelar
@@ -130,6 +129,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const [todayKey, setTodayKey] = useState(todayRestaurantDate)
   const [dateMode, setDateMode] = useState<'today' | 'custom'>('today')
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
+  const { confirm, notify, dialog } = useActionDialog()
 
   const visibleDate = dateMode === 'today' ? todayKey : chosenDate
 
@@ -215,12 +215,31 @@ export default function AdminOrders({ token }: { token: string }) {
 
   const changeStatus = async (id: string, status: string) => {
     if (busyId) return
+
+    const actionLabel: Record<string, string> = {
+      CONFIRMED: 'aceitar',
+      PREPARING: 'iniciar o preparo de',
+      COMPLETED: 'concluir',
+      CANCELED: 'cancelar',
+    }
+    const verb = actionLabel[status] ?? 'alterar'
+    const approved = await confirm({
+      title: status === 'CANCELED' ? 'Cancelar pedido?' : 'Confirmar alteração?',
+      message: 'Deseja ' + verb + ' o pedido #' + id.slice(0, 8) + '?',
+      confirmLabel: status === 'CANCELED' ? 'Sim, cancelar' : 'Confirmar',
+      tone: status === 'CANCELED' ? 'warning' : 'info',
+    })
+    if (!approved) return
+
     setBusyId(id)
     try {
       await restaurant.updateOrderStatus(token, id, status)
       await refresh()
+      notify({ title: 'Pedido atualizado', message: 'A situação do pedido foi alterada com sucesso.', tone: 'success' })
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Falha ao alterar status.')
+      const message = cause instanceof Error ? cause.message : 'Falha ao alterar status.'
+      setError(message)
+      notify({ title: 'Não foi possível atualizar', message, tone: 'error' })
     } finally {
       setBusyId('')
     }
@@ -336,6 +355,7 @@ export default function AdminOrders({ token }: { token: string }) {
       )}
       {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedId(null)} />}
       {printOrder && <OrderReceipt order={printOrder} onClose={() => setPrintId(null)} />}
+      {dialog}
     </section>
   )
 }
