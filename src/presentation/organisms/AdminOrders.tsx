@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { restaurant } from '../../application/container'
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domain/models'
 import { brl } from '../../api'
+import OrderDetails from './OrderDetails'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
@@ -32,10 +33,12 @@ function OrderCard({
   order,
   busy,
   onStatusChange,
+  onOpen,
 }: {
   order: Order
   busy: boolean
   onStatusChange: (id: string, status: string) => Promise<void>
+  onOpen: (order: Order) => void
 }) {
   const action = nextAction(order.status)
   const itemsCount = order.items.reduce((total, item) => total + item.quantity, 0)
@@ -64,34 +67,14 @@ function OrderCard({
           {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} · {new Date(order.createdAt).toLocaleString('pt-BR')}
         </p>
 
-        <details className="rounded-xl bg-[#1a3d53] p-3 text-sm text-slate-100">
-          <summary className="cursor-pointer font-bold">Ver itens do pedido</summary>
-          <ul className="mt-3 space-y-2">
-            {order.items.map((item, index) => (
-              <li key={index}>
-                <span className="font-semibold">{item.quantity}× {item.productName}</span>
-                {item.additions.map((addition, extraIndex) => (
-                  <p className="pl-4 text-slate-300" key={extraIndex}>
-                    + {addition.quantity}× {addition.additionName}
-                  </p>
-                ))}
-              </li>
-            ))}
-          </ul>
-        </details>
-
-        {'histories' in order && (
-          <details className="rounded-xl border border-[#37637b] px-3 py-2 text-xs text-slate-200">
-            <summary className="cursor-pointer font-semibold">Histórico de status</summary>
-            <ol className="mt-2 space-y-1">
-              {order.histories.map((entry, index) => (
-                <li key={index}>
-                  {statusLabels[entry.status] ?? entry.status} · {new Date(entry.changedAt).toLocaleString('pt-BR')}
-                </li>
-              ))}
-            </ol>
-          </details>
-        )}
+        <button
+          type="button"
+          onClick={() => onOpen(order)}
+          className="w-full rounded-xl border border-[#467991] bg-[#1a3d53] p-3 text-left text-sm font-bold text-white hover:bg-[#27576f]"
+          aria-label={'Ver detalhes do pedido ' + order.id.slice(0, 8)}
+        >
+          Ver detalhes do pedido →
+        </button>
 
         {action && (
           <div className="flex flex-wrap gap-2 pt-1">
@@ -128,6 +111,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const [busyId, setBusyId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const fetchOrders = useCallback(() => Promise.all([
     restaurant.pendingOrders(token),
@@ -194,6 +178,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const canceled = history.filter(order => order.status === 'CANCELED')
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
   const currentOrders = groups[tab]
+  const selectedOrder = [...pending, ...preparing, ...history].find(order => order.id === selectedId)
 
   return (
     <section className="space-y-5" aria-label="Painel de pedidos">
@@ -242,10 +227,11 @@ export default function AdminOrders({ token }: { token: string }) {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {currentOrders.map(order => (
-            <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} />
+            <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} onOpen={order => setSelectedId(order.id)} />
           ))}
         </div>
       )}
+      {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedId(null)} />}
     </section>
   )
 }
