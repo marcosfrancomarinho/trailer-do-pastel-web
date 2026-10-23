@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { restaurant } from '../../application/container'
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domain/models'
 import { brl } from '../../api'
-import { todayRestaurantDate } from '../../domain/order-date'
+import { restaurantDateKey, todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 import OrderReceipt from './OrderReceipt'
 import { useActionDialog } from '../molecules/ActionDialog'
@@ -132,6 +132,12 @@ export default function AdminOrders({ token }: { token: string }) {
   const { confirm, notify, dialog } = useActionDialog()
 
   const visibleDate = dateMode === 'today' ? todayKey : chosenDate
+  const currentFilterRef = useRef('')
+  const currentFilter = token + '|' + tab + '|' + visibleDate
+  currentFilterRef.current = currentFilter
+
+  const onlyRequestedDay = useCallback(<T extends Order>(orders: T[], date: string): T[] =>
+    orders.filter(order => restaurantDateKey(order.createdAt) === date), [])
 
   // Atualiza apenas a data local; não consulta pedidos em segundo plano.
   useEffect(() => {
@@ -145,17 +151,19 @@ export default function AdminOrders({ token }: { token: string }) {
   }, [])
 
   const fetchTab = useCallback(async (currentTab: Tab, date: string) => {
+    const filterKey = token + '|' + currentTab + '|' + date
+
     if (currentTab === 'pending') {
       const result = await restaurant.pendingOrders(token, date)
-      setPending(result)
+      if (currentFilterRef.current === filterKey) setPending(onlyRequestedDay(result, date))
     } else if (currentTab === 'preparing') {
       const result = await restaurant.preparingOrders(token, date)
-      setPreparing(result)
+      if (currentFilterRef.current === filterKey) setPreparing(onlyRequestedDay(result, date))
     } else {
       const result = await restaurant.orderHistory(token, date)
-      setHistory(result)
+      if (currentFilterRef.current === filterKey) setHistory(onlyRequestedDay(result, date))
     }
-  }, [token])
+  }, [token, onlyRequestedDay])
 
   // Apenas Pendentes usa polling. As demais abas consultam quando abertas.
   useEffect(() => {
@@ -166,13 +174,13 @@ export default function AdminOrders({ token }: { token: string }) {
       try {
         if (tab === 'pending') {
           const result = await restaurant.pendingOrders(token, visibleDate)
-          if (active) setPending(result)
+          if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) setPending(onlyRequestedDay(result, visibleDate))
         } else if (tab === 'preparing') {
           const result = await restaurant.preparingOrders(token, visibleDate)
-          if (active) setPreparing(result)
+          if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) setPreparing(onlyRequestedDay(result, visibleDate))
         } else {
           const result = await restaurant.orderHistory(token, visibleDate)
-          if (active) setHistory(result)
+          if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) setHistory(onlyRequestedDay(result, visibleDate))
         }
         if (active) setError('')
       } catch (cause) {
@@ -199,7 +207,7 @@ export default function AdminOrders({ token }: { token: string }) {
       active = false
       if (timer !== undefined) clearTimeout(timer)
     }
-  }, [token, tab, visibleDate])
+  }, [token, tab, visibleDate, onlyRequestedDay])
 
   const refresh = async () => {
     setLoading(true)
@@ -248,7 +256,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const completed = history.filter(order => order.status === 'COMPLETED')
   const canceled = history.filter(order => order.status === 'CANCELED')
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
-  const currentOrders = groups[tab]
+  const currentOrders = onlyRequestedDay(groups[tab], visibleDate)
   const selectedOrder = currentOrders.find(order => order.id === selectedId)
   const printOrder = currentOrders.find(order => order.id === printId)
 
