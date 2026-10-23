@@ -14,7 +14,7 @@ const labels: Record<string, string> = {
   PENDING: 'Aguardando confirmação',
   CONFIRMED: 'Pedido aceito',
   PREPARING: 'Em preparo',
-  COMPLETED: 'Concluído',
+  COMPLETED: 'Pronto para retirada',
   CANCELED: 'Cancelado',
 }
 
@@ -50,7 +50,7 @@ function CustomerOrderDetails({
         role="dialog"
         aria-modal="true"
         aria-labelledby="customer-order-title"
-        className="customer-dialog"
+        className={'customer-dialog ' + (status === 'COMPLETED' ? 'customer-dialog-ready' : '')}
       >
         <header className="customer-dialog-heading">
           <div>
@@ -60,7 +60,7 @@ function CustomerOrderDetails({
           <button type="button" autoFocus onClick={onClose} aria-label="Fechar detalhes" className="customer-close">✕</button>
         </header>
 
-        <div className="customer-detail-status">
+        <div className={'customer-detail-status ' + (status === 'COMPLETED' ? 'customer-detail-ready' : '')}>
           <span>Situação atual</span>
           <strong>{labels[status] ?? status}</strong>
         </div>
@@ -155,7 +155,7 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
             const status = statuses[order.trackingToken] ?? order.status
             const quantity = order.details?.items.reduce((sum, item) => sum + item.quantity, 0)
             return (
-              <article key={order.trackingToken} className="customer-order-card">
+              <article key={order.trackingToken} className={'customer-order-card ' + (status === 'COMPLETED' ? 'customer-order-ready' : '')}>
                 <button
                   type="button"
                   onClick={() => setSelectedToken(order.trackingToken)}
@@ -166,7 +166,12 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
                     <span className="customer-order-number">Pedido #{order.id.slice(0, 8)}</span>
                     <span className="customer-card-chevron" aria-hidden="true">›</span>
                   </div>
-                  <span className="customer-order-status">{labels[status] ?? status}</span>
+                  <span className={'customer-order-status ' + (status === 'COMPLETED' ? 'customer-status-ready' : '')}>
+                    {status === 'COMPLETED' ? '✓ Pronto para retirada' : labels[status] ?? status}
+                  </span>
+                  {status === 'COMPLETED' && (
+                    <span className="customer-ready-hint">Seu pedido está pronto! Vá ao Trailer do Pastel retirar.</span>
+                  )}
                   <div className="customer-card-bottom">
                     <strong>{brl(order.total)}</strong>
                     <span>{quantity === undefined ? 'Ver detalhes' : quantity + (quantity === 1 ? ' item' : ' itens')}</span>
