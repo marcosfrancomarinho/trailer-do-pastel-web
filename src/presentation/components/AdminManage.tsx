@@ -103,7 +103,9 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
       await reload()
       await refreshCatalog()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível salvar.')
+      const message = cause instanceof Error ? cause.message : 'Não foi possível salvar.'
+      setError(message)
+      notify({ title: 'Erro ao salvar', message, tone: 'error' })
     } finally {
       setBusy(false)
     }
@@ -125,7 +127,9 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
       await reload()
       await refreshCatalog()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível excluir. O cadastro pode estar em uso.')
+      const message = cause instanceof Error ? cause.message : 'Não foi possível excluir. O cadastro pode estar em uso.'
+      setError(message)
+      notify({ title: 'Erro ao excluir', message, tone: 'error' })
     } finally {
       setBusy(false)
     }
