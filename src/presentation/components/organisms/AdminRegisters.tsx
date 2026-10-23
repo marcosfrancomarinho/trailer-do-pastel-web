@@ -55,7 +55,9 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
       if (section === 'product' || section === 'category') await onProductCreated()
       if (section === 'addition') await loadOptions()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao realizar cadastro.')
+      const message = err instanceof Error ? err.message : 'Erro ao realizar cadastro.'
+      setError(message)
+      notify({ title: 'Cadastro não realizado', message, tone: 'error' })
     } finally {
       setSaving(false)
     }
