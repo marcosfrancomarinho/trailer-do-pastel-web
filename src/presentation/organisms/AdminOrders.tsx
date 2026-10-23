@@ -4,6 +4,7 @@ import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domai
 import { brl } from '../../api'
 import { todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
+import OrderReceipt from './OrderReceipt'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
@@ -35,11 +36,13 @@ function OrderCard({
   busy,
   onStatusChange,
   onOpen,
+  onPrint,
 }: {
   order: Order
   busy: boolean
   onStatusChange: (id: string, status: string) => Promise<void>
   onOpen: (order: Order) => void
+  onPrint: (order: Order) => void
 }) {
   const action = nextAction(order.status)
   const itemsCount = order.items.reduce((total, item) => total + item.quantity, 0)
@@ -68,14 +71,24 @@ function OrderCard({
           {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} · {new Date(order.createdAt).toLocaleString('pt-BR')}
         </p>
 
-        <button
-          type="button"
-          onClick={() => onOpen(order)}
-          className="w-full rounded-xl border border-[#467991] bg-[#1a3d53] p-3 text-left text-sm font-bold text-white hover:bg-[#27576f]"
-          aria-label={'Ver detalhes do pedido ' + order.id.slice(0, 8)}
-        >
-          Ver detalhes do pedido →
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => onOpen(order)}
+            className="min-h-11 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-4 py-3 text-sm font-bold text-white hover:bg-[#27576f]"
+            aria-label={'Ver detalhes do pedido ' + order.id.slice(0, 8)}
+          >
+            Detalhes
+          </button>
+          <button
+            type="button"
+            onClick={() => onPrint(order)}
+            className="min-h-11 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-4 py-3 text-sm font-bold text-white hover:bg-[#27576f]"
+            aria-label={'Imprimir pedido ' + order.id.slice(0, 8)}
+          >
+            🖨 Imprimir
+          </button>
+        </div>
 
         {action && (
           <div className="flex flex-wrap gap-2 pt-1">
@@ -113,6 +126,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [printId, setPrintId] = useState<string | null>(null)
   const [todayKey, setTodayKey] = useState(todayRestaurantDate)
   const [dateMode, setDateMode] = useState<'today' | 'custom'>('today')
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
@@ -178,6 +192,7 @@ export default function AdminOrders({ token }: { token: string }) {
     setPreparing([])
     setHistory([])
     setSelectedId(null)
+    setPrintId(null)
     void load()
 
     return () => {
@@ -216,6 +231,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
   const currentOrders = groups[tab]
   const selectedOrder = currentOrders.find(order => order.id === selectedId)
+  const printOrder = currentOrders.find(order => order.id === printId)
 
   return (
     <section className="space-y-5" aria-label="Painel de pedidos">
@@ -314,11 +330,12 @@ export default function AdminOrders({ token }: { token: string }) {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {currentOrders.map(order => (
-            <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} onOpen={order => setSelectedId(order.id)} />
+            <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} onOpen={order => setSelectedId(order.id)} onPrint={order => setPrintId(order.id)} />
           ))}
         </div>
       )}
       {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedId(null)} />}
+      {printOrder && <OrderReceipt order={printOrder} onClose={() => setPrintId(null)} />}
     </section>
   )
 }
