@@ -516,3 +516,72 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   background:#144534!important;border:1px solid #4bcc8b!important;
 }
 .customer-dialog .customer-detail-status.customer-detail-ready strong{color:#b7ffd3!important}
+
+
+/* Fotos do cardápio ocupam o quadrado inteiro, sem esticar a imagem. */
+.restaurant-app .wooden-product-card .product-art-area{
+  position:relative;
+  width:100%;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:1/1;
+  overflow:hidden;
+}
+.restaurant-app .wooden-product-card .product-art-area img.product-photo{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:cover;
+  object-position:center;
+}
+@media(max-width:639px){
+  .restaurant-app .wooden-product-card{
+    grid-template-columns:clamp(92px,27vw,118px) minmax(0,1fr);
+  }
+  .restaurant-app .wooden-product-card .product-art-area{
+    align-self:start;
+    border-bottom:0;
+  }
+}
+
+/* Cancelados usam vermelho, em contraposição ao verde dos pedidos concluídos. */
+.customer-orders-page .customer-order-card.customer-order-canceled{
+  border:2px solid #f87171!important;
+  background:linear-gradient(135deg,#50212b 0%,#3d1a27 100%)!important;
+  box-shadow:0 0 0 1px #813541,0 7px 20px rgba(170,34,58,.23)!important;
+}
+.customer-order-canceled .customer-order-number,
+.customer-order-canceled .customer-card-bottom strong{color:#fff2f2!important}
+.customer-order-canceled .customer-order-status.customer-status-canceled{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  width:fit-content;
+  border:1px solid #fca5a5!important;
+  border-radius:999px;
+  background:#fecaca!important;
+  color:#7f1d1d!important;
+  padding:7px 12px;
+  font-size:13px;
+  font-weight:900;
+}
+.customer-order-canceled .customer-canceled-hint{
+  display:block;
+  margin-top:9px;
+  color:#ffe0e0!important;
+  font-size:13px;
+  line-height:1.45;
+  font-weight:800;
+}
+.customer-dialog.customer-dialog-canceled{border:2px solid #f87171!important}
+.customer-dialog .customer-detail-status.customer-detail-canceled{
+  background:#56252e!important;
+  border:1px solid #f87171!important;
+}
+.customer-dialog .customer-detail-status.customer-detail-canceled strong{
+  color:#fecaca!important;
+}
