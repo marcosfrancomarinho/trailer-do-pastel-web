@@ -2,78 +2,271 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { restaurant } from '../../application/container'
 import { brl } from '../../api'
-import type { Product, Addition, Category } from '../../domain/models'
+import type { Addition, Category, Product } from '../../domain/models'
+
 type Kind = 'product' | 'addition' | 'category'
 type Item = Product | Addition | Category
 type Props = { kind: Kind; token: string; refreshCatalog: () => Promise<void> }
-const field = 'mt-1 w-full rounded-xl border-2 border-cyan-200 bg-white px-4 py-3'
-export default function AdminManage({kind, token, refreshCatalog}: Props) {
-  const [items,setItems]=useState<Item[]>([])
-  const [categories,setCategories]=useState<Category[]>([])
-  const [additions,setAdditions]=useState<Addition[]>([])
-  const [editing,setEditing]=useState<string|null>(null)
-  const [name,setName]=useState('')
-  const [description,setDescription]=useState('')
-  const [price,setPrice]=useState('')
-  const [categoryId,setCategoryId]=useState('')
-  const [imageUrl,setImageUrl]=useState('')
-  const [available,setAvailable]=useState(true)
-  const [additionIds,setAdditionIds]=useState<string[]>([])
-  const [busy,setBusy]=useState(false)
-  const [error,setError]=useState('')
-  const [message,setMessage]=useState('')
-  const path=kind==='product'?'/products':kind==='addition'?'/additions':'/categories'
+
+const inputClass = 'mt-2 min-h-12 w-full rounded-xl border border-[#8eaec0] bg-white px-4 py-3 text-[#102b40]'
+const labelClass = 'block min-w-0 text-sm font-semibold text-white'
+const kindRoute: Record<Kind, 'products' | 'additions' | 'categories'> = {
+  product: 'products',
+  addition: 'additions',
+  category: 'categories',
+}
+
+export default function AdminManage({ kind, token, refreshCatalog }: Props) {
+  const [items, setItems] = useState<Item[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [additions, setAdditions] = useState<Addition[]>([])
+  const [editing, setEditing] = useState<string | null>(null)
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [price, setPrice] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [available, setAvailable] = useState(true)
+  const [additionIds, setAdditionIds] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
   async function reload() {
     try {
-      const [data,cats,adds]=await Promise.all([restaurant.listRecords(path.slice(1) as 'products' | 'additions' | 'categories') as Promise<Item[]>,restaurant.listRecords('categories') as Promise<Category[]>,restaurant.listRecords('additions') as Promise<Addition[]>])
-      setItems(data);setCategories(cats);setAdditions(adds)
-    } catch(e){setError(e instanceof Error?e.message:'Erro ao carregar cadastros.')}
-  }
-  useEffect(()=>{void reload()},[kind])
-  async function startEdit(item:Item) {
-    setEditing(item.id);setName(item.name);setError('');setMessage('')
-    if('price' in item){setPrice(item.price);setAvailable(item.available)}
-    if('description' in item){
-      setDescription(item.description);setCategoryId(item.categoryId);setImageUrl(item.imageUrl||'')
-      try {const extras=await restaurant.additions(item.id);setAdditionIds(extras.map(a=>a.id))}
-      catch(e){setError(e instanceof Error?e.message:'Erro ao consultar adicionais.')}
+      const [records, cats, adds] = await Promise.all([
+        restaurant.listRecords(kindRoute[kind]) as Promise<Item[]>,
+        restaurant.listRecords('categories') as Promise<Category[]>,
+        restaurant.listRecords('additions') as Promise<Addition[]>,
+      ])
+      setItems(records)
+      setCategories(cats)
+      setAdditions(adds)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar cadastros.')
     }
   }
-  async function save(event:FormEvent<HTMLFormElement>){
-    event.preventDefault();if(!editing)return
-    setBusy(true);setError('');setMessage('')
-    const body=kind==='category'?{name}:kind==='addition'?{name,price,available}:{name,description,price,available,categoryId,imageUrl:imageUrl.trim()||null,additionIds}
+
+  useEffect(() => { void reload() }, [kind])
+
+  useEffect(() => {
+    if (!editing) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !busy) setEditing(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [editing, busy])
+
+  async function startEdit(item: Item) {
+    setEditing(item.id)
+    setError('')
+    setMessage('')
+    setName(item.name)
+    setAdditionIds([])
+    if ('price' in item) {
+      setPrice(item.price)
+      setAvailable(item.available)
+    }
+    if ('description' in item) {
+      setDescription(item.description)
+      setCategoryId(item.categoryId)
+      setImageUrl(item.imageUrl ?? '')
+      try {
+        const extras = await restaurant.additions(item.id)
+        setAdditionIds(extras.map(extra => extra.id))
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Falha ao carregar adicionais.')
+      }
+    }
+  }
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!editing || busy) return
+
+    const body = kind === 'category'
+      ? { name }
+      : kind === 'addition'
+        ? { name, price, available }
+        : { name, description, price, categoryId, imageUrl: imageUrl.trim() || null, additionIds, available }
+
+    setBusy(true)
+    setError('')
     try {
-      await restaurant.updateRecord(path.slice(1) as 'products' | 'additions' | 'categories', editing, token, body)
-      setEditing(null);setMessage('Cadastro atualizado!');await reload();await refreshCatalog()
-    }catch(e){setError(e instanceof Error?e.message:'Erro ao salvar.')}finally{setBusy(false)}
+      await restaurant.updateRecord(kindRoute[kind], editing, token, body)
+      setEditing(null)
+      setMessage('Cadastro atualizado com sucesso.')
+      await reload()
+      await refreshCatalog()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível salvar.')
+    } finally {
+      setBusy(false)
+    }
   }
-  async function remove(item:Item){
-    if(!window.confirm('Excluir '+item.name+'? Esta ação não pode ser desfeita.'))return
-    setBusy(true);setError('');setMessage('')
-    try{
-      await restaurant.removeRecord(path.slice(1) as 'products' | 'additions' | 'categories', item.id, token)
-      setMessage('Cadastro excluído.');setEditing(null);await reload();await refreshCatalog()
-    }catch(e){setError(e instanceof Error?e.message:'Não foi possível excluir. Talvez o registro esteja em uso.')}finally{setBusy(false)}
+
+  async function remove(item: Item) {
+    if (!window.confirm('Excluir ' + item.name + '? Esta ação não pode ser desfeita.')) return
+    setBusy(true)
+    setError('')
+    try {
+      await restaurant.removeRecord(kindRoute[kind], item.id, token)
+      setMessage('Cadastro excluído.')
+      await reload()
+      await refreshCatalog()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível excluir. O cadastro pode estar em uso.')
+    } finally {
+      setBusy(false)
+    }
   }
-  return <section className="rounded-3xl border-2 border-[#0b4063] bg-white p-4 sm:p-7">
-    <div className="mb-5 flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{kind==='product'?'Produtos':kind==='addition'?'Adicionais':'Categorias'}</h2><button type="button" onClick={()=>void reload()} className="rounded-xl border px-3 py-2 text-sm font-bold">Atualizar</button></div>
-    {error&&<p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-red-700">{error}</p>}{message&&<p role="status" className="mb-3 rounded-xl bg-green-50 p-3">{message}</p>}
-    {editing&&<form onSubmit={e=>void save(e)} className="mb-6 grid gap-3 rounded-2xl bg-cyan-50 p-4 sm:grid-cols-2">
-      <h3 className="font-black sm:col-span-2">Editar cadastro</h3>
-      <label className="text-sm font-bold">Nome<input required className={field} value={name} onChange={e=>setName(e.target.value)}/></label>
-      {kind!=='category'&&<><label className="text-sm font-bold">Preço<input required type="number" min="0" step="0.01" className={field} value={price} onChange={e=>setPrice(e.target.value)}/></label><label className="flex items-center gap-2"><input type="checkbox" checked={available} onChange={e=>setAvailable(e.target.checked)}/> Disponível</label></>}
-      {kind==='product'&&<>
-        <label className="text-sm font-bold">Descrição<input className={field} value={description} onChange={e=>setDescription(e.target.value)}/></label>
-        <label className="text-sm font-bold">Categoria<select required className={field} value={categoryId} onChange={e=>setCategoryId(e.target.value)}><option value="">Selecione</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-        <label className="text-sm font-bold sm:col-span-2">URL da imagem<input type="url" className={field} value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="https://..."/></label>
-        <fieldset className="sm:col-span-2"><legend className="font-bold">Adicionais permitidos</legend><div className="grid gap-2 sm:grid-cols-2">{additions.map(a=><label key={a.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={additionIds.includes(a.id)} onChange={e=>setAdditionIds(ids=>e.target.checked?[...ids,a.id]:ids.filter(id=>id!==a.id))}/>{a.name} ({brl(a.price)})</label>)}</div></fieldset>
-      </>}
-      <div className="flex flex-wrap gap-2 sm:col-span-2"><button disabled={busy} type="submit" className="rounded-xl bg-[#ffc629] px-5 py-3 font-bold">Salvar alterações</button><button type="button" onClick={()=>setEditing(null)} className="rounded-xl border px-5 py-3">Cancelar</button></div>
-    </form>}
-    <div className="grid gap-3">{items.map(item=><div key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-100 p-3 sm:p-4">
-      <div className="min-w-0"><p className="break-words font-extrabold">{item.name}</p>{'price' in item&&<p className="text-sm text-slate-600">{brl(item.price)} · {item.available?'Disponível':'Indisponível'}</p>}</div>
-      <div className="flex gap-2"><button disabled={busy} onClick={()=>void startEdit(item)} className="rounded-xl bg-cyan-100 px-3 py-2 text-sm font-bold">Editar</button><button disabled={busy} onClick={()=>void remove(item)} className="rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-700">Excluir</button></div>
-    </div>)}{items.length===0&&<p className="py-6 text-center text-slate-500">Nenhum cadastro encontrado.</p>}</div>
-  </section>
+
+  const heading = kind === 'product' ? 'Produtos' : kind === 'addition' ? 'Adicionais' : 'Categorias'
+
+  return (
+    <section className="rounded-2xl border border-[#365b70] bg-[#112e43] p-4 text-white sm:p-6">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-black sm:text-2xl">{heading}</h2>
+        <button type="button" onClick={() => void reload()} className="min-h-11 rounded-xl border border-[#6a98ad] px-4 py-2 text-sm font-bold text-white">
+          Atualizar
+        </button>
+      </div>
+
+      {message && <p role="status" className="mb-4 rounded-xl bg-[#24583d] p-3 text-sm font-semibold text-white">{message}</p>}
+      {error && !editing && <p role="alert" className="mb-4 rounded-xl bg-[#5b2832] p-3 text-sm font-semibold text-white">{error}</p>}
+
+      <div className="grid gap-3">
+        {items.map(item => (
+          <article key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-4 rounded-xl border border-[#37637b] bg-[#19394f] p-4 sm:p-5">
+            <div className="min-w-0 flex-1">
+              <h3 className="break-words text-base font-extrabold text-white">{item.name}</h3>
+              {'price' in item && (
+                <p className="mt-1 text-sm text-slate-200">
+                  {brl(item.price)} · {item.available ? 'Disponível' : 'Indisponível'}
+                </p>
+              )}
+            </div>
+            <div className="flex w-full gap-2 sm:w-auto">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void startEdit(item)}
+                className="min-h-11 flex-1 rounded-xl bg-[#b6e8f5] px-4 py-2 text-sm font-extrabold text-[#0c3044] sm:flex-none"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void remove(item)}
+                className="min-h-11 flex-1 rounded-xl bg-[#fbe0dc] px-4 py-2 text-sm font-extrabold text-[#7c202c] sm:flex-none"
+              >
+                Excluir
+              </button>
+            </div>
+          </article>
+        ))}
+        {items.length === 0 && <p className="py-8 text-center text-slate-200">Nenhum cadastro encontrado.</p>}
+      </div>
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 sm:items-center sm:p-4"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget && !busy) setEditing(null)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-catalog-title"
+            className="flex max-h-[96dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[#4b7b93] bg-[#102b40] shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl"
+          >
+            <header className="flex items-center justify-between gap-3 border-b border-[#31566e] px-5 py-4 sm:px-7">
+              <h2 id="edit-catalog-title" className="text-xl font-black">
+                Editar {kind === 'product' ? 'produto' : kind === 'addition' ? 'adicional' : 'categoria'}
+              </h2>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setEditing(null)}
+                aria-label="Fechar edição"
+                className="min-h-11 min-w-11 rounded-xl bg-[#21485d] text-lg font-bold text-white"
+              >
+                ✕
+              </button>
+            </header>
+
+            <form onSubmit={event => void save(event)} className="min-h-0 overflow-y-auto p-5 sm:p-7">
+              {error && <p role="alert" className="mb-4 rounded-xl bg-[#5b2832] p-3 text-sm font-semibold text-white">{error}</p>}
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className={labelClass}>
+                  Nome
+                  <input required autoFocus className={inputClass} value={name} onChange={event => setName(event.target.value)} />
+                </label>
+
+                {kind !== 'category' && (
+                  <>
+                    <label className={labelClass}>
+                      Preço (R$)
+                      <input required type="number" step="0.01" min="0.01" className={inputClass} value={price} onChange={event => setPrice(event.target.value)} />
+                    </label>
+                    <label className="flex min-h-12 items-center gap-3 rounded-xl border border-[#47778f] bg-[#1b4056] p-3 text-sm font-bold text-white sm:col-span-2">
+                      <input type="checkbox" checked={available} onChange={event => setAvailable(event.target.checked)} className="h-5 w-5 accent-[#ffca28]" />
+                      Disponível no cardápio
+                    </label>
+                  </>
+                )}
+
+                {kind === 'product' && (
+                  <>
+                    <label className={labelClass}>
+                      Descrição
+                      <input className={inputClass} value={description} onChange={event => setDescription(event.target.value)} />
+                    </label>
+                    <label className={labelClass}>
+                      Categoria
+                      <select required className={inputClass} value={categoryId} onChange={event => setCategoryId(event.target.value)}>
+                        <option value="">Selecione a categoria</option>
+                        {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+                      </select>
+                    </label>
+                    <label className={labelClass + ' sm:col-span-2'}>
+                      URL da imagem
+                      <input type="url" className={inputClass} value={imageUrl} onChange={event => setImageUrl(event.target.value)} placeholder="https://..." />
+                    </label>
+                    <fieldset className="rounded-xl border border-[#47778f] p-4 sm:col-span-2">
+                      <legend className="px-2 text-sm font-bold text-white">Adicionais permitidos</legend>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {additions.map(addition => (
+                          <label key={addition.id} className="flex items-center gap-3 rounded-lg bg-[#20475e] p-3 text-sm text-white">
+                            <input
+                              type="checkbox"
+                              checked={additionIds.includes(addition.id)}
+                              onChange={event => setAdditionIds(ids => event.target.checked ? [...ids, addition.id] : ids.filter(id => id !== addition.id))}
+                              className="h-5 w-5 accent-[#ffca28]"
+                            />
+                            {addition.name} ({brl(addition.price)})
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </>
+                )}
+              </div>
+              <footer className="sticky bottom-0 mt-6 flex flex-col-reverse gap-3 bg-[#102b40] pt-4 sm:flex-row sm:justify-end">
+                <button type="button" disabled={busy} onClick={() => setEditing(null)} className="min-h-12 rounded-xl border border-[#7a9bab] px-5 py-3 font-bold text-white">
+                  Voltar
+                </button>
+                <button type="submit" disabled={busy} className="min-h-12 rounded-xl bg-[#ffca28] px-6 py-3 font-extrabold text-[#082739] disabled:opacity-60">
+                  {busy ? 'Salvando...' : 'Salvar alterações'}
+                </button>
+              </footer>
+            </form>
+          </section>
+        </div>
+      )}
+    </section>
+  )
 }
