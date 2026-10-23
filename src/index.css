@@ -448,3 +448,46 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 .product-customizer-modal .text-\[\#102b40\]{color:#102b40}
 .product-customizer-modal .bg-\[\#ffdc86\]{color:#102b40}
 .product-customizer-modal .bg-\[\#ffca28\]{color:#102b40}
+
+/* Cadastro ADM: remove a borda global de .inner-page form, que atravessava os campos. */
+.restaurant-app .inner-page .admin-register-form,
+.restaurant-app .admin-layout .admin-register-form{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:0!important;
+  box-shadow:none!important;
+  outline:0!important;
+  min-width:0;
+  width:100%;
+}
+.restaurant-app .admin-register-panel{
+  min-width:0;
+  overflow:hidden;
+}
+.restaurant-app .admin-register-form>label,
+.restaurant-app .admin-register-form>fieldset{
+  min-width:0;
+}
+.restaurant-app .admin-register-form>label{
+  padding:2px 1px;
+}
+.restaurant-app .admin-register-form input:not([type="checkbox"]),
+.restaurant-app .admin-register-form select{
+  max-width:100%;
+  box-sizing:border-box;
+}
+.restaurant-app .admin-register-form fieldset{
+  margin:0;
+  padding:18px!important;
+  border:1px solid #527b92;
+}
+.restaurant-app .admin-register-form fieldset legend{
+  padding:0 8px;
+  color:#fff;
+}
+@media(max-width:639px){
+  .restaurant-app .admin-register-panel{padding:20px!important}
+  .restaurant-app .admin-register-form{gap:20px!important}
+  .restaurant-app .admin-register-form fieldset{padding:14px!important}
+}
