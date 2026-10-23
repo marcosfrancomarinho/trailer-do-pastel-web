@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { cartTotal, toOrderPayload } from '../src/domain/cart.ts'
 import { restaurantDateKey } from '../src/domain/order-date.ts'
+import { readCart, saveCart } from '../src/infrastructure/storage/cart-storage.ts'
 
 const product = {
   id: 'p1',
@@ -59,4 +60,45 @@ test('mantém o filtro consistente em diferentes fusos horários do sistema', ()
     pedidos.filter(order => restaurantDateKey(order.createdAt) === '2026-10-23').map(order => order.id),
     ['hoje'],
   )
+})
+
+test('preserva produtos, quantidades e adicionais no carrinho entre recarregamentos', () => {
+  const previousStorage = globalThis.localStorage
+  const store = new Map()
+  globalThis.localStorage = {
+    getItem: key => store.get(key) ?? null,
+    setItem: (key, value) => { store.set(key, value) },
+    removeItem: key => { store.delete(key) },
+  }
+  try {
+    saveCart(cart)
+    assert.deepEqual(readCart(), cart)
+    saveCart([])
+    assert.deepEqual(readCart(), [])
+    assert.equal(store.size, 0)
+  } finally {
+    if (previousStorage === undefined) delete globalThis.localStorage
+    else globalThis.localStorage = previousStorage
+  }
+})
+
+test('ignora conteúdo inválido no armazenamento do carrinho', () => {
+  const previousStorage = globalThis.localStorage
+  const store = new Map([['trailer-pastel-cart-v1', '{invalido']])
+  globalThis.localStorage = {
+    getItem: key => store.get(key) ?? null,
+    setItem: (key, value) => { store.set(key, value) },
+    removeItem: key => { store.delete(key) },
+  }
+  try {
+    assert.deepEqual(readCart(), [])
+    store.set('trailer-pastel-cart-v1', JSON.stringify([
+      { ...cart[0], quantity: -3 },
+      ...cart,
+    ]))
+    assert.deepEqual(readCart(), cart)
+  } finally {
+    if (previousStorage === undefined) delete globalThis.localStorage
+    else globalThis.localStorage = previousStorage
+  }
 })
