@@ -242,7 +242,7 @@ export default function App() {
         <div className="hero-inner mx-auto grid max-w-6xl items-center gap-8 px-5 py-10 md:grid-cols-[1fr_0.95fr] md:py-20">
           <div className="relative z-10">
             <span className="hero-eyebrow">⚓ BEM-VINDO AO TRAILER DO PASTEL</span>
-            <h1 className="hero-headline">UM MAR DE <span>SABOR!</span></h1>
+            <h1 className="hero-headline">UM MAR DE <span>SABORES!</span></h1>
             <p className="hero-description">Pastéis crocantes, recheios caprichados e muita diversão. Escolha seus favoritos e faça seu pedido!</p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <button onClick={() => document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' })} className="restaurant-primary">VER CARDÁPIO <span aria-hidden="true">↗</span></button>
