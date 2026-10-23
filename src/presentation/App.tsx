@@ -222,7 +222,66 @@ export default function App() {
         </section>
       </div>}
     </main>}
-    {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation" onMouseDown={e => {if(e.target===e.currentTarget) setSelected(null)}}><div role="dialog" aria-modal="true" aria-label={'Personalizar '+selected.name} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-[#f8f5eb] p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-black text-[#008b9e]">MONTE DO SEU JEITO</p><h2 className="mt-2 text-2xl font-black">{selected.name}</h2><p className="mt-2 text-sm text-[#557383]">{selected.description}</p></div><button onClick={() => setSelected(null)} className="rounded-full bg-white px-3 py-2" aria-label="Fechar">✕</button></div><div className="my-6 border-t border-cyan-100 pt-5"><h3 className="mb-3 font-black">Adicionais</h3>{extrasBusy ? <p>Carregando adicionais...</p> : extras.filter(a => a.available).length===0 ? <p className="text-sm text-[#557383]">Sem adicionais para este produto.</p> : extras.filter(a => a.available).map(a => <div key={a.id} className="flex items-center justify-between border-b border-cyan-100 py-3"><div><b>{a.name}</b><p className="text-sm text-[#557383]">+ {brl(a.price)}</p></div><div className="flex items-center gap-3"><button aria-label={'Remover '+a.name} onClick={() => setAmounts(p => ({...p,[a.id]:Math.max(0,(p[a.id]||0)-1)}))} className="rounded-lg bg-[#ffe39a] px-3 py-1">−</button><span>{amounts[a.id]||0}</span><button aria-label={'Adicionar '+a.name} onClick={() => setAmounts(p => ({...p,[a.id]:(p[a.id]||0)+1}))} className="rounded-lg bg-[#ffe39a] px-3 py-1">+</button></div></div>)}</div><div className="flex items-center justify-between"><span className="font-bold">Quantidade</span><div className="flex items-center gap-4"><button onClick={() => setQuantity(n => Math.max(1,n-1))} className="rounded-lg bg-[#ffe39a] px-3 py-1">−</button><b>{quantity}</b><button onClick={() => setQuantity(n => n+1)} className="rounded-lg bg-[#ffe39a] px-3 py-1">+</button></div></div><button disabled={extrasBusy} onClick={addItem} className="mt-6 w-full rounded-full bg-[#ffc629] py-4 font-black text-[#113548] disabled:opacity-50">Adicionar • {brl(quantity*(Number(selected.price)+extras.reduce((n,a)=>n+Number(a.price)*(amounts[a.id]||0),0)))}</button></div></div>}
+    {selected && (
+      <div
+        role="presentation"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-4"
+        onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null) }}
+      >
+        <section role="dialog" aria-modal="true" aria-label={'Personalizar ' + selected.name}
+          className="product-customizer-modal flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl border border-[#608ba0] bg-[#102c40] text-white shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl">
+          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[#41687c] px-5 py-5 sm:px-7">
+            <div className="min-w-0">
+              <p className="text-xs font-black tracking-wider text-[#8be9fb]">MONTE DO SEU JEITO</p>
+              <h2 className="mt-2 break-words text-2xl font-black leading-tight text-white sm:text-3xl">{selected.name}</h2>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#d4e8f2]">{selected.description}</p>
+            </div>
+            <button type="button" onClick={() => setSelected(null)} aria-label="Fechar"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#648ca0] bg-[#28546b] text-lg font-bold text-white">✕</button>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
+            <h3 className="mb-3 text-base font-black text-white">Adicionais</h3>
+            {extrasBusy ? (
+              <p className="text-sm text-[#e1eef5]">Carregando adicionais...</p>
+            ) : extras.filter(extra => extra.available).length === 0 ? (
+              <p className="rounded-xl bg-[#20475d] p-4 text-sm font-semibold text-white">Sem adicionais para este produto.</p>
+            ) : extras.filter(extra => extra.available).map(extra => (
+              <div key={extra.id} className="flex items-center justify-between gap-3 border-b border-[#48758b] py-3">
+                <div className="min-w-0">
+                  <strong className="break-words text-sm text-white sm:text-base">{extra.name}</strong>
+                  <p className="mt-1 text-sm font-semibold text-[#c8e7f4]">+ {brl(extra.price)}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button type="button" aria-label={'Remover ' + extra.name}
+                    onClick={() => setAmounts(previous => ({ ...previous, [extra.id]: Math.max(0, (previous[extra.id] || 0) - 1) }))}
+                    className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-xl font-black text-[#102b40]">−</button>
+                  <span className="min-w-6 text-center font-black text-white">{amounts[extra.id] || 0}</span>
+                  <button type="button" aria-label={'Adicionar ' + extra.name}
+                    onClick={() => setAmounts(previous => ({ ...previous, [extra.id]: (previous[extra.id] || 0) + 1 }))}
+                    className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-xl font-black text-[#102b40]">+</button>
+                </div>
+              </div>
+            ))}
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <span className="font-black text-white">Quantidade</span>
+              <div className="flex items-center gap-2">
+                <button type="button" aria-label="Diminuir quantidade" onClick={() => setQuantity(value => Math.max(1, value - 1))}
+                  className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-xl font-black text-[#102b40]">−</button>
+                <strong className="min-w-7 text-center text-white">{quantity}</strong>
+                <button type="button" aria-label="Aumentar quantidade" onClick={() => setQuantity(value => value + 1)}
+                  className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-xl font-black text-[#102b40]">+</button>
+              </div>
+            </div>
+          </div>
+          <footer className="shrink-0 border-t border-[#41687c] bg-[#102c40] px-5 py-4 sm:px-7">
+            <button type="button" disabled={extrasBusy} onClick={addItem}
+              className="min-h-12 w-full rounded-xl bg-[#ffca28] px-4 py-3 text-base font-black text-[#0c2a3c] disabled:opacity-60">
+              Adicionar • {brl(quantity * (Number(selected.price) + extras.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0)))}
+            </button>
+          </footer>
+        </section>
+      </div>
+    )}
     <SiteFooter navigate={go} />
   </div>
 }
