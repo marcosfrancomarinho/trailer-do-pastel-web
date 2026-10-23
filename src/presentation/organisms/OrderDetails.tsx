@@ -12,7 +12,7 @@ const names: Record<string, string> = {
   CANCELED: 'Cancelado',
 }
 
-const date = (value: string) => new Date(value).toLocaleString('pt-BR')
+const date = (value: string) => new Date(value).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })
 
 export default function OrderDetails({
   order,
