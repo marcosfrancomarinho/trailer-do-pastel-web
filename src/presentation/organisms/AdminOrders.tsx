@@ -44,7 +44,7 @@ const statusLabels: Record<string, string> = {
 }
 
 function nextAction(status: string): { label: string; next: string } | null {
-  if (status === 'PENDING') return { label: 'Aceitar pedido', next: 'CONFIRMED' }
+  if (status === 'PENDING') return { label: 'Aceitar pedido', next: 'PREPARING' }
   if (status === 'CONFIRMED') return { label: 'Iniciar preparo', next: 'PREPARING' }
   if (status === 'PREPARING') return { label: 'Concluir pedido', next: 'COMPLETED' }
   return null
