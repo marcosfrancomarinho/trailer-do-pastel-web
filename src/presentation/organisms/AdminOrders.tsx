@@ -13,7 +13,7 @@ function toBrazilianDate(iso: string): string {
 }
 
 function fromBrazilianDate(text: string): string | null {
-  if (!/^\\d{2}\\/\\d{2}\\/\\d{4}$/.test(text)) return null
+  if (!/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(text)) return null
   const [day, month, year] = text.split('/').map(Number)
   const date = new Date(Date.UTC(year, month - 1, day))
   if (
@@ -341,7 +341,7 @@ export default function AdminOrders({ token }: { token: string }) {
                 value={dateText}
                 aria-invalid={Boolean(dateError)}
                 onChange={event => {
-                  const digits = event.target.value.replace(/\\D/g, '').slice(0, 8)
+                  const digits = event.target.value.replace(/[^0-9]/g, '').slice(0, 8)
                   const formatted = digits.length > 4
                     ? digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4)
                     : digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits
