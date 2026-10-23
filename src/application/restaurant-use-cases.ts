@@ -2,7 +2,15 @@ import type { CatalogPort } from './ports/catalog-port'
 import type { OrderHistoryPort, OrderPort } from './ports/order-port'
 import type { CustomerOrderDetails, OrderPayload } from '../domain/models'
 export class RestaurantUseCases {
-  constructor(private readonly catalog: CatalogPort, private readonly orders: OrderPort, private readonly history: OrderHistoryPort) {}
+  private readonly catalog: CatalogPort
+  private readonly orders: OrderPort
+  private readonly history: OrderHistoryPort
+
+  constructor(catalog: CatalogPort, orders: OrderPort, history: OrderHistoryPort) {
+    this.catalog = catalog
+    this.orders = orders
+    this.history = history
+  }
   catalogList() { return Promise.all([this.catalog.categories(), this.catalog.products()]) }
   additions(id: string) { return this.catalog.additions(id) }
   listRecords(kind: 'products' | 'additions' | 'categories') { return kind === 'products' ? this.catalog.products() : kind === 'additions' ? this.catalog.allAdditions() : this.catalog.categories() }
