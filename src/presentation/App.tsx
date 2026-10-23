@@ -84,30 +84,50 @@ export default function App() {
     if (!cart.length || sending) return
     setSending(true); setError('')
     try {
-      const result = await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart))
+      await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart))
       setOrders(restaurant.recentOrders())
       setCart([]); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
     finally { setSending(false) }
   }
+  // Poll somente enquanto a tela está aberta; nunca sobrepõe requisições.
   useEffect(() => {
     if (view !== 'tracking' || orders.length === 0) return
     let active = true
-    const update = async () => {
-      const responses = await Promise.allSettled(orders.map(o => trackOrder(o.trackingToken)))
-      if (!active) return
-      const next: Record<string,string> = {}
-      responses.forEach((r,i) => { if (r.status === 'fulfilled') next[orders[i].trackingToken] = r.value.status })
-      setStatuses(previous => ({...previous,...next}))
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = async () => {
+      try {
+        const responses = await Promise.allSettled(orders.map(o => trackOrder(o.trackingToken)))
+        if (!active) return
+        const next: Record<string, string> = {}
+        responses.forEach((r, i) => {
+          if (r.status === 'fulfilled') next[orders[i].trackingToken] = r.value.status
+        })
+        setStatuses(previous => ({ ...previous, ...next }))
+      } finally {
+        if (active) timer = setTimeout(() => { void refresh() }, 5000)
+      }
     }
-    void update()
-    const timer = window.setInterval(() => { void update() }, 15000)
-    return () => { active = false; window.clearInterval(timer) }
+    void refresh()
+    return () => { active = false; if (timer !== undefined) clearTimeout(timer) }
   }, [view, orders])
+
   useEffect(() => {
     if (view !== 'admin' || !adminToken || adminSection !== 'orders') return
-    const timer = window.setInterval(() => { void restaurant.pendingOrders(adminToken).then(setPending).catch(() => {}) }, 15000)
-    return () => window.clearInterval(timer)
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = async () => {
+      try {
+        const latest = await restaurant.pendingOrders(adminToken)
+        if (active) setPending(latest)
+      } catch {
+        // Falhas transitórias são recuperadas na próxima consulta.
+      } finally {
+        if (active) timer = setTimeout(() => { void refresh() }, 5000)
+      }
+    }
+    void refresh()
+    return () => { active = false; if (timer !== undefined) clearTimeout(timer) }
   }, [view, adminToken, adminSection])
   async function changeStatus(id: string, status: string) {
     setStatusBusy(id); setAdminError('')
@@ -171,7 +191,7 @@ export default function App() {
     </main>}
     {view === 'tracking' && <main className="inner-page mx-auto max-w-3xl px-4 py-12">
       <p className="font-black tracking-widest text-[#008b9e]">ACOMPANHAMENTO</p><h1 className="mt-2 text-4xl font-black">Meus pedidos</h1>
-      <p className="mt-2 text-sm text-slate-600">Atualização automática a cada 15 segundos, enquanto esta tela estiver aberta.</p>
+      <p className="mt-2 text-sm text-slate-600">Consulta automática a cada 5 segundos, enquanto esta tela estiver aberta.</p>
       {trackingError && <p role="alert" className="mt-4 text-red-700">{trackingError}</p>}
       {orders.length === 0 ? <div className="mt-7 rounded-2xl bg-white p-6">Nenhum pedido salvo neste navegador.</div> :
         <div className="mt-6 grid gap-4">{orders.map(o => <article key={o.trackingToken} className="rounded-3xl border-2 border-cyan-100 bg-white p-5 shadow-sm">
