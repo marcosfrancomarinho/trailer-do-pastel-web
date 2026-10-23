@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react'
+import type { PendingOrder, PreparingOrder, OrderHistoryItem } from '../../domain/models'
+import { brl } from '../../api'
+
+type Order = PendingOrder | PreparingOrder | OrderHistoryItem
+
+/** Comanda simples para impressão térmica pelo diálogo do navegador. */
+export default function OrderReceipt({ order, onClose }: { order: Order; onClose: () => void }) {
+  const [paperWidth, setPaperWidth] = useState<'58' | '80'>('80')
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  return (
+    <div className="receipt-preview-overlay" onMouseDown={event => {
+      if (event.target === event.currentTarget) onClose()
+    }}>
+      <section role="dialog" aria-modal="true" aria-label="Imprimir comanda" className="receipt-preview-dialog">
+        <header className="receipt-preview-toolbar">
+          <h2>Imprimir pedido</h2>
+          <button type="button" onClick={onClose} aria-label="Fechar prévia">✕</button>
+        </header>
+        <div className="receipt-preview-options">
+          <span>Largura da bobina</span>
+          <div role="group" aria-label="Largura do papel">
+            <button type="button" aria-pressed={paperWidth === '58'} onClick={() => setPaperWidth('58')}>58 mm</button>
+            <button type="button" aria-pressed={paperWidth === '80'} onClick={() => setPaperWidth('80')}>80 mm</button>
+          </div>
+        </div>
+        <div className="receipt-preview-scroll">
+          <article className={'receipt-print receipt-width-' + paperWidth} aria-label="Comanda do pedido">
+            <header className="receipt-center">
+              <h3>TRAILER DO PASTEL</h3>
+              <strong>COMANDA #{order.id.slice(0, 8)}</strong>
+              <p>{new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}</p>
+            </header>
+            <div className="receipt-separator" />
+            <p><strong>CLIENTE:</strong> {order.customerName}</p>
+            <p><strong>TELEFONE:</strong> {order.customerPhone}</p>
+            <div className="receipt-separator" />
+            <h4>ITENS</h4>
+            {order.items.map((item, index) => (
+              <div className="receipt-item" key={index}>
+                <div className="receipt-line">
+                  <strong>{item.quantity}x {item.productName}</strong>
+                  <span>{brl(Number(item.unitPrice) * item.quantity)}</span>
+                </div>
+                {item.additions.map((extra, extraIndex) => (
+                  <div className="receipt-line receipt-extra" key={extraIndex}>
+                    <span>+ {extra.quantity}x {extra.additionName}</span>
+                    <span>{brl(Number(extra.unitPrice) * extra.quantity * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div className="receipt-separator" />
+            <div className="receipt-line receipt-total"><strong>TOTAL</strong><strong>{brl(order.total)}</strong></div>
+            <div className="receipt-separator" />
+            <p className="receipt-center">Pedido para retirada</p>
+            <p className="receipt-center">Obrigado pela preferência!</p>
+          </article>
+        </div>
+        <footer className="receipt-preview-actions">
+          <button type="button" onClick={onClose}>Voltar</button>
+          <button type="button" onClick={() => window.print()}>Imprimir</button>
+        </footer>
+      </section>
+    </div>
+  )
+}
