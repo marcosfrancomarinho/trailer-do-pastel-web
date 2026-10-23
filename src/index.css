@@ -339,3 +339,24 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   .receipt-print p,.receipt-print strong,.receipt-print span,.receipt-print h3,.receipt-print h4{color:#000!important}
   .receipt-separator{border-color:#000!important}
 }
+
+
+/* Popup de confirmação/aviso próprio, com leitura e alvos móveis acessíveis. */
+.action-dialog-backdrop{position:fixed;inset:0;z-index:110;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,10,19,.82);backdrop-filter:blur(5px)}
+.action-dialog-panel{width:min(100%,420px);border:1px solid #678fa4;border-radius:22px;background:#113147;padding:26px 22px 22px;color:#f7fcff;box-shadow:0 22px 70px rgba(0,0,0,.55);text-align:center}
+.action-dialog-symbol{display:grid;place-items:center;width:57px;height:57px;margin:0 auto 17px;border-radius:50%;font-size:30px;font-weight:900}
+.action-dialog-warning{background:#ffe0ad;color:#653414}
+.action-dialog-error{background:#ffd7da;color:#86212d}
+.action-dialog-success{background:#aff0d3;color:#12553e}
+.action-dialog-info{background:#b4eafa;color:#0b465e}
+.action-dialog-panel h2{margin:0;color:#fff;font-size:21px;font-weight:900;line-height:1.3}
+.action-dialog-panel p{margin:12px 0 0;color:#d6e8f1;font-size:15px;line-height:1.6;overflow-wrap:anywhere}
+.action-dialog-actions{display:flex;flex-direction:column-reverse;gap:10px;margin-top:25px}
+.action-dialog-actions button{min-height:50px;width:100%;border-radius:12px;padding:12px;font-size:15px;font-weight:900;touch-action:manipulation}
+.action-dialog-cancel{border:1px solid #779aae;background:#22485e;color:#fff}
+.action-dialog-primary{border:1px solid #ffce37;background:#ffce37;color:#09283b}
+.action-dialog-primary.action-dialog-danger{border-color:#ffc4c6;background:#ffd8d8;color:#7b202b}
+.action-dialog-actions button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(min-width:480px){.action-dialog-actions{flex-direction:row}.action-dialog-actions button{flex:1}}
+@media(max-width:420px){.action-dialog-panel{padding:24px 18px 20px}.action-dialog-panel h2{font-size:20px}}
+@media print{.action-dialog-backdrop{display:none!important}}
