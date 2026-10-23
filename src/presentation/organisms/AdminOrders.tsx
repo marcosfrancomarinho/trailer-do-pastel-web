@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { restaurant } from '../../application/container'
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domain/models'
 import { brl } from '../../api'
-import { restaurantDateKey, todayRestaurantDate } from '../../domain/order-date'
+import { todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
@@ -117,59 +117,89 @@ export default function AdminOrders({ token }: { token: string }) {
   const [dateMode, setDateMode] = useState<'today' | 'custom'>('today')
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
 
-  const fetchOrders = useCallback(() => Promise.all([
-    restaurant.pendingOrders(token),
-    restaurant.preparingOrders(token),
-    restaurant.orderHistory(token),
-  ]), [token])
+  const visibleDate = dateMode === 'today' ? todayKey : chosenDate
 
-  const refresh = async () => {
-    try {
-      const [newPending, newPreparing, newHistory] = await fetchOrders()
-      setPending(newPending)
-      setPreparing(newPreparing)
-      setHistory(newHistory)
-      setError('')
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível consultar os pedidos.')
-    } finally {
-      setLoading(false)
-      setTodayKey(todayRestaurantDate())
+  // Atualiza apenas a data local; não consulta pedidos em segundo plano.
+  useEffect(() => {
+    const updateDay = () => setTodayKey(todayRestaurantDate())
+    const timer = window.setInterval(updateDay, 30_000)
+    window.addEventListener('focus', updateDay)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', updateDay)
     }
-  }
+  }, [])
 
+  const fetchTab = useCallback(async (currentTab: Tab, date: string) => {
+    if (currentTab === 'pending') {
+      const result = await restaurant.pendingOrders(token, date)
+      setPending(result)
+    } else if (currentTab === 'preparing') {
+      const result = await restaurant.preparingOrders(token, date)
+      setPreparing(result)
+    } else {
+      const result = await restaurant.orderHistory(token, date)
+      setHistory(result)
+    }
+  }, [token])
+
+  // Apenas Pendentes usa polling. As demais abas consultam quando abertas.
   useEffect(() => {
     let active = true
     let timer: ReturnType<typeof setTimeout> | undefined
 
-    const poll = async () => {
+    const load = async () => {
       try {
-        const [newPending, newPreparing, newHistory] = await fetchOrders()
-        if (!active) return
-        setTodayKey(todayRestaurantDate())
-        setPending(newPending)
-        setPreparing(newPreparing)
-        setHistory(newHistory)
-        setError('')
+        if (tab === 'pending') {
+          const result = await restaurant.pendingOrders(token, visibleDate)
+          if (active) setPending(result)
+        } else if (tab === 'preparing') {
+          const result = await restaurant.preparingOrders(token, visibleDate)
+          if (active) setPreparing(result)
+        } else {
+          const result = await restaurant.orderHistory(token, visibleDate)
+          if (active) setHistory(result)
+        }
+        if (active) setError('')
       } catch (cause) {
-        if (active) setError(cause instanceof Error ? cause.message : 'Falha ao atualizar pedidos.')
+        if (active) {
+          setError(cause instanceof Error ? cause.message : 'Falha ao buscar pedidos.')
+        }
       } finally {
         if (active) {
-          setTodayKey(todayRestaurantDate())
           setLoading(false)
-          timer = setTimeout(() => { void poll() }, 5000)
+          if (tab === 'pending') timer = setTimeout(() => { void load() }, 5000)
         }
       }
     }
 
-    void poll()
+    setLoading(true)
+    setPending([])
+    setPreparing([])
+    setHistory([])
+    setSelectedId(null)
+    void load()
+
     return () => {
       active = false
       if (timer !== undefined) clearTimeout(timer)
     }
-  }, [fetchOrders])
+  }, [token, tab, visibleDate])
+
+  const refresh = async () => {
+    setLoading(true)
+    try {
+      await fetchTab(tab, visibleDate)
+      setError('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar os pedidos.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const changeStatus = async (id: string, status: string) => {
+    if (busyId) return
     setBusyId(id)
     try {
       await restaurant.updateOrderStatus(token, id, status)
@@ -181,27 +211,22 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }
 
-  const visibleDate = dateMode === 'today' ? todayKey : chosenDate
-  const byDate = <T extends Order>(orders: T[]): T[] =>
-    orders.filter(order => restaurantDateKey(order.createdAt) === visibleDate)
-
-  const completed = byDate(history.filter(order => order.status === 'COMPLETED'))
-  const canceled = byDate(history.filter(order => order.status === 'CANCELED'))
-  const groups: Record<Tab, Order[]> = {
-    pending: byDate(pending),
-    preparing: byDate(preparing),
-    completed,
-    canceled,
-  }
+  const completed = history.filter(order => order.status === 'COMPLETED')
+  const canceled = history.filter(order => order.status === 'CANCELED')
+  const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
   const currentOrders = groups[tab]
-  const selectedOrder = [...pending, ...preparing, ...history].find(order => order.id === selectedId)
+  const selectedOrder = currentOrders.find(order => order.id === selectedId)
 
   return (
     <section className="space-y-5" aria-label="Painel de pedidos">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-black text-white">Pedidos</h2>
-          <p className="text-sm text-slate-300">Atualização automática a cada 5 segundos</p>
+          <p className="text-sm text-slate-300">
+            {tab === 'pending'
+              ? 'Pendentes atualizados automaticamente a cada 5 segundos.'
+              : 'Atualizados ao abrir esta aba ou clicar em Atualizar.'}
+          </p>
         </div>
         <button
           type="button"
@@ -274,7 +299,7 @@ export default function AdminOrders({ token }: { token: string }) {
             }
           >
             <span className="block">{option.label}</span>
-            <strong className="mt-1 block text-lg">{groups[option.id].length}</strong>
+            {tab === option.id && <strong className="mt-1 block text-lg">{currentOrders.length}</strong>}
           </button>
         ))}
       </div>
