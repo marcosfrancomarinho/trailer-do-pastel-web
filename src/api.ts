@@ -4,7 +4,7 @@ export type Addition = { id: string; name: string; price: string; available: boo
 export type OrderPayload = { customerName: string; customerPhone: string; items: { productId: string; quantity: number; additions: { additionId: string; quantity: number }[] }[] }
 export type CreatedOrder = { id: string; trackingToken: string; status: string; total: string }
 export type PendingOrder = { id: string; customerName: string; customerPhone: string; status: string; total: string; createdAt: string; items: { productName: string; quantity: number; unitPrice: string; additions: { additionName: string; quantity: number; unitPrice: string }[] }[] }
-const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
+const base = (import.meta.env.VITE_API_URL || 'https://trailer-do-pastel.onrender.com').replace(/\/$/, '')
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response
   try { response = await fetch(base + path, { ...init, headers: { 'Content-Type': 'application/json', ...init.headers } }) }

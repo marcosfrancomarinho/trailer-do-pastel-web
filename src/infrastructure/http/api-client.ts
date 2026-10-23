@@ -1,4 +1,4 @@
-const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
+const base = (import.meta.env.VITE_API_URL || 'https://trailer-do-pastel.onrender.com').replace(/\/$/, '')
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response
   try {
