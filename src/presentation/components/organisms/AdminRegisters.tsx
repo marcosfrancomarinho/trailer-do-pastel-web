@@ -6,7 +6,7 @@ import type { Addition, Category } from '../../../domain/models'
 type Section = 'product' | 'addition' | 'user' | 'category'
 type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
 const inputClass = 'mt-2 w-full rounded-xl border-2 border-[#9ec9d9] bg-white px-4 py-3 outline-cyan-400'
-const labelClass = 'block text-sm font-bold text-[#143b50]'
+const labelClass = 'block min-w-0 text-sm font-bold text-white'
 
 export default function AdminRegisters({ token, section, onProductCreated }: Props) {
   const [categories, setCategories] = useState<Category[]>([])
@@ -58,11 +58,11 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
     }
   }
 
-  return <section className="mt-0 rounded-3xl border-2 border-[#0b4063] bg-white p-5 shadow-[5px_6px_0_#0b4063] sm:p-7">
+  return <section className="mt-0 rounded-3xl border-2 border-[#0b4063] bg-[#112e43] p-5 shadow-sm sm:p-8">
     <p className="text-xs font-black tracking-widest text-[#008b9e]">GERENCIAMENTO</p>
     <h2 className="mt-2 text-2xl font-black">{section === "product" ? "Cadastrar produto" : section === "addition" ? "Cadastrar adicional" : section === "category" ? "Cadastrar categoria" : "Cadastrar usuário"}</h2>
     <p className="mt-2 text-sm text-[#557383]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
-    <form onSubmit={e => void handleSubmit(e)} className="grid gap-5 sm:grid-cols-2">
+    <form onSubmit={e => void handleSubmit(e)} className="mt-7 grid min-w-0 gap-x-6 gap-y-6 sm:grid-cols-2">
       <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : section === 'category' ? 'Nome da categoria' : 'Nome do produto'}
         <input className={inputClass} required value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
       </label>
@@ -84,10 +84,10 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </label>
-            <fieldset className="sm:col-span-2">
-              <legend className="mb-3 text-sm font-bold text-[#143b50]">Adicionais permitidos (opcional)</legend>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-cyan-100 p-3 text-sm">
+            <fieldset className="min-w-0 rounded-2xl border border-[#37637b] bg-[#16384c] p-4 sm:col-span-2 sm:p-5">
+              <legend className="mb-3 text-sm font-bold text-white">Adicionais permitidos (opcional)</legend>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#52788b] bg-[#23495d] p-4 text-sm text-white">
                   <span><input type="checkbox" disabled={!a.available} checked={additionIds.includes(a.id)}
                     onChange={e => setAdditionIds(ids => e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))}
                     className="mr-2 accent-[#0079b6]" />{a.name}</span>
@@ -97,7 +97,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
               </div>
             </fieldset>
           </>}
-          <label className="flex items-center gap-3 text-sm font-bold sm:col-span-2">
+          <label className="flex items-center gap-3 rounded-xl bg-[#183e53] p-4 text-sm font-bold text-white sm:col-span-2">
             <input type="checkbox" checked={available} onChange={e => setAvailable(e.target.checked)} className="accent-[#0079b6]" />
             Disponível no cardápio
           </label>
