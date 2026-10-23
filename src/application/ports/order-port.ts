@@ -4,7 +4,7 @@ export interface OrderPort {
   pending(token: string, date?: string): Promise<PendingOrder[]>
   preparing(token: string, date?: string): Promise<PreparingOrder[]>
   history(token: string, date?: string): Promise<OrderHistoryItem[]>
-  tracking(trackingToken: string): Promise<TrackedOrder>
+  tracking(trackingToken: string, signal?: AbortSignal): Promise<TrackedOrder>
   changeStatus(token: string, id: string, status: string): Promise<void>
 }
 export interface OrderHistoryPort {
