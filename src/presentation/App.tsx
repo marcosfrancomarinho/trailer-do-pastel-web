@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, brl } from '../api'
-import { readOrders, saveOrder } from '../infrastructure/storage/order-storage'
+import { restaurant } from '../application/container'
+import { readOrders } from '../infrastructure/storage/order-storage'
 import { trackOrder, updateOrderStatus } from '../application/order-service'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import ProductCard from './components/ProductCard'
 import AdminManage from './components/AdminManage'
-import AdminRegisters from './components/AdminRegisters'
+import AdminRegisters from './components/organisms/AdminRegisters'
 import type { Addition, Category, CreatedOrder, OrderPayload, PendingOrder, Product } from '../api'
 
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
@@ -51,7 +52,7 @@ export default function App() {
   async function loadCatalog() {
     setLoading(true); setError('')
     try {
-      const [cats, prods] = await Promise.all([api<Category[]>('/categories'), api<Product[]>('/products')])
+      const [cats, prods] = await restaurant.catalogList()
       setCategories(cats); setProducts(prods)
     } catch (err) { setError(err instanceof Error ? err.message : 'Falha ao carregar o cardápio') }
     finally { setLoading(false) }
@@ -68,7 +69,7 @@ export default function App() {
   async function choose(product: Product) {
     if (!product.available) return
     setSelected(product); setExtras([]); setAmounts({}); setQuantity(1); setExtrasBusy(true)
-    try { setExtras(await api<Addition[]>('/products/' + encodeURIComponent(product.id) + '/additions')) }
+    try { setExtras(await restaurant.additions(product.id)) }
     catch (err) { setError(err instanceof Error ? err.message : 'Falha ao carregar adicionais'); setSelected(null) }
     finally { setExtrasBusy(false) }
   }
@@ -94,8 +95,8 @@ export default function App() {
         additions: item.additions.map(a => ({ additionId: a.addition.id, quantity: a.quantity })) }))
     }
     try {
-      const result = await api<CreatedOrder>('/orders', { method: 'POST', body: JSON.stringify(body) })
-      setOrders(saveOrder(result))
+      const result = await restaurant.createOrder(body)
+      setOrders(restaurant.recentOrders())
       setOrder(result); setCart([]); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
     finally { setSending(false) }
@@ -124,7 +125,7 @@ export default function App() {
   }
   async function loadPending(token: string) {
     setAdminBusy(true); setAdminError('')
-    try { setPending(await api<PendingOrder[]>('/orders/pending', { headers: { Authorization: 'Bearer ' + token } })) }
+    try { setPending(await restaurant.pendingOrders(token)) }
     catch (err) { setAdminError(err instanceof Error ? err.message : 'Erro ao buscar pedidos') }
     finally { setAdminBusy(false) }
   }
