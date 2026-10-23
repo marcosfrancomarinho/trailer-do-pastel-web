@@ -50,7 +50,7 @@ function CustomerOrderDetails({
         role="dialog"
         aria-modal="true"
         aria-labelledby="customer-order-title"
-        className={'customer-dialog ' + (status === 'COMPLETED' ? 'customer-dialog-ready' : '')}
+        className={'customer-dialog ' + (status === 'COMPLETED' ? 'customer-dialog-ready' : status === 'CANCELED' ? 'customer-dialog-canceled' : '')}
       >
         <header className="customer-dialog-heading">
           <div>
@@ -60,7 +60,7 @@ function CustomerOrderDetails({
           <button type="button" autoFocus onClick={onClose} aria-label="Fechar detalhes" className="customer-close">✕</button>
         </header>
 
-        <div className={'customer-detail-status ' + (status === 'COMPLETED' ? 'customer-detail-ready' : '')}>
+        <div className={'customer-detail-status ' + (status === 'COMPLETED' ? 'customer-detail-ready' : status === 'CANCELED' ? 'customer-detail-canceled' : '')}>
           <span>Situação atual</span>
           <strong>{labels[status] ?? status}</strong>
         </div>
@@ -155,7 +155,7 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
             const status = statuses[order.trackingToken] ?? order.status
             const quantity = order.details?.items.reduce((sum, item) => sum + item.quantity, 0)
             return (
-              <article key={order.trackingToken} className={'customer-order-card ' + (status === 'COMPLETED' ? 'customer-order-ready' : '')}>
+              <article key={order.trackingToken} className={'customer-order-card ' + (status === 'COMPLETED' ? 'customer-order-ready' : status === 'CANCELED' ? 'customer-order-canceled' : '')}>
                 <button
                   type="button"
                   onClick={() => setSelectedToken(order.trackingToken)}
@@ -166,11 +166,14 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
                     <span className="customer-order-number">Pedido #{order.id.slice(0, 8)}</span>
                     <span className="customer-card-chevron" aria-hidden="true">›</span>
                   </div>
-                  <span className={'customer-order-status ' + (status === 'COMPLETED' ? 'customer-status-ready' : '')}>
-                    {status === 'COMPLETED' ? '✓ Pronto para retirada' : labels[status] ?? status}
+                  <span className={'customer-order-status ' + (status === 'COMPLETED' ? 'customer-status-ready' : status === 'CANCELED' ? 'customer-status-canceled' : '')}>
+                    {status === 'COMPLETED' ? '✓ Pronto para retirada' : status === 'CANCELED' ? '✕ Pedido cancelado' : labels[status] ?? status}
                   </span>
                   {status === 'COMPLETED' && (
                     <span className="customer-ready-hint">Seu pedido está pronto! Vá ao Trailer do Pastel retirar.</span>
+                  )}
+                  {status === 'CANCELED' && (
+                    <span className="customer-canceled-hint">Este pedido foi cancelado e não estará disponível para retirada.</span>
                   )}
                   <div className="customer-card-bottom">
                     <strong>{brl(order.total)}</strong>
