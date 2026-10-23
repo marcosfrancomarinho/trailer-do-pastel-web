@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
-import { cartTotal, toOrderPayload } from '../domain/cart'
+import { cartTotal, toOrderPayload, type CartItem } from '../domain/cart'
+import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
 import { trackOrder } from '../application/order-service'
 import AdminOrders from './organisms/AdminOrders'
 import CustomerOrders from './organisms/CustomerOrders'
@@ -45,12 +47,25 @@ function saveAdminSession(token: string): void {
   }
 }
 
-type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
+const pagePaths: Record<View, string> = {
+  menu: '/',
+  cart: '/carrinho',
+  tracking: '/pedidos',
+  admin: '/admin',
+}
+const pathViews: Record<string, View> = {
+  '/': 'menu',
+  '/carrinho': 'cart',
+  '/pedidos': 'tracking',
+  '/admin': 'admin',
+}
 type AdminSection = 'orders' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const view = pathViews[location.pathname] ?? 'menu'
   const [adminToken, setAdminToken] = useState(readAdminSession)
-  const [view, setView] = useState<View>(() => readAdminSession() ? 'admin' : 'menu')
   const [cartToast, setCartToast] = useState<{ message: string; id: number } | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -63,7 +78,7 @@ export default function App() {
   const [extrasBusy, setExtrasBusy] = useState(false)
   const [amounts, setAmounts] = useState<Record<string, number>>({})
   const [quantity, setQuantity] = useState(1)
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>(readCart)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [sending, setSending] = useState(false)
@@ -87,6 +102,8 @@ export default function App() {
   }
   useEffect(() => { void loadCatalog() }, [])
 
+  useEffect(() => { saveCart(cart) }, [cart])
+
   useEffect(() => {
     if (!cartToast) return
     const timeout = window.setTimeout(() => setCartToast(null), 2500)
@@ -98,7 +115,7 @@ export default function App() {
   ), [products, filter, search])
   const total = cartTotal(cart)
   const cartCount = cart.reduce((n, item) => n + item.quantity, 0)
-  function go(next: View) { setView(next); setError(''); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  function go(next: View) { navigate(pagePaths[next]); setError(''); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   async function choose(product: Product) {
     if (!product.available) return
     setSelected(product); setExtras([]); setAmounts({}); setQuantity(1); setExtrasBusy(true)
@@ -236,7 +253,8 @@ export default function App() {
   }
   return <div className="restaurant-app min-h-screen overflow-x-hidden">
     <SiteHeader view={view} count={cartCount} navigate={go} />
-    {view === 'menu' && <>
+    <Routes>
+      <Route path="/" element={<>
       <section className="restaurant-hero">
         <span className="sea-flower sea-flower-left" aria-hidden="true">✿</span><span className="sea-flower sea-flower-right" aria-hidden="true">✿</span>
         <div className="hero-inner mx-auto grid max-w-6xl items-center gap-8 px-5 py-10 md:grid-cols-[1fr_0.95fr] md:py-20">
@@ -263,13 +281,13 @@ export default function App() {
         {loading ? <div className="py-20 text-center">Carregando o cardápio...</div> : visible.length === 0 ? <div className="py-20 text-center">Nenhum produto encontrado.</div> :
         <div className="product-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visible.map(p => <ProductCard key={p.id} product={p} category={categories.find(c => c.id === p.categoryId)?.name || 'Especial'} select={choose} />)}</div>}
       </main>
-    </>}
-    {view === 'cart' && <main className="inner-page mx-auto max-w-5xl px-4 py-12"><button className="mb-6 text-sm font-bold text-[#008b9e]" onClick={() => go('menu')}>← Voltar ao cardápio</button><h1 className="mb-8 text-4xl font-black">Seu carrinho</h1>
+    </>} />
+      <Route path="/carrinho" element={<main className="inner-page mx-auto max-w-5xl px-4 py-12"><button className="mb-6 text-sm font-bold text-[#008b9e]" onClick={() => go('menu')}>← Voltar ao cardápio</button><h1 className="mb-8 text-4xl font-black">Seu carrinho</h1>
       {cart.length === 0 ? <div className="rounded-3xl bg-white p-12 text-center"><p className="mb-5">Seu carrinho está vazio.</p><button className="rounded-full bg-[#ffc629] px-6 py-3 font-bold text-[#113548]" onClick={() => go('menu')}>Escolher pastéis</button></div> :
       <div className="grid gap-8 md:grid-cols-[1.3fr_1fr]"><div className="space-y-3">{cart.map(item => <div key={item.key} className="rounded-2xl bg-white p-5 shadow-sm"><div className="flex justify-between gap-3"><div><h3 className="text-lg font-extrabold">{item.product.name}</h3>{item.additions.map(a => <p key={a.addition.id} className="text-sm text-[#557383]">+ {a.quantity}× {a.addition.name}</p>)}</div><strong>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((n,a) => n + Number(a.addition.price)*a.quantity,0)))}</strong></div><div className="mt-4 flex items-center gap-4"><button aria-label="Diminuir quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity: x.quantity-1}:x).filter(x => x.quantity > 0))}>−</button><b>{item.quantity}</b><button aria-label="Aumentar quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity:x.quantity+1}:x))}>+</button><button className="ml-auto text-sm text-red-600" onClick={() => setCart(c => c.filter(x => x.key !== item.key))}>Remover</button></div></div>)}</div>
         <form onSubmit={e => void checkout(e)} className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Finalizar pedido</h2><label className="block text-sm font-semibold">Seu nome<input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="Como podemos chamar você?"/></label><label className="block text-sm font-semibold">Telefone<input required type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="(99) 99999-9999"/></label><div className="flex justify-between border-t border-cyan-100 pt-4 text-lg"><span>Total estimado</span><strong>{brl(total)}</strong></div><p className="text-xs text-[#557383]">O preço final será validado pela pastelaria no servidor.</p>{error && <p role="alert" className="text-sm text-red-600">{error}</p>}<button disabled={sending} className="w-full rounded-full bg-[#ffc629] py-4 font-black text-[#113548] disabled:opacity-60">{sending ? 'Enviando pedido...' : 'Confirmar pedido →'}</button></form></div>}
-    </main>}
-    {view === 'tracking' && <>
+    </main>} />
+      <Route path="/pedidos" element={<>
       {trackingError && <p role="alert" className="mx-auto max-w-3xl px-4 pt-4 text-red-200">{trackingError}</p>}
       <CustomerOrders
         orders={orders}
@@ -291,8 +309,8 @@ export default function App() {
             .catch(error => setTrackingError(error instanceof Error ? error.message : 'Falha ao consultar status'))
         }}
       />
-    </>}
-    {view === 'admin' && <main className="inner-page mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#008b9e]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
+    </>} />
+      <Route path="/admin" element={<main className="inner-page mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#008b9e]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
       <div className="admin-layout mt-8 grid min-w-0 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
@@ -318,7 +336,9 @@ export default function App() {
           {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div>}
-    </main>}
+    </main>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
     {selected && (
       <div
         role="presentation"
