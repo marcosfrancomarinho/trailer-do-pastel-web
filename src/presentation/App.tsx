@@ -3,13 +3,14 @@ import { api, brl } from '../api'
 import { restaurant } from '../application/container'
 import { cartTotal, toOrderPayload } from '../domain/cart'
 import { readOrders } from '../infrastructure/storage/order-storage'
-import { trackOrder, updateOrderStatus } from '../application/order-service'
+import { trackOrder } from '../application/order-service'
+import AdminOrders from './organisms/AdminOrders'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import ProductCard from './components/ProductCard'
 import AdminManage from './components/AdminManage'
 import AdminRegisters from './components/organisms/AdminRegisters'
-import type { Addition, Category, CreatedOrder, PendingOrder, Product } from '../api'
+import type { Addition, Category, CreatedOrder, Product } from '../api'
 
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
@@ -33,14 +34,12 @@ export default function App() {
   const [sending, setSending] = useState(false)
   const [orders, setOrders] = useState<CreatedOrder[]>(readOrders)
   const [statuses, setStatuses] = useState<Record<string, string>>({})
-  const [statusBusy, setStatusBusy] = useState('')
   const [trackingError, setTrackingError] = useState('')
   const [adminName, setAdminName] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
   const [adminSection, setAdminSection] = useState<AdminSection>('orders')
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
-  const [pending, setPending] = useState<PendingOrder[]>([])
   const [adminBusy, setAdminBusy] = useState(false)
   const [adminError, setAdminError] = useState('')
 
@@ -112,37 +111,6 @@ export default function App() {
     return () => { active = false; if (timer !== undefined) clearTimeout(timer) }
   }, [view, orders])
 
-  useEffect(() => {
-    if (view !== 'admin' || !adminToken || adminSection !== 'orders') return
-    let active = true
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const refresh = async () => {
-      try {
-        const latest = await restaurant.pendingOrders(adminToken)
-        if (active) setPending(latest)
-      } catch {
-        // Falhas transitórias são recuperadas na próxima consulta.
-      } finally {
-        if (active) timer = setTimeout(() => { void refresh() }, 5000)
-      }
-    }
-    void refresh()
-    return () => { active = false; if (timer !== undefined) clearTimeout(timer) }
-  }, [view, adminToken, adminSection])
-  async function changeStatus(id: string, status: string) {
-    setStatusBusy(id); setAdminError('')
-    try {
-      await updateOrderStatus(adminToken, id, status)
-      await loadPending(adminToken)
-    } catch (e) { setAdminError(e instanceof Error ? e.message : 'Falha ao atualizar status') }
-    finally { setStatusBusy('') }
-  }
-  async function loadPending(token: string) {
-    setAdminBusy(true); setAdminError('')
-    try { setPending(await restaurant.pendingOrders(token)) }
-    catch (err) { setAdminError(err instanceof Error ? err.message : 'Erro ao buscar pedidos') }
-    finally { setAdminBusy(false) }
-  }
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setAdminBusy(true); setAdminError('')
     try {
@@ -150,7 +118,7 @@ export default function App() {
         method: 'POST', body: JSON.stringify({ name: adminName, password: adminPassword })
       })
       setAdminToken(logged.accessToken); setAdminPassword('')
-      await loadPending(logged.accessToken)
+      setAdminBusy(false)
     } catch (err) { setAdminError(err instanceof Error ? err.message : 'Não foi possível entrar'); setAdminBusy(false) }
   }
   return <div className="restaurant-app min-h-screen overflow-x-hidden">
@@ -221,17 +189,10 @@ export default function App() {
               </button>)}
           </nav>
           <button type="button" className="mt-3 w-full rounded-xl border border-cyan-200 px-3 py-3 text-sm font-bold text-[#143b50] hover:bg-cyan-50"
-            onClick={() => {setAdminToken(''); setPending([]); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
+            onClick={() => {setAdminToken(''); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
-          {adminSection === 'orders' ? <>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div><h2 className="text-2xl font-black">Pedidos</h2><span className="mt-2 inline-block rounded-full bg-[#ffe39a] px-4 py-2 text-sm font-bold text-[#16435b]">{pending.length} pedidos pendentes</span></div>
-              <button className="rounded-full border border-cyan-200 bg-white px-4 py-2 font-bold" onClick={() => void loadPending(adminToken)}>Atualizar</button>
-            </div>
-            {adminError && <p role="alert" className="mb-5 text-red-600">{adminError}</p>}
-            {adminBusy && <p>Carregando pedidos...</p>}{!adminBusy && pending.length===0 && <p className="rounded-2xl bg-white p-8 text-center">Nenhum pedido pendente.</p>}<div className="grid gap-4 md:grid-cols-2">{pending.map(p => <article key={p.id} className="rounded-2xl bg-white p-6 shadow-sm"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold text-[#008b9e]">PEDIDO #{p.id.slice(0,8)}</p><h2 className="mt-2 text-xl font-black">{p.customerName}</h2><p className="text-sm text-[#557383]">{p.customerPhone}</p></div><strong>{brl(p.total)}</strong></div><div className="my-4 border-t border-cyan-100 pt-3">{p.items.map((item,i) => <div key={i} className="mb-3 text-sm"><strong>{item.quantity}× {item.productName}</strong>{item.additions.map((a,j) => <p key={j} className="text-[#557383]">+ {a.quantity}× {a.additionName}</p>)}</div>)}</div><div className="mt-3 flex flex-wrap gap-2">{(['CONFIRMED','PREPARING','READY','COMPLETED','CANCELED'] as const).map(status => <button key={status} disabled={statusBusy === p.id} type="button" onClick={() => void changeStatus(p.id,status)} className={'rounded-lg px-3 py-2 text-xs font-bold disabled:opacity-50 ' + (status==='CANCELED'?'bg-red-100 text-red-700':'bg-cyan-100 text-[#143b50]')}>{({CONFIRMED:'Aceitar',PREPARING:'Preparar',READY:'Pronto',COMPLETED:'Concluir',CANCELED:'Cancelar'} as Record<string,string>)[status]}</button>)}</div></article>)}</div>
-          </> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
+          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div>}
     </main>}
