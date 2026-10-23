@@ -151,6 +151,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const [dateError, setDateError] = useState('')
   const [soundEnabled, setSoundEnabled] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
   const [newOrderCount, setNewOrderCount] = useState(0)
+  const [soundReady, setSoundReady] = useState(false)
   const alertRef = useRef<OrderAlert | null>(null)
   const soundEnabledRef = useRef(soundEnabled)
   soundEnabledRef.current = soundEnabled
@@ -199,6 +200,7 @@ export default function AdminOrders({ token }: { token: string }) {
     if (!soundEnabled) return
     const unlock = () => {
       void alertRef.current?.enable().then(() => {
+        setSoundReady(true)
         document.removeEventListener('pointerdown', unlock)
         document.removeEventListener('keydown', unlock)
       }).catch(() => {
@@ -216,6 +218,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const toggleSound = async () => {
     if (soundEnabled) {
       setSoundEnabled(false)
+      setSoundReady(false)
       window.localStorage.setItem('admin-order-sound', 'off')
       alertRef.current?.close()
       alertRef.current = new OrderAlert()
@@ -224,6 +227,7 @@ export default function AdminOrders({ token }: { token: string }) {
     try {
       await alertRef.current?.enable()
       setSoundEnabled(true)
+      setSoundReady(true)
       window.localStorage.setItem('admin-order-sound', 'on')
       alertRef.current?.play()
     } catch {
@@ -232,6 +236,17 @@ export default function AdminOrders({ token }: { token: string }) {
         message: 'Toque em Ativar som novamente e confira as permissões de áudio do navegador.',
         tone: 'error',
       })
+    }
+  }
+
+  const testSound = async () => {
+    try {
+      await alertRef.current?.enable()
+      setSoundReady(true)
+      alertRef.current?.play()
+    } catch {
+      setSoundReady(false)
+      notify({ title: 'Áudio bloqueado', message: 'Confira o volume do dispositivo e a permissão de som do site.', tone: 'error' })
     }
   }
 
@@ -304,6 +319,28 @@ export default function AdminOrders({ token }: { token: string }) {
       if (timer !== undefined) clearTimeout(timer)
     }
   }, [token, tab, visibleDate, onlyRequestedDay, receivePending])
+
+  // Continua monitorando novos pedidos mesmo nas demais abas do painel.
+  useEffect(() => {
+    if (tab === 'pending') return
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const check = async () => {
+      try {
+        const orders = await restaurant.pendingOrders(token, todayKey)
+        if (active) receivePending(orders, todayKey)
+      } catch {
+        // A tela atual mantém seu próprio tratamento de erro.
+      } finally {
+        if (active) timer = setTimeout(() => { void check() }, 5000)
+      }
+    }
+    void check()
+    return () => {
+      active = false
+      if (timer !== undefined) clearTimeout(timer)
+    }
+  }, [tab, token, todayKey, receivePending])
 
   const refresh = async () => {
     setLoading(true)
@@ -381,6 +418,15 @@ export default function AdminOrders({ token }: { token: string }) {
           >
             {soundEnabled ? '🔔 Som ativado' : '🔕 Ativar som'}
           </button>
+          {soundEnabled && (
+            <button
+              type="button"
+              onClick={() => { void testSound() }}
+              className="min-h-11 rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white"
+            >
+              🔊 Testar som
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { void refresh() }}
@@ -391,7 +437,14 @@ export default function AdminOrders({ token }: { token: string }) {
         </div>
       </div>
 
-      {newOrderCount > 0 && tab === 'pending' && (
+      {soundEnabled && !soundReady && (
+        <button type="button" onClick={() => { void testSound() }}
+          className="w-full rounded-xl border border-amber-300 bg-[#4b3d1b] px-4 py-3 text-left text-sm font-bold text-white">
+          🔇 Som ainda não liberado pelo navegador. Toque aqui para ativar e testar o alerta.
+        </button>
+      )}
+
+      {newOrderCount > 0 && (
         <div role="status" className="flex items-center justify-between gap-3 rounded-xl border border-[#ffca28] bg-[#4b3d1b] px-4 py-3 text-sm font-bold text-white">
           <span>🔔 {newOrderCount} {newOrderCount === 1 ? 'novo pedido recebido' : 'novos pedidos recebidos'}</span>
           <button type="button" onClick={() => setNewOrderCount(0)} className="rounded-lg border border-[#ffe3a6] px-3 py-2 text-xs text-white">
