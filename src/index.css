@@ -172,3 +172,35 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 .restaurant-footer button{color:#ffce36}
 .restaurant-app button:focus-visible{outline-color:#ffcf2d}
 @media(max-width:639px){.restaurant-hero{background:linear-gradient(150deg,#0a3550,#071a2b)}.menu-product-card,.wooden-product-card{box-shadow:2px 3px 0 #020c16!important}}
+
+/* Âncora da marca: traço cartunesco emblema náutico. */
+.restaurant-header .brand-symbol.anchor-brand{display:grid;place-items:center;width:43px;height:43px;padding:0;border-radius:50%;background:transparent;box-shadow:none;flex-shrink:0}
+.restaurant-header .anchor-logo{width:43px;height:43px;filter:drop-shadow(0 3px 0 #021524)}
+@media(max-width:639px){.restaurant-header .brand-symbol.anchor-brand{width:36px;height:36px}.restaurant-header .anchor-logo{width:36px;height:36px}}
+
+/* Correção de contraste para todos os botões claros sobre o tema noturno. */
+.restaurant-app button.bg-white,
+.restaurant-app button.bg-cyan-100,
+.restaurant-app button.bg-red-50,
+.restaurant-app button.bg-amber-100,
+.restaurant-app button.bg-yellow-100{
+  color:#092c42!important;
+}
+.restaurant-app button.bg-white{background:#eef9fd!important;border-color:#7ab0c6!important}
+.restaurant-app button.bg-white:hover{background:#cceaf5!important;color:#092c42!important}
+.restaurant-app button.bg-cyan-100{background:#a8e5f2!important;color:#073047!important}
+.restaurant-app button.bg-cyan-100:hover{background:#6fcbe2!important}
+.restaurant-app button.bg-red-50{background:#ffe1dc!important;color:#842331!important}
+.restaurant-app button.bg-red-50:hover{background:#f9b7af!important}
+.restaurant-app button.bg-amber-100,.restaurant-app button.bg-yellow-100{background:#ffe4a0!important;color:#412e07!important}
+.restaurant-app button[class*="bg-[#e8faff]"]{background:#d6eef8!important;color:#092e43!important}
+.restaurant-app button[class*="bg-[#ffe39a]"]{background:#ffe29a!important;color:#493307!important}
+.restaurant-app button[class*="bg-[#ffc629]"],
+.restaurant-app button[class*="bg-[#ffca28]"],
+.restaurant-app button[class*="bg-[#ffcf28]"],
+.restaurant-app button[class*="bg-[#ffcf2d]"]{color:#09283b!important}
+.restaurant-app button[class*="bg-[#ffc629]"]:hover{background:#ffdd60!important}
+.restaurant-app .admin-sidebar nav button:not([aria-current="page"]){background:transparent!important;color:#eaf7ff!important}
+.restaurant-app .admin-sidebar nav button:not([aria-current="page"]):hover{background:#24576f!important;color:#fff!important}
+.restaurant-app .admin-sidebar nav button[aria-current="page"]{background:#ffce34!important;color:#09283b!important}
+.restaurant-app button:disabled{opacity:.65}
