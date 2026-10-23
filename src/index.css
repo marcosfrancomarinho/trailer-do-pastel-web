@@ -294,3 +294,48 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   .customer-dialog-backdrop{align-items:center;padding:22px}
   .customer-dialog{max-width:590px;max-height:90dvh;border-radius:22px;padding:27px}
 }
+
+/* Prévia da comanda térmica e impressão em bobina. */
+.receipt-preview-overlay{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center;background:#000c}
+.receipt-preview-dialog{display:flex;flex-direction:column;max-height:96dvh;width:100%;max-width:500px;overflow:hidden;border:1px solid #648da0;border-radius:22px 22px 0 0;background:#102b40;color:#fff}
+.receipt-preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #42677a;padding:17px 20px}
+.receipt-preview-toolbar h2{font-size:19px;font-weight:900}
+.receipt-preview-toolbar button{width:44px;height:44px;border-radius:10px;background:#274d61;color:#fff}
+.receipt-preview-options{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;font-size:14px;font-weight:800}
+.receipt-preview-options>div{display:flex;gap:6px}
+.receipt-preview-options button{min-height:43px;border:1px solid #6e96ac;border-radius:9px;padding:8px 12px;color:#fff;background:#24475b}
+.receipt-preview-options button[aria-pressed="true"]{color:#082739;background:#ffd33a}
+.receipt-preview-scroll{min-height:0;overflow:auto;background:#d5e1e7;padding:20px 10px}
+.receipt-print{margin:0 auto;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.4;padding:5mm 3mm;box-shadow:0 4px 20px #0002;overflow-wrap:anywhere}
+.receipt-width-58{width:58mm}
+.receipt-width-80{width:80mm}
+.receipt-center{text-align:center}
+.receipt-print h3{font-weight:900;font-size:15px;color:#000}
+.receipt-print h4{margin-bottom:7px;font-weight:900;color:#000}
+.receipt-print p{color:#000}
+.receipt-print header strong{display:block;margin:5px 0}
+.receipt-separator{border-top:1px dashed #000;margin:10px 0}
+.receipt-item{margin-bottom:9px}
+.receipt-line{display:flex;justify-content:space-between;align-items:flex-start;gap:7px}
+.receipt-line>:first-child{min-width:0;flex:1}
+.receipt-line>:last-child{flex-shrink:0}
+.receipt-extra{padding-left:8px;font-size:10px}
+.receipt-total{font-size:14px}
+.receipt-preview-actions{display:flex;gap:10px;padding:14px 20px}
+.receipt-preview-actions button{min-height:48px;flex:1;border-radius:11px;border:1px solid #6a94a8;font-weight:900;color:#fff}
+.receipt-preview-actions button:last-child{background:#ffca28;color:#09283b;border-color:#ffca28}
+@media(min-width:600px){.receipt-preview-overlay{align-items:center;padding:16px}.receipt-preview-dialog{border-radius:22px;max-height:92dvh}}
+
+@media print{
+  @page{margin:0}
+  html,body,#root,.restaurant-app{margin:0!important;padding:0!important;background:white!important;color:#000!important;overflow:visible!important;min-height:0!important}
+  body *{visibility:hidden!important}
+  .receipt-print,.receipt-print *{visibility:visible!important}
+  .receipt-print{position:absolute!important;top:0!important;left:0!important;margin:0!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:#fff!important;color:#000!important;padding:3mm 2mm!important;line-height:1.35!important}
+  .receipt-width-58{width:58mm!important}
+  .receipt-width-80{width:80mm!important}
+  .receipt-preview-overlay,.receipt-preview-dialog,.receipt-preview-scroll{position:static!important;display:block!important;overflow:visible!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+  .receipt-preview-toolbar,.receipt-preview-options,.receipt-preview-actions{display:none!important}
+  .receipt-print p,.receipt-print strong,.receipt-print span,.receipt-print h3,.receipt-print h4{color:#000!important}
+  .receipt-separator{border-color:#000!important}
+}
