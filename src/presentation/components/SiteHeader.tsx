@@ -25,7 +25,7 @@ export default function SiteHeader({ view, count, navigate }: Props) {
             </span>
             <span className="brand-letters">
               TRAILER DO PASTEL
-              <small className="brand-tagline">PASTÉIS • MUITO SABOR</small>
+              <small className="brand-tagline">PASTÉIS • UM MAR DE SABORES</small>
             </span>
           </button>
           <nav className="hidden gap-2 text-sm font-bold sm:flex" aria-label="Navegação principal">
