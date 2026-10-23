@@ -7,3 +7,5 @@ export type TrackedOrder = { status: string; updatedAt: string }
 export type PendingOrder = { id: string; customerName: string; customerPhone: string; status: string; total: string; createdAt: string; items: { productName: string; quantity: number; unitPrice: string; additions: { additionName: string; quantity: number; unitPrice: string }[] }[] }
 
 export type OrderHistoryItem = Omit<PendingOrder, 'status'> & { status: 'COMPLETED' | 'CANCELED'; updatedAt: string; histories: { status: string; changedAt: string }[] }
+
+export type PreparingOrder = Omit<PendingOrder, 'status'> & { status: 'CONFIRMED' | 'PREPARING'; updatedAt: string }
