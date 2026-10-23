@@ -13,7 +13,7 @@ export class RestaurantHttpAdapter implements CatalogPort, OrderPort {
   pending(token: string, date?: string) { return api<PendingOrder[]>('/orders/pending' + queryDate(date), { headers: auth(token) }) }
   preparing(token: string, date?: string) { return api<PreparingOrder[]>('/orders/preparing' + queryDate(date), { headers: auth(token) }) }
   history(token: string, date?: string) { return api<OrderHistoryItem[]>('/orders/history' + queryDate(date), { headers: auth(token) }) }
-  tracking(token: string) { return api<TrackedOrder>('/orders/tracking/' + encodeURIComponent(token)) }
+  tracking(token: string, signal?: AbortSignal) { return api<TrackedOrder>('/orders/tracking/' + encodeURIComponent(token), { signal }) }
   async changeStatus(token: string, id: string, status: string) { await api('/orders/' + encodeURIComponent(id) + '/status', { method: 'PATCH', headers: auth(token), body: JSON.stringify({status}) }) }
   async update(kind: 'products' | 'additions' | 'categories', id: string, token: string, data: unknown) { await api('/' + kind + '/' + encodeURIComponent(id), { method: 'PATCH', headers: auth(token), body: JSON.stringify(data) }) }
   async remove(kind: 'products' | 'additions' | 'categories', id: string, token: string) { await api('/' + kind + '/' + encodeURIComponent(id), { method: 'DELETE', headers: auth(token) }) }
