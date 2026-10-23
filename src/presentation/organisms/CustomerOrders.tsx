@@ -145,7 +145,7 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
       <p className="customer-eyebrow">ACOMPANHAMENTO</p>
       <h1>Meus pedidos</h1>
       <p className="customer-orders-subtitle">O status é consultado automaticamente a cada 5 segundos.</p>
-      <div role="note" className="customer-pickup-notice"><strong>📍 Retirada somente no local</strong><p>Não fazemos entrega. Acompanhe seu pedido e, quando estiver concluído, vá ao Trailer do Pastel para retirar.</p></div>
+      
 
       {orders.length === 0 ? (
         <div className="customer-empty">Nenhum pedido salvo neste dispositivo.</div>
