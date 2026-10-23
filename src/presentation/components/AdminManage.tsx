@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { restaurant } from '../../application/container'
 import { brl } from '../../api'
+import { useActionDialog } from '../molecules/ActionDialog'
 import type { Addition, Category, Product } from '../../domain/models'
 
 type Kind = 'product' | 'addition' | 'category'
@@ -31,6 +32,7 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const { confirm, notify, dialog } = useActionDialog()
 
   async function reload() {
     try {
@@ -97,6 +99,7 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
       await restaurant.updateRecord(kindRoute[kind], editing, token, body)
       setEditing(null)
       setMessage('Cadastro atualizado com sucesso.')
+      notify({ title: 'Alteração salva', message: 'As informações foram atualizadas com sucesso.', tone: 'success' })
       await reload()
       await refreshCatalog()
     } catch (cause) {
@@ -107,12 +110,18 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
   }
 
   async function remove(item: Item) {
-    if (!window.confirm('Excluir ' + item.name + '? Esta ação não pode ser desfeita.')) return
+    const approved = await confirm({
+      title: 'Excluir cadastro?',
+      message: 'Deseja excluir "' + item.name + '"? Essa ação não pode ser desfeita.',
+      confirmLabel: 'Sim, excluir',
+    })
+    if (!approved) return
     setBusy(true)
     setError('')
     try {
       await restaurant.removeRecord(kindRoute[kind], item.id, token)
       setMessage('Cadastro excluído.')
+      notify({ title: 'Cadastro excluído', message: 'O cadastro foi excluído com sucesso.', tone: 'success' })
       await reload()
       await refreshCatalog()
     } catch (cause) {
@@ -267,6 +276,7 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
           </section>
         </div>
       )}
+      {dialog}
     </section>
   )
 }
