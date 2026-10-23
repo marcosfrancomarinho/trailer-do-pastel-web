@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { restaurant } from '../../../application/container'
 import type { Addition, Category } from '../../../domain/models'
+import { useActionDialog } from '../../molecules/ActionDialog'
 
 type Section = 'product' | 'addition' | 'user' | 'category'
 type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
@@ -21,6 +22,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
+  const { notify, dialog } = useActionDialog()
 
   async function loadOptions() {
     try {
@@ -48,6 +50,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
     try {
       await restaurant.createRecord(path.slice(1) as 'products' | 'additions' | 'categories' | 'users', token, body)
       setSuccess(section === 'product' ? 'Produto cadastrado com sucesso!' : section === 'addition' ? 'Adicional cadastrado com sucesso!' : section === 'category' ? 'Categoria cadastrada com sucesso!' : 'Usuário cadastrado com sucesso!')
+      notify({ title: 'Cadastro realizado', message: 'As informações foram cadastradas com sucesso.', tone: 'success' })
       setName(''); setPassword(''); setPrice(''); setDescription(''); setAdditionIds([]); setAvailable(true)
       if (section === 'product' || section === 'category') await onProductCreated()
       if (section === 'addition') await loadOptions()
@@ -108,5 +111,6 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
         {saving ? 'Salvando...' : section === 'product' ? 'Cadastrar produto' : section === 'addition' ? 'Cadastrar adicional' : section === 'category' ? 'Cadastrar categoria' : 'Cadastrar usuário'}
       </button>
     </form>
+    {dialog}
   </section>
 }
