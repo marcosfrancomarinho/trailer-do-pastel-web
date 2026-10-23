@@ -19,6 +19,6 @@ export class RestaurantUseCases {
   pendingOrders(token: string, date?: string) { return this.orders.pending(token, date) }
   preparingOrders(token: string, date?: string) { return this.orders.preparing(token, date) }
   orderHistory(token: string, date?: string) { return this.orders.history(token, date) }
-  track(token: string) { return this.orders.tracking(token) }
+  track(token: string, signal?: AbortSignal) { return this.orders.tracking(token, signal) }
   updateOrderStatus(token: string, id: string, status: string) { return this.orders.changeStatus(token,id,status) }
 }
