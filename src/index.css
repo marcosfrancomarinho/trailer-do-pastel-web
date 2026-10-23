@@ -117,3 +117,58 @@
 .restaurant-header .cart-header-button b{min-width:19px;height:19px;font-size:11px}
 @media(max-width:639px){.restaurant-header .brand-symbol{width:31px;height:31px;font-size:19px}.restaurant-header .brand-letters{font-size:16px;letter-spacing:0}.restaurant-header .cart-header-button{min-height:36px;padding:6px 9px}}
 @media(max-width:359px){.restaurant-header .brand-letters{font-size:14px}.restaurant-header .brand-mark{gap:5px}}
+
+
+/* Identidade noturna: azul-marinho profundo, ciano intenso, amarelo e coral. */
+:root{color-scheme:dark;--night:#071725;--night-2:#0b2235;--panel:#112e43;--stroke:#25516a;--gold:#ffcc29;--cyan:#1baecb;--light:#f5f8fb}
+body,.restaurant-app{background:var(--night);color:var(--light)}
+.restaurant-app{background:linear-gradient(150deg,#071725 0%,#0b2235 48%,#071725 100%);min-height:100vh}
+.restaurant-header,.restaurant-header.sticky{background:#071b2e;border-bottom:2px solid #1a627b;box-shadow:0 10px 28px #0005}
+.restaurant-header nav button{color:#edfaff}
+.restaurant-header nav button:hover,.restaurant-header nav button.nav-active{background:#ffc629;color:#0c2636}
+.restaurant-header .brand-letters{color:#ffce29;-webkit-text-stroke:.7px #071725;text-shadow:1px 2px 0 #000}
+.restaurant-header .cart-header-button{background:#ffca28;color:#092337}
+.restaurant-hero{background:radial-gradient(ellipse at 70% 22%,#16768e 0%,#0b425c 36%,#081b30 75%,#061321 100%);border-bottom:4px solid #ffca28}
+.restaurant-hero::before{opacity:.15}
+.hero-description{color:#d2eefa}
+.hero-eyebrow{background:#ffcb35;color:#0a2638;border-color:#06192a}
+.hero-kicker{color:#afe5ef}
+.hero-headline,.hero-headline span{color:#f7fafc;-webkit-text-stroke:1px #061c30;text-shadow:4px 5px 0 #03101a}
+.hero-headline span{color:#ffd030}
+.spongebob-backdrop{border-color:#092437;background:radial-gradient(circle at 40% 25%,#45b9d1,#12627c 62%,#0c304c)}
+.service-strip{background:#d79d13;color:#092337;border-bottom:3px solid #795007}
+.menu-section h2,.inner-page h1{color:#fff}
+.menu-section h2 span{color:#2fc9e5}
+.menu-section p:not([role]),.inner-page>p:not([role]){color:#d0e2ec}
+.category-filters button{background:#173a50!important;color:#e9f8ff!important;border-color:#36647d}
+.category-filters button:hover,.category-filters button:focus-visible{border-color:#ffcf2d}
+.category-filters button[class*="bg-[#ffc629]"]{background:#ffcf2d!important;color:#0c263a!important}
+.menu-section input[aria-label="Buscar produto"]{background:#133349;color:#fff;border:2px solid #2c6781}
+.menu-section input::placeholder{color:#a9c5d3}
+.menu-product-card,.wooden-product-card{background:#112f43!important;border-color:#34728e!important;box-shadow:4px 6px 0 #05131f!important}
+.wooden-card-top{background:repeating-linear-gradient(0deg,#60391f 0,#60391f 11px,#70462a 12px,#70462a 17px,#52301c 18px,#52301c 25px)}
+.wooden-product-card .product-card-body{background:#112e43}
+.wooden-product-card .product-card-body h3,.wooden-product-card .product-price strong{color:#fff0b5}
+.wooden-product-card .product-card-description{color:#cae1ed}
+.wooden-product-card .product-price small{color:#8ed0e0}
+.wooden-product-card .product-card-bottom{border-top-color:#376078}
+.wooden-product-card .product-add-action{background:#ffca28;color:#0b2636}
+.wooden-product-card .product-art-area{background:radial-gradient(circle at center,#ffd978 0%,#df9835 62%,#904e23 100%)}
+.drink-product-card .product-art-area{background:radial-gradient(circle at center,#2bcde0 0%,#126789 65%,#103650 100%)}
+.inner-page .rounded-3xl.bg-white,.inner-page .rounded-2xl.bg-white,.inner-page article.bg-white,.inner-page form.bg-white,.admin-sidebar.bg-white{background:#112e43!important;border-color:#2f617d!important;color:#eff8fd}
+.inner-page .rounded-3xl.bg-white p,.inner-page .rounded-2xl.bg-white p,.inner-page article.bg-white p{color:#d3e4ee}
+.inner-page input,.inner-page select,.inner-page textarea,.admin-layout input,.admin-layout select{background:#edf8fc!important;color:#092438!important;border-color:#3b7791!important}
+.inner-page input::placeholder{color:#536d7a}
+.inner-page label{color:#e8f7ff}
+.inner-page .text-\[\#557383\],.admin-layout .text-\[\#557383\]{color:#b4d1dd}
+.inner-page .bg-\[\#e8faff\],.inner-page .bg-cyan-50{background:#244b61;color:#f0faff}
+.inner-page .bg-amber-50{background:#45391c;color:#fff0bd}
+.inner-page .bg-amber-100{background:#73541e;color:#fff1bc}
+.admin-sidebar{background:#0b2639!important}
+.admin-sidebar nav button:not([aria-current="page"]){color:#e6f5fb}
+.admin-sidebar nav button:hover{background:#1a4b62}
+.admin-sidebar nav button[aria-current="page"]{background:#ffca28;color:#0b2636}
+.restaurant-footer{background:#05121f;border-top:5px solid #e7ae1a;color:#c9e5f1}
+.restaurant-footer button{color:#ffce36}
+.restaurant-app button:focus-visible{outline-color:#ffcf2d}
+@media(max-width:639px){.restaurant-hero{background:linear-gradient(150deg,#0a3550,#071a2b)}.menu-product-card,.wooden-product-card{box-shadow:2px 3px 0 #020c16!important}}
