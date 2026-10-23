@@ -9,3 +9,17 @@ export type PendingOrder = { id: string; customerName: string; customerPhone: st
 export type OrderHistoryItem = Omit<PendingOrder, 'status'> & { status: 'COMPLETED' | 'CANCELED'; updatedAt: string; histories: { status: string; changedAt: string }[] }
 
 export type PreparingOrder = Omit<PendingOrder, 'status'> & { status: 'CONFIRMED' | 'PREPARING'; updatedAt: string }
+
+/** Resumo persistido no dispositivo para o cliente consultar sem autenticação. */
+export type CustomerOrderDetails = {
+  customerName: string
+  customerPhone: string
+  createdAt: string
+  items: {
+    productName: string
+    quantity: number
+    unitPrice: string
+    additions: { additionName: string; quantity: number; unitPrice: string }[]
+  }[]
+}
+export type SavedCustomerOrder = CreatedOrder & { details?: CustomerOrderDetails }
