@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { restaurant } from '../../application/container'
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domain/models'
 import { brl } from '../../api'
+import { restaurantDateKey, todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
@@ -112,6 +113,9 @@ export default function AdminOrders({ token }: { token: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [todayKey, setTodayKey] = useState(todayRestaurantDate)
+  const [dateMode, setDateMode] = useState<'today' | 'custom'>('today')
+  const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
 
   const fetchOrders = useCallback(() => Promise.all([
     restaurant.pendingOrders(token),
@@ -130,6 +134,7 @@ export default function AdminOrders({ token }: { token: string }) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível consultar os pedidos.')
     } finally {
       setLoading(false)
+      setTodayKey(todayRestaurantDate())
     }
   }
 
@@ -141,6 +146,7 @@ export default function AdminOrders({ token }: { token: string }) {
       try {
         const [newPending, newPreparing, newHistory] = await fetchOrders()
         if (!active) return
+        setTodayKey(todayRestaurantDate())
         setPending(newPending)
         setPreparing(newPreparing)
         setHistory(newHistory)
@@ -149,6 +155,7 @@ export default function AdminOrders({ token }: { token: string }) {
         if (active) setError(cause instanceof Error ? cause.message : 'Falha ao atualizar pedidos.')
       } finally {
         if (active) {
+          setTodayKey(todayRestaurantDate())
           setLoading(false)
           timer = setTimeout(() => { void poll() }, 5000)
         }
@@ -174,9 +181,18 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }
 
-  const completed = history.filter(order => order.status === 'COMPLETED')
-  const canceled = history.filter(order => order.status === 'CANCELED')
-  const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
+  const visibleDate = dateMode === 'today' ? todayKey : chosenDate
+  const byDate = <T extends Order>(orders: T[]): T[] =>
+    orders.filter(order => restaurantDateKey(order.createdAt) === visibleDate)
+
+  const completed = byDate(history.filter(order => order.status === 'COMPLETED'))
+  const canceled = byDate(history.filter(order => order.status === 'CANCELED'))
+  const groups: Record<Tab, Order[]> = {
+    pending: byDate(pending),
+    preparing: byDate(preparing),
+    completed,
+    canceled,
+  }
   const currentOrders = groups[tab]
   const selectedOrder = [...pending, ...preparing, ...history].find(order => order.id === selectedId)
 
@@ -194,6 +210,52 @@ export default function AdminOrders({ token }: { token: string }) {
         >
           Atualizar
         </button>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3">
+        <div className="flex gap-2" role="group" aria-label="Período dos pedidos">
+          <button
+            type="button"
+            aria-pressed={dateMode === 'today'}
+            onClick={() => setDateMode('today')}
+            className={
+              'rounded-lg px-4 py-2 text-sm font-bold ' +
+              (dateMode === 'today'
+                ? 'bg-[#ffca28] text-[#082739]'
+                : 'border border-[#467991] bg-[#1b4258] text-white')
+            }
+          >
+            Hoje
+          </button>
+          <button
+            type="button"
+            aria-pressed={dateMode === 'custom'}
+            onClick={() => { setChosenDate(visibleDate); setDateMode('custom') }}
+            className={
+              'rounded-lg px-4 py-2 text-sm font-bold ' +
+              (dateMode === 'custom'
+                ? 'bg-[#ffca28] text-[#082739]'
+                : 'border border-[#467991] bg-[#1b4258] text-white')
+            }
+          >
+            Outra data
+          </button>
+        </div>
+        {dateMode === 'custom' && (
+          <label className="flex flex-col gap-1 text-xs font-bold text-slate-200">
+            Data do pedido
+            <input
+              type="date"
+              value={chosenDate}
+              max={todayKey}
+              onChange={event => setChosenDate(event.target.value)}
+              className="rounded-lg border border-[#467991] bg-white px-3 py-2 text-sm text-[#09283b]"
+            />
+          </label>
+        )}
+        <span className="text-xs text-slate-300">
+          Mostrando pedidos de {visibleDate.split('-').reverse().join('/')}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
