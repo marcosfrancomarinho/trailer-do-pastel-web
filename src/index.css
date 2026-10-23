@@ -585,3 +585,9 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 .customer-dialog .customer-detail-status.customer-detail-canceled strong{
   color:#fecaca!important;
 }
+
+/* Contraste do botão de navegação no painel administrativo mobile. */
+.admin-layout .admin-mobile-menu-trigger{background:#cfeef9!important;color:#143b50!important;border:2px solid #659bb4!important}
+.admin-layout .admin-mobile-menu-trigger span{color:#143b50!important}
+.admin-layout .admin-mobile-menu-trigger > span:last-child{color:#456778!important}
+.admin-layout .admin-mobile-menu-trigger:hover{background:#e5f7fc!important}
