@@ -6,6 +6,7 @@ import { restaurantDateKey, todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 import OrderReceipt from './OrderReceipt'
 import { useActionDialog } from '../molecules/ActionDialog'
+import { OrderAlert } from '../audio/order-alert'
 
 function toBrazilianDate(iso: string): string {
   const [year, month, day] = iso.split('-')
@@ -148,6 +149,11 @@ export default function AdminOrders({ token }: { token: string }) {
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
   const [dateText, setDateText] = useState(() => toBrazilianDate(todayRestaurantDate()))
   const [dateError, setDateError] = useState('')
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [newOrderCount, setNewOrderCount] = useState(0)
+  const alertRef = useRef<OrderAlert | null>(null)
+  const seenPendingRef = useRef<Set<string>>(new Set())
+  const seenDateRef = useRef('')
   const { confirm, notify, dialog } = useActionDialog()
 
   const visibleDate = dateMode === 'today' ? todayKey : chosenDate
@@ -157,6 +163,53 @@ export default function AdminOrders({ token }: { token: string }) {
 
   const onlyRequestedDay = useCallback(<T extends Order>(orders: T[], date: string): T[] =>
     orders.filter(order => restaurantDateKey(order.createdAt) === date), [])
+
+  // O primeiro carregamento serve como referência: não toca para pedidos já existentes.
+  const receivePending = useCallback((orders: PendingOrder[], date: string) => {
+    const filtered = onlyRequestedDay(orders, date)
+    const ids = new Set(filtered.map(order => order.id))
+    if (seenDateRef.current !== date) {
+      seenDateRef.current = date
+      seenPendingRef.current = ids
+    } else {
+      const added = filtered.filter(order => !seenPendingRef.current.has(order.id))
+      if (added.length > 0 && date === todayRestaurantDate()) {
+        setNewOrderCount(previous => previous + added.length)
+        alertRef.current?.play()
+      }
+      for (const id of ids) seenPendingRef.current.add(id)
+    }
+    setPending(filtered)
+  }, [onlyRequestedDay])
+
+  useEffect(() => {
+    const alert = new OrderAlert()
+    alertRef.current = alert
+    return () => {
+      alertRef.current = null
+      alert.close()
+    }
+  }, [])
+
+  const toggleSound = async () => {
+    if (soundEnabled) {
+      setSoundEnabled(false)
+      alertRef.current?.close()
+      alertRef.current = new OrderAlert()
+      return
+    }
+    try {
+      await alertRef.current?.enable()
+      setSoundEnabled(true)
+      alertRef.current?.play()
+    } catch {
+      notify({
+        title: 'Áudio bloqueado',
+        message: 'Toque em Ativar som novamente e confira as permissões de áudio do navegador.',
+        tone: 'error',
+      })
+    }
+  }
 
   // Atualiza apenas a data local; não consulta pedidos em segundo plano.
   useEffect(() => {
@@ -174,7 +227,7 @@ export default function AdminOrders({ token }: { token: string }) {
 
     if (currentTab === 'pending') {
       const result = await restaurant.pendingOrders(token, date)
-      if (currentFilterRef.current === filterKey) setPending(onlyRequestedDay(result, date))
+      if (currentFilterRef.current === filterKey) receivePending(result, date)
     } else if (currentTab === 'preparing') {
       const result = await restaurant.preparingOrders(token, date)
       if (currentFilterRef.current === filterKey) setPreparing(onlyRequestedDay(result, date))
@@ -182,7 +235,7 @@ export default function AdminOrders({ token }: { token: string }) {
       const result = await restaurant.orderHistory(token, date)
       if (currentFilterRef.current === filterKey) setHistory(onlyRequestedDay(result, date))
     }
-  }, [token, onlyRequestedDay])
+  }, [token, onlyRequestedDay, receivePending])
 
   // Apenas Pendentes usa polling. As demais abas consultam quando abertas.
   useEffect(() => {
@@ -193,7 +246,7 @@ export default function AdminOrders({ token }: { token: string }) {
       try {
         if (tab === 'pending') {
           const result = await restaurant.pendingOrders(token, visibleDate)
-          if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) setPending(onlyRequestedDay(result, visibleDate))
+          if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) receivePending(result, visibleDate)
         } else if (tab === 'preparing') {
           const result = await restaurant.preparingOrders(token, visibleDate)
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) setPreparing(onlyRequestedDay(result, visibleDate))
@@ -226,7 +279,7 @@ export default function AdminOrders({ token }: { token: string }) {
       active = false
       if (timer !== undefined) clearTimeout(timer)
     }
-  }, [token, tab, visibleDate, onlyRequestedDay])
+  }, [token, tab, visibleDate, onlyRequestedDay, receivePending])
 
   const refresh = async () => {
     setLoading(true)
@@ -290,14 +343,38 @@ export default function AdminOrders({ token }: { token: string }) {
               : 'Atualizados ao abrir esta aba ou clicar em Atualizar.'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => { void refresh() }}
-          className="rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white hover:bg-[#24556c]"
-        >
-          Atualizar
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => { void toggleSound() }}
+            aria-pressed={soundEnabled}
+            className={
+              'min-h-11 rounded-xl border px-4 py-2 text-sm font-bold ' +
+              (soundEnabled
+                ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
+                : 'border-[#56879d] bg-[#194258] text-white')
+            }
+          >
+            {soundEnabled ? '🔔 Som ativado' : '🔕 Ativar som'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { void refresh() }}
+            className="min-h-11 rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white hover:bg-[#24556c]"
+          >
+            Atualizar
+          </button>
+        </div>
       </div>
+
+      {newOrderCount > 0 && tab === 'pending' && (
+        <div role="status" className="flex items-center justify-between gap-3 rounded-xl border border-[#ffca28] bg-[#4b3d1b] px-4 py-3 text-sm font-bold text-white">
+          <span>🔔 {newOrderCount} {newOrderCount === 1 ? 'novo pedido recebido' : 'novos pedidos recebidos'}</span>
+          <button type="button" onClick={() => setNewOrderCount(0)} className="rounded-lg border border-[#ffe3a6] px-3 py-2 text-xs text-white">
+            Dispensar
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3">
         <div className="flex gap-2" role="group" aria-label="Período dos pedidos">
