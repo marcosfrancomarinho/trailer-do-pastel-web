@@ -64,6 +64,14 @@ function CustomerOrderDetails({
           <span>Situação atual</span>
           <strong>{labels[status] ?? status}</strong>
         </div>
+        <div className="customer-pickup-notice customer-pickup-detail" role="note">
+          <strong>📍 Retirada no Trailer do Pastel</strong>
+          <p>{status === 'COMPLETED'
+            ? 'Seu pedido está concluído. Dirija-se ao Trailer do Pastel para retirá-lo.'
+            : status === 'CANCELED'
+              ? 'Este pedido foi cancelado e não está disponível para retirada.'
+              : 'Não fazemos entrega. Aguarde a conclusão do pedido antes de ir ao local para retirá-lo.'}</p>
+        </div>
 
         {details ? (
           <>
@@ -137,6 +145,7 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
       <p className="customer-eyebrow">ACOMPANHAMENTO</p>
       <h1>Meus pedidos</h1>
       <p className="customer-orders-subtitle">O status é consultado automaticamente a cada 5 segundos.</p>
+      <div role="note" className="customer-pickup-notice"><strong>📍 Retirada somente no local</strong><p>Não fazemos entrega. Acompanhe seu pedido e, quando estiver concluído, vá ao Trailer do Pastel para retirar.</p></div>
 
       {orders.length === 0 ? (
         <div className="customer-empty">Nenhum pedido salvo neste dispositivo.</div>
