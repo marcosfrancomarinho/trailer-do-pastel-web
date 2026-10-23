@@ -196,7 +196,7 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
             aria-labelledby="edit-catalog-title"
             className="flex max-h-[96dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[#4b7b93] bg-[#102b40] shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl"
           >
-            <header className="flex items-center justify-between gap-3 border-b border-[#31566e] px-5 py-4 sm:px-7">
+            <header className="shrink-0 flex items-center justify-between gap-3 border-b border-[#31566e] px-5 py-4 sm:px-7">
               <h2 id="edit-catalog-title" className="text-xl font-black">
                 Editar {kind === 'product' ? 'produto' : kind === 'addition' ? 'adicional' : 'categoria'}
               </h2>
@@ -211,7 +211,8 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
               </button>
             </header>
 
-            <form onSubmit={event => void save(event)} className="min-h-0 overflow-y-auto p-5 sm:p-7">
+            <form onSubmit={event => void save(event)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 pb-8 sm:px-7 sm:py-6">
               {error && <p role="alert" className="mb-4 rounded-xl bg-[#5b2832] p-3 text-sm font-semibold text-white">{error}</p>}
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className={labelClass}>
@@ -268,7 +269,8 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
                   </>
                 )}
               </div>
-              <footer className="sticky bottom-0 mt-6 flex flex-col-reverse gap-3 bg-[#102b40] pt-4 sm:flex-row sm:justify-end">
+              </div>
+              <footer className="z-10 flex shrink-0 flex-col-reverse gap-3 border-t border-[#42677a] bg-[#102b40] px-5 py-4 shadow-[0_-6px_18px_#0003] sm:flex-row sm:justify-end sm:px-7">
                 <button type="button" disabled={busy} onClick={() => setEditing(null)} className="min-h-12 rounded-xl border border-[#7a9bab] px-5 py-3 font-bold text-white">
                   Voltar
                 </button>
