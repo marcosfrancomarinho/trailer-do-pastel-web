@@ -6,7 +6,7 @@ import { useActionDialog } from '../../molecules/ActionDialog'
 
 type Section = 'product' | 'addition' | 'user' | 'category'
 type Props = { token: string; section: Section; onProductCreated: () => Promise<void> }
-const inputClass = 'mt-2 w-full rounded-xl border-2 border-[#9ec9d9] bg-white px-4 py-3 outline-cyan-400'
+const inputClass = 'mt-2 block min-h-12 w-full min-w-0 rounded-xl border border-[#9ec9d9] bg-white px-4 py-3 text-[#092438] outline-cyan-400'
 const labelClass = 'block min-w-0 text-sm font-bold text-white'
 
 export default function AdminRegisters({ token, section, onProductCreated }: Props) {
@@ -63,11 +63,11 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
     }
   }
 
-  return <section className="mt-0 rounded-3xl border-2 border-[#0b4063] bg-[#112e43] p-5 shadow-sm sm:p-8">
+  return <section className="admin-register-panel mt-0 min-w-0 rounded-3xl border border-[#37637b] bg-[#112e43] p-5 shadow-sm sm:p-8">
     <p className="text-xs font-black tracking-widest text-[#008b9e]">GERENCIAMENTO</p>
     <h2 className="mt-2 text-2xl font-black">{section === "product" ? "Cadastrar produto" : section === "addition" ? "Cadastrar adicional" : section === "category" ? "Cadastrar categoria" : "Cadastrar usuário"}</h2>
     <p className="mt-2 text-sm text-[#557383]">Cadastre produtos, adicionais e usuários diretamente no painel.</p>
-    <form onSubmit={e => void handleSubmit(e)} className="mt-7 grid min-w-0 gap-x-6 gap-y-6 sm:grid-cols-2">
+    <form onSubmit={e => void handleSubmit(e)} className="admin-register-form mt-7 grid min-w-0 grid-cols-1 gap-x-6 gap-y-7 sm:grid-cols-2">
       <label className={labelClass}>{section === 'user' ? 'Nome do usuário' : section === 'addition' ? 'Nome do adicional' : section === 'category' ? 'Nome da categoria' : 'Nome do produto'}
         <input className={inputClass} required value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
       </label>
@@ -91,12 +91,12 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
             </label>
             <fieldset className="min-w-0 rounded-2xl border border-[#37637b] bg-[#16384c] p-4 sm:col-span-2 sm:p-5">
               <legend className="mb-3 text-sm font-bold text-white">Adicionais permitidos (opcional)</legend>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {additions.map(a => <label key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#52788b] bg-[#23495d] p-4 text-sm text-white">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {additions.map(a => <label key={a.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-[#52788b] bg-[#23495d] p-4 text-sm text-white">
                   <span><input type="checkbox" disabled={!a.available} checked={additionIds.includes(a.id)}
                     onChange={e => setAdditionIds(ids => e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))}
                     className="mr-2 accent-[#0079b6]" />{a.name}</span>
-                  <span className="text-[#557383]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
+                  <span className="font-semibold text-[#e4f2fa]">R$ {Number(a.price).toFixed(2).replace('.', ',')}</span>
                 </label>)}
                 {additions.length === 0 && <p className="text-sm text-[#557383]">Ainda não há adicionais cadastrados.</p>}
               </div>
