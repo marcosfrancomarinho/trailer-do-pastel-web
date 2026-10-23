@@ -43,7 +43,7 @@ export default function SiteHeader({ view, count, navigate }: Props) {
           </button>
         </div>
       </header>
-      <nav className="mobile-shop-nav sm:hidden" aria-label="Navegação do cliente">
+      {view !== 'admin' && <nav className="mobile-shop-nav sm:hidden" aria-label="Navegação do cliente">
         {mobileLinks.map(link => (
           <button
             key={link.page}
@@ -57,7 +57,7 @@ export default function SiteHeader({ view, count, navigate }: Props) {
             {link.page === 'cart' && count > 0 && <strong className="mobile-cart-count">{count}</strong>}
           </button>
         ))}
-      </nav>
+      </nav>}
     </>
   )
 }
