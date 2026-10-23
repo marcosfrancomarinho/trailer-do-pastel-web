@@ -3,6 +3,7 @@ import { api, brl } from '../api'
 import { restaurant } from '../application/container'
 import { cartTotal, toOrderPayload } from '../domain/cart'
 import { trackOrder } from '../application/order-service'
+import { useActionDialog } from './molecules/ActionDialog'
 import AdminOrders from './organisms/AdminOrders'
 import CustomerOrders from './organisms/CustomerOrders'
 import SiteHeader from './components/SiteHeader'
@@ -18,6 +19,7 @@ type View = 'menu' | 'cart' | 'tracking' | 'admin'
 type AdminSection = 'orders' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
   const [view, setView] = useState<View>('menu')
+  const { confirm: confirmCart, dialog: cartDialog } = useActionDialog()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [filter, setFilter] = useState('all')
@@ -67,7 +69,7 @@ export default function App() {
     catch (err) { setError(err instanceof Error ? err.message : 'Falha ao carregar adicionais'); setSelected(null) }
     finally { setExtrasBusy(false) }
   }
-  function addItem() {
+  async function addItem() {
     if (!selected || extrasBusy) return
     const additions = extras.filter(a => a.available && (amounts[a.id] || 0) > 0)
       .map(addition => ({ addition, quantity: amounts[addition.id] }))
@@ -77,7 +79,17 @@ export default function App() {
       return exists ? previous.map(p => p.key === key ? { ...p, quantity: p.quantity + quantity } : p)
         : [...previous, { key, product: selected, quantity, additions }]
     })
+    const itemName = selected.name
+    const addedQuantity = quantity
     setSelected(null)
+
+    const openCart = await confirmCart({
+      title: 'Adicionado ao carrinho!',
+      message: addedQuantity + '× ' + itemName + ' foi adicionado ao seu carrinho. Deseja ir para o carrinho agora?',
+      tone: 'success',
+      confirmLabel: 'Ver carrinho',
+    })
+    if (openCart) go('cart')
   }
   async function checkout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -324,7 +336,7 @@ export default function App() {
             </div>
           </div>
           <footer className="shrink-0 border-t border-[#41687c] bg-[#102c40] px-5 py-4 sm:px-7">
-            <button type="button" disabled={extrasBusy} onClick={addItem}
+            <button type="button" disabled={extrasBusy} onClick={() => { void addItem() }}
               className="min-h-12 w-full rounded-xl bg-[#ffca28] px-4 py-3 text-base font-black text-[#0c2a3c] disabled:opacity-60">
               Adicionar • {brl(quantity * (Number(selected.price) + extras.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0)))}
             </button>
@@ -332,6 +344,7 @@ export default function App() {
         </section>
       </div>
     )}
+    {cartDialog}
     <SiteFooter navigate={go} />
   </div>
 }
