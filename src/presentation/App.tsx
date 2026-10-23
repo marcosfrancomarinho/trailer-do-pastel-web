@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
 import { cartTotal, toOrderPayload } from '../domain/cart'
-import { readOrders } from '../infrastructure/storage/order-storage'
 import { trackOrder } from '../application/order-service'
 import AdminOrders from './organisms/AdminOrders'
+import CustomerOrders from './organisms/CustomerOrders'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import ProductCard from './components/ProductCard'
 import AdminManage from './components/AdminManage'
 import AdminRegisters from './components/organisms/AdminRegisters'
-import type { Addition, Category, CreatedOrder, Product } from '../api'
+import type { Addition, Category, Product } from '../api'
+import type { SavedCustomerOrder } from '../domain/models'
 
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
@@ -32,7 +33,7 @@ export default function App() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [sending, setSending] = useState(false)
-  const [orders, setOrders] = useState<CreatedOrder[]>(readOrders)
+  const [orders, setOrders] = useState<SavedCustomerOrder[]>(() => restaurant.recentOrders())
   const [statuses, setStatuses] = useState<Record<string, string>>({})
   const [trackingError, setTrackingError] = useState('')
   const [adminName, setAdminName] = useState('')
@@ -83,7 +84,21 @@ export default function App() {
     if (!cart.length || sending) return
     setSending(true); setError('')
     try {
-      await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart))
+      await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart), {
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        createdAt: new Date().toISOString(),
+        items: cart.map(item => ({
+          productName: item.product.name,
+          quantity: item.quantity,
+          unitPrice: item.product.price,
+          additions: item.additions.map(extra => ({
+            additionName: extra.addition.name,
+            quantity: extra.quantity,
+            unitPrice: extra.addition.price,
+          })),
+        })),
+      })
       setOrders(restaurant.recentOrders())
       setCart([]); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
@@ -157,18 +172,29 @@ export default function App() {
       <div className="grid gap-8 md:grid-cols-[1.3fr_1fr]"><div className="space-y-3">{cart.map(item => <div key={item.key} className="rounded-2xl bg-white p-5 shadow-sm"><div className="flex justify-between gap-3"><div><h3 className="text-lg font-extrabold">{item.product.name}</h3>{item.additions.map(a => <p key={a.addition.id} className="text-sm text-[#557383]">+ {a.quantity}× {a.addition.name}</p>)}</div><strong>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((n,a) => n + Number(a.addition.price)*a.quantity,0)))}</strong></div><div className="mt-4 flex items-center gap-4"><button aria-label="Diminuir quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity: x.quantity-1}:x).filter(x => x.quantity > 0))}>−</button><b>{item.quantity}</b><button aria-label="Aumentar quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity:x.quantity+1}:x))}>+</button><button className="ml-auto text-sm text-red-600" onClick={() => setCart(c => c.filter(x => x.key !== item.key))}>Remover</button></div></div>)}</div>
         <form onSubmit={e => void checkout(e)} className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Finalizar pedido</h2><label className="block text-sm font-semibold">Seu nome<input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="Como podemos chamar você?"/></label><label className="block text-sm font-semibold">Telefone<input required type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="(99) 99999-9999"/></label><div className="flex justify-between border-t border-cyan-100 pt-4 text-lg"><span>Total estimado</span><strong>{brl(total)}</strong></div><p className="text-xs text-[#557383]">O preço final será validado pela pastelaria no servidor.</p>{error && <p role="alert" className="text-sm text-red-600">{error}</p>}<button disabled={sending} className="w-full rounded-full bg-[#ffc629] py-4 font-black text-[#113548] disabled:opacity-60">{sending ? 'Enviando pedido...' : 'Confirmar pedido →'}</button></form></div>}
     </main>}
-    {view === 'tracking' && <main className="inner-page mx-auto max-w-3xl px-4 py-12">
-      <p className="font-black tracking-widest text-[#008b9e]">ACOMPANHAMENTO</p><h1 className="mt-2 text-4xl font-black">Meus pedidos</h1>
-      <p className="mt-2 text-sm text-slate-600">Consulta automática a cada 5 segundos, enquanto esta tela estiver aberta.</p>
-      {trackingError && <p role="alert" className="mt-4 text-red-700">{trackingError}</p>}
-      {orders.length === 0 ? <div className="mt-7 rounded-2xl bg-white p-6">Nenhum pedido salvo neste navegador.</div> :
-        <div className="mt-6 grid gap-4">{orders.map(o => <article key={o.trackingToken} className="rounded-3xl border-2 border-cyan-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3"><strong>Pedido #{o.id.slice(0,8)}</strong><span className="rounded-full bg-yellow-100 px-3 py-2 text-sm font-black">{({PENDING:'Pendente',CONFIRMED:'Confirmado',PREPARING:'Em preparo',COMPLETED:'Concluído',CANCELED:'Cancelado'} as Record<string,string>)[statuses[o.trackingToken] || o.status] || statuses[o.trackingToken] || o.status}</span></div>
-          <p className="mt-3 text-sm text-slate-600">Código de acompanhamento</p><p className="break-all rounded-xl bg-cyan-50 p-3 font-mono text-xs">{o.trackingToken}</p>
-          <p className="mt-3 font-black">Total: {brl(o.total)}</p>
-          <button onClick={() => void trackOrder(o.trackingToken).then(res => {setStatuses(old=>({...old,[o.trackingToken]:res.status}));setTrackingError('')}).catch(e=>setTrackingError(e instanceof Error?e.message:'Falha ao consultar status'))} className="mt-3 rounded-xl bg-[#ffc629] px-4 py-2 text-sm font-bold">Atualizar status</button>
-        </article>)}</div>}
-    </main>}
+    {view === 'tracking' && <>
+      {trackingError && <p role="alert" className="mx-auto max-w-3xl px-4 pt-4 text-red-200">{trackingError}</p>}
+      <CustomerOrders
+        orders={orders}
+        statuses={statuses}
+        onRemove={token => {
+          setOrders(restaurant.removeSavedOrder(token))
+          setStatuses(previous => {
+            const next = { ...previous }
+            delete next[token]
+            return next
+          })
+        }}
+        onRefresh={token => {
+          void trackOrder(token)
+            .then(result => {
+              setStatuses(previous => ({ ...previous, [token]: result.status }))
+              setTrackingError('')
+            })
+            .catch(error => setTrackingError(error instanceof Error ? error.message : 'Falha ao consultar status'))
+        }}
+      />
+    </>}
     {view === 'admin' && <main className="inner-page mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#008b9e]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
       <div className="admin-layout mt-8 grid min-w-0 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
