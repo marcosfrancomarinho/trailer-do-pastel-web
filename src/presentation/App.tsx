@@ -13,11 +13,44 @@ import AdminRegisters from './components/organisms/AdminRegisters'
 import type { Addition, Category, Product } from '../api'
 import type { SavedCustomerOrder } from '../domain/models'
 
+const ADMIN_SESSION_KEY = 'trailer-pastel-admin-session'
+
+function readAdminSession(): string {
+  try {
+    const token = window.sessionStorage.getItem(ADMIN_SESSION_KEY) ?? ''
+    if (!token) return ''
+
+    // Não restaura credenciais expiradas, quando o token é um JWT.
+    const payload = token.split('.')[1]
+    if (payload) {
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+      const parsed = JSON.parse(window.atob(normalized)) as { exp?: number }
+      if (typeof parsed.exp === 'number' && parsed.exp * 1000 <= Date.now()) {
+        window.sessionStorage.removeItem(ADMIN_SESSION_KEY)
+        return ''
+      }
+    }
+    return token
+  } catch {
+    return ''
+  }
+}
+
+function saveAdminSession(token: string): void {
+  try {
+    if (token) window.sessionStorage.setItem(ADMIN_SESSION_KEY, token)
+    else window.sessionStorage.removeItem(ADMIN_SESSION_KEY)
+  } catch {
+    // Continua em memória quando o armazenamento do navegador está bloqueado.
+  }
+}
+
 type CartItem = { key: string; product: Product; quantity: number; additions: { addition: Addition; quantity: number }[] }
 type View = 'menu' | 'cart' | 'tracking' | 'admin'
 type AdminSection = 'orders' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
-  const [view, setView] = useState<View>('menu')
+  const [adminToken, setAdminToken] = useState(readAdminSession)
+  const [view, setView] = useState<View>(() => readAdminSession() ? 'admin' : 'menu')
   const [cartToast, setCartToast] = useState<{ message: string; id: number } | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -39,7 +72,6 @@ export default function App() {
   const [trackingError, setTrackingError] = useState('')
   const [adminName, setAdminName] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
-  const [adminToken, setAdminToken] = useState('')
   const [adminSection, setAdminSection] = useState<AdminSection>('orders')
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [adminBusy, setAdminBusy] = useState(false)
@@ -197,6 +229,7 @@ export default function App() {
       const logged = await api<{ name: string; accessToken: string }>('/login', {
         method: 'POST', body: JSON.stringify({ name: adminName, password: adminPassword })
       })
+      saveAdminSession(logged.accessToken)
       setAdminToken(logged.accessToken); setAdminPassword('')
       setAdminBusy(false)
     } catch (err) { setAdminError(err instanceof Error ? err.message : 'Não foi possível entrar'); setAdminBusy(false) }
@@ -279,7 +312,7 @@ export default function App() {
               </button>)}
           </nav>
           <button type="button" className="mt-3 w-full rounded-xl border border-cyan-200 px-3 py-3 text-sm font-bold text-[#143b50] hover:bg-cyan-50"
-            onClick={() => {setAdminToken(''); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
+            onClick={() => {saveAdminSession(''); setAdminToken(''); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
           {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
