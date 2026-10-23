@@ -11,9 +11,9 @@ export class RestaurantUseCases {
   removeRecord(kind: 'products' | 'additions' | 'categories', id: string, token: string) { return this.catalog.remove(kind, id, token) }
   async createOrder(data: OrderPayload) { const order = await this.orders.create(data); this.history.save(order); return order }
   recentOrders() { return this.history.list() }
-  pendingOrders(token: string) { return this.orders.pending(token) }
-  preparingOrders(token: string) { return this.orders.preparing(token) }
-  orderHistory(token: string) { return this.orders.history(token) }
+  pendingOrders(token: string, date?: string) { return this.orders.pending(token, date) }
+  preparingOrders(token: string, date?: string) { return this.orders.preparing(token, date) }
+  orderHistory(token: string, date?: string) { return this.orders.history(token, date) }
   track(token: string) { return this.orders.tracking(token) }
   updateOrderStatus(token: string, id: string, status: string) { return this.orders.changeStatus(token,id,status) }
 }
