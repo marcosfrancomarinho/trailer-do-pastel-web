@@ -604,3 +604,14 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 @media (prefers-reduced-motion: reduce) {
   .table-details-expanded { animation: none; }
 }
+
+
+/* Aviso de loja fechada no checkout: fundo escuro e texto claro, inclusive
+   sob as regras globais de cores do tema. */
+.restaurant-app .inner-page .checkout-closed-notice {
+  background: #4a1f28 !important;
+  border: 1px solid #d67b7b !important;
+  color: #fff1f1 !important;
+  line-height: 1.55;
+  box-shadow: none;
+}
