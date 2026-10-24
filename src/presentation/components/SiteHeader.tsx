@@ -1,6 +1,6 @@
 import AnchorLogo from '../atoms/AnchorLogo'
 
-type Page = 'menu' | 'cart' | 'tracking' | 'admin'
+type Page = 'menu' | 'cart' | 'tracking' | 'admin' | 'tables'
 type Props = { view: string; count: number; navigate: (page: Page) => void }
 
 const mobileLinks: { page: Page; label: string; icon: string }[] = [
@@ -28,11 +28,11 @@ export default function SiteHeader({ view, count, navigate }: Props) {
               <small className="brand-tagline">PASTÉIS • UM MAR DE SABORES</small>
             </span>
           </button>
-          <nav className="hidden gap-2 text-sm font-bold sm:flex" aria-label="Navegação principal">
+          {view !== 'admin' && view !== 'tables' && <nav className="hidden gap-2 text-sm font-bold sm:flex" aria-label="Navegação principal">
             <button type="button" onClick={() => navigate('menu')} className={view === 'menu' ? 'nav-active' : ''}>Cardápio</button>
             <button type="button" onClick={() => navigate('tracking')} className={view === 'tracking' ? 'nav-active' : ''}>Meus pedidos</button>
-          </nav>
-          <button
+          </nav>}
+          {view !== 'admin' && view !== 'tables' && <button
             type="button"
             onClick={() => navigate('cart')}
             className="cart-header-button"
@@ -40,10 +40,10 @@ export default function SiteHeader({ view, count, navigate }: Props) {
           >
             🛒 <span className="hidden sm:inline">Carrinho</span>
             {count > 0 && <b>{count}</b>}
-          </button>
+          </button>}
         </div>
       </header>
-      {view !== 'admin' && <nav className="mobile-shop-nav sm:hidden" aria-label="Navegação do cliente">
+      {view !== 'admin' && view !== 'tables' && <nav className="mobile-shop-nav sm:hidden" aria-label="Navegação do cliente">
         {mobileLinks.map(link => (
           <button
             key={link.page}
