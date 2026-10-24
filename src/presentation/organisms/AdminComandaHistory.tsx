@@ -18,7 +18,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [requestedDate, setRequestedDate] = useState(date)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'canceled'>('all')
+  const [statusFilter, setStatusFilter] = useState<'completed' | 'canceled'>('completed')
 
   useEffect(() => {
     let active = true
@@ -44,13 +44,12 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     return () => { active = false }
   }, [token, requestedDate, refreshKey])
 
-  const matchesStatus = (status: string) => statusFilter === 'all' || (statusFilter === 'completed' ? status === 'COMPLETED' : status === 'CANCELED')
-  const filtered = comandas.filter(item => statusFilter === 'all' || item.session.orders.some(order => matchesStatus(order.status)))
-  const amountForSession = (session: ClosedComanda['session']) => statusFilter === 'all'
-    ? Number(session.closedTotal ?? 0)
-    : session.orders.filter(order => matchesStatus(order.status)).reduce((sum, order) => sum + Number(order.total), 0)
+  const matchesStatus = (status: string) => statusFilter === 'completed' ? status === 'COMPLETED' : status === 'CANCELED'
+  const filtered = comandas.filter(item => item.session.orders.some(order => matchesStatus(order.status)))
+  const amountForSession = (session: ClosedComanda['session']) =>
+    session.orders.filter(order => matchesStatus(order.status)).reduce((sum, order) => sum + Number(order.total), 0)
   const total = filtered.reduce((sum, item) => sum + amountForSession(item.session), 0)
-  const totalLabel = statusFilter === 'canceled' ? 'Total cancelado' : statusFilter === 'completed' ? 'Total realizado' : 'Total das comandas'
+  const totalLabel = statusFilter === 'canceled' ? 'Total cancelado' : 'Total realizado'
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
     <div>
@@ -67,8 +66,8 @@ export default function AdminComandaHistory({ token }: { token: string }) {
       <button type="button" disabled={loading || !date} onClick={() => { setExpanded(null); setRequestedDate(date); setRefreshKey(value => value + 1) }}
         className="min-h-11 rounded-lg bg-[#ffca28] px-4 text-sm font-bold text-[#102c40] disabled:opacity-55">Buscar por data</button>
     </div>
-    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Filtrar pedidos por situação">
-      {([['all', 'Todos'], ['completed', 'Realizados'], ['canceled', 'Cancelados']] as const).map(([value, label]) =>
+    <div className="grid grid-cols-2 gap-2" role="group" aria-label="Filtrar pedidos por situação">
+      {([['completed', 'Realizados'], ['canceled', 'Cancelados']] as const).map(([value, label]) =>
         <button key={value} type="button" aria-pressed={statusFilter === value}
           onClick={() => { setStatusFilter(value); setExpanded(null) }}
           className={'min-h-11 rounded-xl border px-2 py-2 text-xs font-bold sm:text-sm ' +
