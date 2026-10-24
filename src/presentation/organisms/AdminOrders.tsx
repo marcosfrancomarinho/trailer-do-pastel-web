@@ -446,13 +446,13 @@ export default function AdminOrders({ token }: { token: string }) {
           >
             {soundEnabled ? '🔔 Som ativado' : '🔕 Ativar som'}
           </button>
-          <button
+          {tab !== 'pending' && <button
             type="button"
             onClick={() => { void refresh() }}
             className="min-h-11 rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white hover:bg-[#24556c]"
           >
             Atualizar
-          </button>
+          </button>}
         </div>
       </div>
 
