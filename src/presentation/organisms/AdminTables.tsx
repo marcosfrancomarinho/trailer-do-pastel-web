@@ -4,6 +4,7 @@ import { brl } from '../../api'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
 import type { Addition, Category, Product, RestaurantTable, TableOrders } from '../../domain/models'
 import { useActionDialog } from '../molecules/ActionDialog'
+import TableReceipt from './TableReceipt'
 
 type Props = { token: string; products: Product[]; categories: Category[] }
 const orderStatusLabels: Record<string, string> = {
@@ -25,6 +26,7 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [tableView, setTableView] = useState<'orders' | 'new'>('orders')
   const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
+  const [printTable, setPrintTable] = useState<TableOrders | null>(null)
   const [number, setNumber] = useState('')
   const [showCreateTable, setShowCreateTable] = useState(false)
   const [observation, setObservation] = useState('')
@@ -275,6 +277,10 @@ export default function AdminTables({ token, products, categories }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-black">Mesa {details.number}</h3><span className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · <strong>{brl(details.totalSpent)}</strong></span></div>
           <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={busy || details.orders.length === 0} onClick={() => setPrintTable(details)}
+              className="min-h-11 rounded-xl border border-[#8ab2c5] bg-[#244e63] px-4 py-2 text-sm font-black text-white disabled:opacity-40">
+              🖨 Imprimir conta
+            </button>
             {details.status === 'OCCUPIED' ? (
               <button disabled={busy} type="button" className={button} onClick={() => void release()}>Liberar mesa</button>
             ) : (
@@ -404,6 +410,7 @@ export default function AdminTables({ token, products, categories }: Props) {
         </section>
       </div>
     )}
+    {printTable && <TableReceipt table={printTable} onClose={() => setPrintTable(null)} />}
     {dialog}
   </section>
 }
