@@ -649,7 +649,6 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 /* Impressão do relatório: retira o conteúdo da área de rolagem do painel administrativo. */
 @media print{
   body.printing-comanda-history,
-  body.printing-comanda-history html,
   body.printing-comanda-history #root,
   body.printing-comanda-history .restaurant-app,
   body.printing-comanda-history .admin-layout{
@@ -658,8 +657,9 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   }
   body.printing-comanda-history .comanda-history-print{
     display:block!important;
-    position:fixed!important;
-    inset:0 auto auto 0!important;
+    position:absolute!important;
+    top:0!important;
+    left:0!important;
     z-index:2147483647!important;
     width:100%!important;
     max-width:none!important;
