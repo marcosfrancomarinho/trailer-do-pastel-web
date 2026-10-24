@@ -89,13 +89,27 @@ export default function AdminTables({ token, products, categories }: Props) {
     }
   }, [refresh])
 
+  function closeTable() {
+    ++selectionRequest.current
+    setSelected(null)
+    setDetails(null)
+    setProduct(null)
+    setError('')
+  }
+
+  useEffect(() => {
+    if (!selected) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !product && !printTable) closeTable()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [selected, product, printTable])
+
   async function openTable(id: string) {
     const request = ++selectionRequest.current
     if (selected === id) {
-      setSelected(null)
-      setDetails(null)
-        setProduct(null)
-      setError('')
+      closeTable()
       return
     }
     setSelected(id)
@@ -262,16 +276,22 @@ export default function AdminTables({ token, products, categories }: Props) {
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {tables.map(table => <button key={table.id} type="button" onClick={() => void openTable(table.id)}
         aria-expanded={selected === table.id}
-        aria-controls="table-expanded-details"
+        aria-haspopup="dialog"
         className={'flex min-h-16 flex-col justify-center gap-1 rounded-lg border px-3 py-2 text-left transition-all duration-200 ' +
           (table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : readyTables.has(table.id) ? 'border-[#61c7fa] bg-[#174b73] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
           (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')}>
-        <span className="flex w-full items-center justify-between gap-1"><strong className="text-base">Mesa {table.number}</strong><span className="text-xs" aria-hidden="true">{selected === table.id ? '▲' : '▼'}</span></span>
+        <span className="flex w-full items-center justify-between gap-1"><strong className="text-base">Mesa {table.number}</strong><span className="text-xs" aria-hidden="true">↗</span></span>
         <span className="text-xs font-semibold">{table.status === 'FREE' ? '● Livre' : readyTables.has(table.id) ? '✓ Prontos · Ocupada' : '● Ocupada'} · {brl(table.totalSpent)}</span>
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
-    {selected && <div id="table-expanded-details" className="table-details-expanded space-y-4 rounded-2xl border border-[#537d90] bg-[#112e43] p-4 sm:p-6">
+    {selected && <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget && !product && !printTable) closeTable() }}>
+      <section role="dialog" aria-modal="true" aria-label={details ? 'Mesa ' + details.number : 'Detalhes da mesa'} className="flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-[#537d90] bg-[#112e43] shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#537d90] px-4 py-3 sm:px-5">
+          <div className="min-w-0"><h3 className="text-xl font-black">{details ? 'Mesa ' + details.number : 'Abrindo mesa...'}</h3>{details && <p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · {brl(details.totalSpent)}</p>}</div>
+          <button type="button" onClick={closeTable} aria-label="Fechar detalhes da mesa" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#63899a] text-xl font-bold">✕</button>
+        </header>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
       {!details ? <p>Carregando detalhes...</p> : <>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-black">Mesa {details.number}</h3><span className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · <strong>{brl(details.totalSpent)}</strong></span></div>
@@ -389,6 +409,8 @@ export default function AdminTables({ token, products, categories }: Props) {
           </div>
         </div>}
       </>}
+        </div>
+      </section>
     </div>}
     {product && (
       <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/80 sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget) setProduct(null) }}>
