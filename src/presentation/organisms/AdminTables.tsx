@@ -286,38 +286,27 @@ export default function AdminTables({ token, products, categories }: Props) {
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
     {selected && <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget && !product && !printTable) closeTable() }}>
-      <section role="dialog" aria-modal="true" aria-label={details ? 'Mesa ' + details.number : 'Detalhes da mesa'} className="flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl border border-[#537d90] bg-[#112e43] shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
+      <section role="dialog" aria-modal="true" aria-label={details ? 'Mesa ' + details.number : 'Detalhes da mesa'} className="flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-[#537d90] bg-[#112e43] shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#537d90] px-4 py-3 sm:px-5">
           <div className="min-w-0"><h3 className="text-xl font-black">{details ? 'Mesa ' + details.number : 'Abrindo mesa...'}</h3>{details && <p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · {brl(details.totalSpent)}</p>}</div>
           <button type="button" onClick={closeTable} aria-label="Fechar detalhes da mesa" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#63899a] text-xl font-bold">✕</button>
         </header>
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-5">
       {!details ? <p>Carregando detalhes...</p> : <>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-black">Mesa {details.number}</h3><span className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · <strong>{brl(details.totalSpent)}</strong></span></div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={busy || details.orders.length === 0} onClick={() => setPrintTable(details)}
-              className="min-h-11 rounded-xl border border-[#8ab2c5] bg-[#244e63] px-4 py-2 text-sm font-black text-white disabled:opacity-40">
-              🖨 Imprimir conta
-            </button>
-            {details.status === 'OCCUPIED' ? (
-              <button disabled={busy} type="button" className={button} onClick={() => void release()}>Liberar mesa</button>
-            ) : (
-              <button
-                disabled={busy}
-                type="button"
-                className="min-h-11 rounded-xl border border-red-300 bg-[#572b36] px-4 py-2 font-bold text-white disabled:opacity-50"
-                onClick={() => void archiveTable()}
-              >
-                Retirar mesa de uso
-              </button>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-2 border-b border-[#345b70] pb-3">
+          <button type="button" disabled={busy || details.orders.length === 0} onClick={() => setPrintTable(details)}
+            className="min-h-10 rounded-lg border border-[#63899a] bg-[#1a4055] px-3 text-xs font-bold text-white disabled:opacity-40 sm:text-sm">🖨 Imprimir conta</button>
+          {details.status === 'OCCUPIED' ? (
+            <button disabled={busy} type="button" className="min-h-10 rounded-lg bg-[#ffca28] px-3 text-xs font-bold text-[#09283b] disabled:opacity-50 sm:text-sm" onClick={() => void release()}>Liberar mesa</button>
+          ) : (
+            <button disabled={busy} type="button" onClick={() => void archiveTable()}
+              className="min-h-10 rounded-lg border border-[#a66c75] bg-[#442b36] px-3 text-xs font-bold text-white disabled:opacity-50 sm:text-sm">Retirar de uso</button>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#0b2536] p-1.5" role="tablist" aria-label={'Visualização da mesa ' + details.number}>
           <button type="button" role="tab" aria-selected={tableView === 'orders'} onClick={() => setTableView('orders')}
             className={'min-h-12 rounded-lg px-2 py-2 text-sm font-black transition ' + (tableView === 'orders' ? 'bg-[#ffca28] text-[#09283b]' : 'text-slate-200 hover:bg-[#23485d]')}>
-            Pedidos enviados ({details.orders.length})
+            Pedidos ({details.orders.length})
           </button>
           <button type="button" role="tab" aria-selected={tableView === 'new'} onClick={() => setTableView('new')}
             className={'min-h-12 rounded-lg px-2 py-2 text-sm font-black transition ' + (tableView === 'new' ? 'bg-[#ffca28] text-[#09283b]' : 'text-slate-200 hover:bg-[#23485d]')}>
@@ -352,27 +341,27 @@ export default function AdminTables({ token, products, categories }: Props) {
           <button type="button" onClick={() => setTableView('new')} className="min-h-11 w-full rounded-lg border border-[#63899a] bg-[#193e53] px-4 text-sm font-bold text-white">+ Adicionar outro pedido</button>
         </div>}
         {tableView === 'new' && <div role="tabpanel" className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><h4 className="text-lg font-black">Novo pedido</h4><p className="text-xs text-slate-300">Os itens abaixo ainda não foram enviados.</p></div>
-            <a href="#table-cart-summary" className="rounded-lg bg-[#ffca28] px-3 py-2 text-sm font-black text-[#102b40]">Em montagem ({draftCount}) · {brl(cartTotal(cart))}</a>
+          <div className="flex items-center justify-between gap-2">
+            <div><h4 className="text-base font-black">Novo pedido</h4><p className="text-xs text-slate-300">Selecione os produtos para esta mesa</p></div>
+            <a href="#table-cart-summary" className="shrink-0 rounded-lg border border-[#63899a] px-2 py-2 text-xs font-bold text-white">Ver carrinho ({draftCount})</a>
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,330px)]">
             <aside id="table-cart-summary" className="order-table-cart-panel min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
-          <form onSubmit={event => void createOrder(event)} className="grid gap-2 rounded-xl border border-[#527b8e] bg-[#193e53] p-3 sm:grid-cols-2 lg:grid-cols-1">
+          <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl border border-[#527b8e] bg-[#193e53] p-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="flex items-center justify-between gap-2 sm:col-span-2 lg:col-span-1">
               <h4 className="text-base font-black text-white">Pedido em montagem</h4>
-              <span className="rounded-full bg-[#ffca28] px-3 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
+              <span className="rounded-md bg-[#ffca28] px-2 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
             </div>
             <div className="space-y-2 sm:col-span-2">
-              {cart.map(item => <div key={item.key} className="rounded-xl border border-[#63899a] bg-[#102c40] p-3">
+              {cart.map(item => <div key={item.key} className="rounded-lg border border-[#63899a] bg-[#102c40] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{item.quantity}× {item.product.name}</strong><span>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((total, extra) => total + Number(extra.addition.price) * extra.quantity, 0)))}</span>
                 </div>
                 {item.additions.map(extra => <p key={extra.addition.id} className="text-sm text-slate-200">+ {extra.quantity}× {extra.addition.name}</p>)}
-                <div className="mt-2 flex items-center gap-3">
+                <div className="mt-3 flex items-center gap-2">
                   <button type="button" aria-label="Diminuir quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity - 1 } : value).filter(value => value.quantity > 0))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">−</button>
                   <button type="button" aria-label="Aumentar quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity + 1 } : value))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">+</button>
-                  <button type="button" onClick={() => setCart(items => items.filter(value => value.key !== item.key))} className="ml-auto text-sm font-bold text-red-200 underline">Remover</button>
+                  <button type="button" onClick={() => setCart(items => items.filter(value => value.key !== item.key))} className="ml-auto text-xs font-bold text-red-200 underline">Remover</button>
                 </div>
               </div>)}
               {cart.length === 0 && <p className="text-sm text-slate-200">Nenhum produto adicionado.</p>}
