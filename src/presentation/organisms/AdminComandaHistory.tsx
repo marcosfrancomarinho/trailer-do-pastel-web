@@ -86,9 +86,9 @@ export default function AdminComandaHistory({ token }: { token: string }) {
             <p className="break-all text-slate-200">ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
             <p className="text-slate-300">Abertura: {dateTime(session.openedAt)}</p>
             {session.orders.length === 0 && <p>Nenhum pedido registrado.</p>}
-            {session.orders.map(order => <div key={order.id} className="rounded-lg bg-[#102c40] p-3">
+            {session.orders.map(order => <div key={order.id} className={'rounded-lg border p-3 ' + (order.status === 'CANCELED' ? 'border-red-400 bg-[#562733] text-white' : 'border-transparent bg-[#102c40]')}>
               <div className="flex justify-between gap-2"><strong>Pedido #{order.id.slice(0, 8)}</strong><strong>{brl(order.total)}</strong></div>
-              <p className="mt-1 text-xs text-slate-300">{order.status === 'COMPLETED' ? 'Concluído' : order.status === 'CANCELED' ? 'Cancelado' : order.status}</p>
+              <p className={'mt-1 text-xs font-bold ' + (order.status === 'CANCELED' ? 'text-red-200' : 'text-slate-300')}>{order.status === 'COMPLETED' ? 'Concluído' : order.status === 'CANCELED' ? 'Cancelado' : order.status}</p>
               <div className="mt-2 space-y-1">
                 {order.items.map((item, index) => <div key={index}>
                   <p>{item.quantity}× {item.productName}</p>
