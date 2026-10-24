@@ -18,7 +18,6 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [requestedDate, setRequestedDate] = useState(date)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<'completed' | 'canceled'>('completed')
 
   useEffect(() => {
     let active = true
@@ -44,12 +43,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     return () => { active = false }
   }, [token, requestedDate, refreshKey])
 
-  const matchesStatus = (status: string) => statusFilter === 'completed' ? status === 'COMPLETED' : status === 'CANCELED'
-  const filtered = comandas.filter(item => item.session.orders.some(order => matchesStatus(order.status)))
-  const amountForSession = (session: ClosedComanda['session']) =>
-    session.orders.filter(order => matchesStatus(order.status)).reduce((sum, order) => sum + Number(order.total), 0)
-  const total = filtered.reduce((sum, item) => sum + amountForSession(item.session), 0)
-  const totalLabel = statusFilter === 'canceled' ? 'Total cancelado' : 'Total realizado'
+  const total = comandas.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
     <div>
@@ -66,26 +60,15 @@ export default function AdminComandaHistory({ token }: { token: string }) {
       <button type="button" disabled={loading || !date} onClick={() => { setExpanded(null); setRequestedDate(date); setRefreshKey(value => value + 1) }}
         className="min-h-11 rounded-lg bg-[#ffca28] px-4 text-sm font-bold text-[#102c40] disabled:opacity-55">Buscar por data</button>
     </div>
-    <div className="grid grid-cols-2 gap-2" role="group" aria-label="Filtrar pedidos por situação">
-      {([['completed', 'Realizados'], ['canceled', 'Cancelados']] as const).map(([value, label]) =>
-        <button key={value} type="button" aria-pressed={statusFilter === value}
-          onClick={() => { setStatusFilter(value); setExpanded(null) }}
-          className={'min-h-11 rounded-xl border px-2 py-2 text-xs font-bold sm:text-sm ' +
-            (statusFilter === value
-              ? value === 'canceled' ? 'border-red-300 bg-[#853543] text-white' : 'border-[#ffca28] bg-[#ffca28] text-[#102c40]'
-              : 'border-[#63899a] bg-[#193e53] text-white hover:bg-[#2a5266]')}>
-          {label}
-        </button>)}
-    </div>
     {error && <p role="alert" className="rounded-lg bg-[#563039] p-3 text-sm text-white">{error}</p>}
     {loading ? <p role="status" className="p-3 text-slate-200">Carregando histórico...</p> : <>
       <div className="flex flex-wrap justify-between gap-3 rounded-xl border border-[#426b80] p-3">
-        <span className="text-sm font-bold">{filtered.length} {filtered.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
-        <strong className="text-amber-200">{totalLabel}: {brl(total)}</strong>
+        <span className="text-sm font-bold">{comandas.length} {comandas.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
+        <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
       </div>
-      {!error && filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda com pedidos deste filtro na data selecionada.</p>}
+      {!error && comandas.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada na data selecionada.</p>}
       <div className="space-y-2">
-        {filtered.map(({ tableNumber, session }) => <article key={session.id} className={'overflow-hidden rounded-xl border bg-[#193e53] ' + (session.orders.some(order => order.status === 'CANCELED') ? 'border-red-400' : 'border-[#426b80]')}>
+        {comandas.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
           <button type="button" aria-expanded={expanded === session.id} onClick={() => setExpanded(value => value === session.id ? null : session.id)}
             className="flex min-h-16 w-full items-center justify-between gap-3 p-3 text-left">
             <div className="min-w-0">
@@ -94,25 +77,46 @@ export default function AdminComandaHistory({ token }: { token: string }) {
               <span className="block break-all text-xs text-slate-300">Comanda: {session.id.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="shrink-0 text-right">
-              <strong className={'block ' + (statusFilter === 'canceled' ? 'text-red-200' : 'text-amber-200')}>{brl(amountForSession(session))}</strong>
+              <strong className="block text-amber-200">{brl(session.closedTotal ?? 0)}</strong>
               <span className="text-xs text-slate-300">{expanded === session.id ? 'Ocultar ▲' : 'Detalhes ▼'}</span>
             </div>
           </button>
           {expanded === session.id && <div className="space-y-3 border-t border-[#426b80] p-3 text-sm">
             <p className="break-all text-slate-200">ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
             <p className="text-slate-300">Abertura: {dateTime(session.openedAt)}</p>
-            {session.orders.length === 0 && <p>Nenhum pedido registrado.</p>}
-            {session.orders.filter(order => matchesStatus(order.status)).map(order => <div key={order.id} className={'rounded-lg border p-3 ' + (order.status === 'CANCELED' ? 'border-red-400 bg-[#562733] text-white' : 'border-transparent bg-[#102c40]')}>
-              <div className="flex justify-between gap-2"><strong>Pedido #{order.id.slice(0, 8)}</strong><strong>{brl(order.total)}</strong></div>
-              <p className={'mt-1 text-xs font-bold ' + (order.status === 'CANCELED' ? 'text-red-200' : 'text-slate-300')}>{order.status === 'COMPLETED' ? 'Concluído' : order.status === 'CANCELED' ? 'Cancelado' : order.status}</p>
-              <div className="mt-2 space-y-1">
-                {order.items.map((item, index) => <div key={index}>
-                  <p>{item.quantity}× {item.productName}</p>
-                  {item.additions.map((addition, i) => <p key={i} className="pl-3 text-xs text-slate-300">+ {addition.quantity}× {addition.additionName}</p>)}
-                </div>)}
-              </div>
-              {order.observation && <p className="mt-2 text-xs text-amber-100">Obs.: {order.observation}</p>}
-            </div>)}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {([
+                { title: 'Realizados', status: 'COMPLETED', style: 'border-emerald-500/70 bg-[#133f39]', heading: 'text-emerald-200' },
+                { title: 'Cancelados', status: 'CANCELED', style: 'border-red-400/80 bg-[#482a33]', heading: 'text-red-200' },
+              ] as const).map(group => {
+                const orders = session.orders.filter(order => order.status === group.status)
+                return <section key={group.status} className={'min-w-0 rounded-xl border-2 p-3 ' + group.style}>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h3 className={'font-bold ' + group.heading}>{group.title}</h3>
+                    <span className={'text-xs font-bold ' + group.heading}>{orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}</span>
+                  </div>
+                  {orders.length === 0 ? <p className="text-xs text-slate-300">Nenhum pedido {group.status === 'CANCELED' ? 'cancelado' : 'concluído'}.</p> :
+                    <div className="space-y-2">
+                      {orders.map(order => <div key={order.id} className={'rounded-lg border p-3 ' + (group.status === 'CANCELED' ? 'border-red-400 bg-[#562733]' : 'border-emerald-500/60 bg-[#102f32]')}>
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <strong>Pedido #{order.id.slice(0, 8).toUpperCase()}</strong>
+                          <strong>{brl(order.total)}</strong>
+                        </div>
+                        <p className={'mt-1 text-xs font-bold ' + group.heading}>{group.status === 'CANCELED' ? 'Cancelado' : 'Concluído'}</p>
+                        <div className="mt-2 space-y-1">
+                          {order.items.map((item, index) => <div key={index}>
+                            <p>{item.quantity}× {item.productName}</p>
+                            {item.additions.map((addition, i) => <p key={i} className="pl-3 text-xs text-slate-300">+ {addition.quantity}× {addition.additionName}</p>)}
+                          </div>)}
+                        </div>
+                        {order.observation && <p className="mt-2 text-xs text-amber-100">Obs.: {order.observation}</p>}
+                      </div>)}
+                    </div>}
+                </section>
+              })}
+            </div>
+            {session.orders.some(order => order.status !== 'COMPLETED' && order.status !== 'CANCELED') &&
+              <p className="text-xs text-slate-300">Outros pedidos: {session.orders.filter(order => order.status !== 'COMPLETED' && order.status !== 'CANCELED').length} com status diferente de concluído ou cancelado.</p>}
           </div>}
         </article>)}
       </div>
