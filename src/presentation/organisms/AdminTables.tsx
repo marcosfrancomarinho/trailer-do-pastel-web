@@ -214,17 +214,15 @@ export default function AdminTables({ token, products, categories }: Props) {
       <button disabled={busy} type="submit" className={button}>Cadastrar mesa</button>
     </form>
     {error && <p role="alert" className="rounded-xl border border-red-400 bg-[#562932] p-3 text-white">{error}</p>}
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {tables.map(table => <button key={table.id} type="button" onClick={() => void openTable(table.id)}
         aria-expanded={selected === table.id}
         aria-controls="table-expanded-details"
-        className={'min-h-32 rounded-2xl border-2 p-3 text-left transition-all duration-200 ' +
+        className={'flex min-h-20 flex-col justify-center gap-1 rounded-xl border-2 px-3 py-2 text-left transition-all duration-200 ' +
           (table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
-          (selected === table.id ? ' outline outline-2 outline-white shadow-lg ring-2 ring-[#ffca28] scale-[1.02]' : ' hover:-translate-y-0.5')}>
-        <strong className="block text-xl">Mesa {table.number}</strong>
-        <span className="mt-2 block text-sm font-bold">{table.status === 'FREE' ? '✓ Livre' : '● Ocupada'}</span>
-        <span className="mt-2 block font-black">{brl(table.totalSpent)}</span>
-        <span className="mt-2 block text-xs font-bold text-white/80">{selected === table.id ? "▲ Minimizar detalhes" : "▼ Ver detalhes"}</span>
+          (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')}>
+        <span className="flex w-full items-center justify-between gap-1"><strong className="text-base">Mesa {table.number}</strong><span className="text-xs" aria-hidden="true">{selected === table.id ? '▲' : '▼'}</span></span>
+        <span className="text-xs font-semibold">{table.status === 'FREE' ? '● Livre' : '● Ocupada'} · {brl(table.totalSpent)}</span>
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
@@ -249,14 +247,27 @@ export default function AdminTables({ token, products, categories }: Props) {
           </div>
         </div>
         <div className="space-y-2">
-          <h4 className="font-black">Pedidos vinculados</h4>
-          {details.orders.length === 0 && <p className="text-sm text-slate-300">Nenhum pedido nesta sessão.</p>}
-          {details.orders.map(order => <div key={order.id} className="rounded-xl border border-[#466b7f] p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2"><strong>#{order.id.slice(0,8)} · {order.customerName}</strong><strong>{brl(order.total)}</strong></div>
-            <p className="text-xs text-slate-200">{order.status} · {order.items.map(item => item.quantity + '× ' + item.productName).join(', ')}</p>
-            {order.observation && <p className="mt-1 text-sm text-amber-200">Obs.: {order.observation}</p>}
-            {order.status !== 'CANCELED' && <button type="button" disabled={busy} onClick={() => void removeOrder(order.id)} className="mt-2 text-sm font-bold text-red-200 underline">Cancelar pedido</button>}
-          </div>)}
+          <h4 className="text-base font-black">Pedidos da mesa <span className="text-cyan-200">({details.orders.length})</span></h4>
+          {details.orders.length === 0 && <p className="rounded-lg bg-[#193e53] px-3 py-2 text-sm text-slate-300">Nenhum pedido nesta comanda.</p>}
+          {details.orders.map((order, index) => <details key={order.id} className="group rounded-xl border border-[#466b7f] bg-[#193e53]">
+            <summary className="flex cursor-pointer list-none items-center gap-2 p-3 marker:hidden">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#2a5267] text-xs font-black">{index + 1}</span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm">Pedido #{order.id.slice(0, 8)}</strong>
+                <span className="block truncate text-xs text-slate-200">{order.items.reduce((sum, item) => sum + item.quantity, 0)} itens · {order.status}</span>
+              </span>
+              <strong className="shrink-0 text-sm text-amber-200">{brl(order.total)}</strong>
+              <span className="text-xs text-cyan-100 group-open:rotate-180" aria-hidden="true">▼</span>
+            </summary>
+            <div className="space-y-2 border-t border-[#466b7f] px-3 py-3">
+              {order.items.map((item, itemIndex) => <div key={itemIndex} className="text-sm text-white">
+                <p className="font-bold">{item.quantity}× {item.productName}</p>
+                {item.additions.map((extra, extraIndex) => <p key={extraIndex} className="pl-3 text-xs text-slate-200">+ {extra.quantity}× {extra.additionName}</p>)}
+              </div>)}
+              {order.observation && <p className="rounded-lg bg-[#433922] p-2 text-xs text-amber-100">Obs.: {order.observation}</p>}
+              {['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status) && <button type="button" disabled={busy} onClick={() => void removeOrder(order.id)} className="min-h-10 rounded-lg border border-red-300 px-3 text-xs font-bold text-red-100 disabled:opacity-40">Cancelar pedido</button>}
+            </div>
+          </details>)}
         </div>
         <div className="space-y-4 border-t border-[#486f83] pt-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
