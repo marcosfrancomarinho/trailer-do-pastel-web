@@ -46,7 +46,11 @@ export default function AdminComandaHistory({ token }: { token: string }) {
 
   const matchesStatus = (status: string) => statusFilter === 'all' || (statusFilter === 'completed' ? status === 'COMPLETED' : status === 'CANCELED')
   const filtered = comandas.filter(item => statusFilter === 'all' || item.session.orders.some(order => matchesStatus(order.status)))
-  const total = filtered.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
+  const amountForSession = (session: ClosedComanda['session']) => statusFilter === 'all'
+    ? Number(session.closedTotal ?? 0)
+    : session.orders.filter(order => matchesStatus(order.status)).reduce((sum, order) => sum + Number(order.total), 0)
+  const total = filtered.reduce((sum, item) => sum + amountForSession(item.session), 0)
+  const totalLabel = statusFilter === 'canceled' ? 'Total cancelado' : statusFilter === 'completed' ? 'Total realizado' : 'Total das comandas'
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
     <div>
@@ -78,11 +82,11 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     {loading ? <p role="status" className="p-3 text-slate-200">Carregando histórico...</p> : <>
       <div className="flex flex-wrap justify-between gap-3 rounded-xl border border-[#426b80] p-3">
         <span className="text-sm font-bold">{filtered.length} {filtered.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
-        <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
+        <strong className="text-amber-200">{totalLabel}: {brl(total)}</strong>
       </div>
       {!error && filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda com pedidos deste filtro na data selecionada.</p>}
       <div className="space-y-2">
-        {filtered.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
+        {filtered.map(({ tableNumber, session }) => <article key={session.id} className={'overflow-hidden rounded-xl border bg-[#193e53] ' + (session.orders.some(order => order.status === 'CANCELED') ? 'border-red-400' : 'border-[#426b80]')}>
           <button type="button" aria-expanded={expanded === session.id} onClick={() => setExpanded(value => value === session.id ? null : session.id)}
             className="flex min-h-16 w-full items-center justify-between gap-3 p-3 text-left">
             <div className="min-w-0">
@@ -91,7 +95,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
               <span className="block break-all text-xs text-slate-300">Comanda: {session.id.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="shrink-0 text-right">
-              <strong className="block text-amber-200">{brl(session.closedTotal ?? 0)}</strong>
+              <strong className={'block ' + (statusFilter === 'canceled' ? 'text-red-200' : 'text-amber-200')}>{brl(amountForSession(session))}</strong>
               <span className="text-xs text-slate-300">{expanded === session.id ? 'Ocultar ▲' : 'Detalhes ▼'}</span>
             </div>
           </button>
