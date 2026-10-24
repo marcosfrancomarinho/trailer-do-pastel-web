@@ -503,8 +503,8 @@ export default function App() {
         <main className="inner-page mx-auto max-w-6xl space-y-5 px-4 py-7 sm:py-10">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-4 text-white">
             <div className="flex min-w-0 items-center gap-3">
-              {adminDisplayName && <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#102c40] bg-[#ffca28] text-xl font-black leading-none tracking-wide text-[#102c40] shadow-sm" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>}
-              <div className="min-w-0"><p className="text-xs font-bold text-[#a2dbf3]">MESAS E COMANDAS</p><h1 className="text-xl font-black sm:text-2xl">{adminDisplayName || 'Área do funcionário'}</h1><p className="text-sm font-bold text-white">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</p></div>
+              {adminDisplayName && <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-xs font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>}
+              <div className="min-w-0"><p className="text-xs font-bold text-[#a2dbf3]">MESAS E COMANDAS</p><h1 className="text-xl font-black sm:text-2xl">{adminDisplayName || 'Área do funcionário'}</h1><p className="text-xs text-slate-300">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</p></div>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => navigate('/admin')} className="min-h-11 rounded-xl bg-[#ffca28] px-4 font-extrabold text-[#102b40]">Painel administrativo</button>
@@ -577,9 +577,9 @@ export default function App() {
           </button>
         </div>
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
-          {adminDisplayName && <div className="mb-3 flex min-w-0 items-center gap-3 rounded-2xl border border-[#a3cedd] bg-[#e9f5fa] p-3" aria-label="Perfil do usuário conectado">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#102c40] bg-[#ffca28] text-xl font-black leading-none tracking-wide text-[#102c40] shadow-sm" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>
-            <div className="min-w-0"><strong className="block break-words text-base font-extrabold leading-snug text-[#102c40]">{adminDisplayName}</strong><span className="text-sm font-bold text-[#25485a]">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</span></div>
+          {adminDisplayName && <div className="mb-3 flex min-w-0 items-center gap-2.5 rounded-xl bg-[#f3f8fa] px-3 py-2.5" aria-label="Perfil do usuário conectado">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-xs font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>
+            <div className="min-w-0"><strong className="block truncate text-sm font-semibold text-[#17384b]">{adminDisplayName}</strong><span className="text-xs text-[#567484]">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</span></div>
           </div>}
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
