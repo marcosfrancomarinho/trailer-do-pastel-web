@@ -103,6 +103,12 @@ export default function AdminComandaHistory({ token }: { token: string }) {
           {expanded === session.id && <div className="space-y-3 border-t border-[#426b80] p-3 text-sm">
             <p className="break-all text-slate-200">ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
             <p className="text-slate-300">Abertura: {dateTime(session.openedAt)}</p>
+            {(origin === 'ONLINE' || tableNumber == null) && session.orders.map(order =>
+              <div key={order.id} className="min-w-0 rounded-lg border border-[#527d92] bg-[#123449] p-3">
+                <p className="break-words text-sm font-bold text-white">Cliente: {order.customerName}</p>
+                <p className="mt-1 break-words text-sm text-slate-200">Telefone: {order.customerPhone}</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {([
                 { title: 'Realizados', status: 'COMPLETED', style: 'border-emerald-500/70 bg-[#133f39]', heading: 'text-emerald-200' },
