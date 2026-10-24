@@ -33,5 +33,5 @@ export type TableSession = { id: string; openedAt: string; closedAt: string | nu
 export type TableSessions = { tableId: string; sessions: TableSession[] }
 export type RestaurantUser = { id: string; name: string; role: 'ADMIN' | 'EMPLOYEE'; createdAt: string }
 
-export type ClosedComanda = { tableId: string; tableNumber: number; session: TableSession }
+export type ClosedComanda = { tableId: string | null; tableNumber: number | null; origin: 'TABLE' | 'ONLINE'; session: TableSession }
 export type ClosedComandaHistory = { comandas: ClosedComanda[] }
