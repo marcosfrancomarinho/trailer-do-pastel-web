@@ -22,6 +22,7 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [tables, setTables] = useState<RestaurantTable[]>([])
   const [readyTables, setReadyTables] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<string | null>(null)
+  const [tableView, setTableView] = useState<'orders' | 'new'>('orders')
   const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
   const [number, setNumber] = useState('')
@@ -102,7 +103,10 @@ export default function AdminTables({ token, products, categories }: Props) {
     setError('')
     try {
       const result = await restaurantAdapter.tableOrders(token, id)
-      if (selectionRequest.current === request) setDetails(result)
+      if (selectionRequest.current === request) {
+        setDetails(result)
+        setTableView(result.orders.length ? 'orders' : 'new')
+      }
     } catch (cause) {
       if (selectionRequest.current === request) {
         setError(cause instanceof Error ? cause.message : 'Erro ao abrir mesa.')
@@ -166,7 +170,8 @@ export default function AdminTables({ token, products, categories }: Props) {
       }, token)
       setCart([])
       setObservation('')
-        await refresh(selected)
+      await refresh(selected)
+      setTableView('orders')
       notify({ title: 'Pedido lançado', message: 'Os produtos foram vinculados à mesa.', tone: 'success' })
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Falha ao lançar pedido.') }
     finally { setBusy(false) }
@@ -279,8 +284,21 @@ export default function AdminTables({ token, products, categories }: Props) {
             )}
           </div>
         </div>
-        <div className="space-y-2">
-          <h4 className="text-base font-black">Pedidos da mesa <span className="text-cyan-200">({details.orders.length})</span></h4>
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#0b2536] p-1.5" role="tablist" aria-label={'Visualização da mesa ' + details.number}>
+          <button type="button" role="tab" aria-selected={tableView === 'orders'} onClick={() => setTableView('orders')}
+            className={'min-h-12 rounded-lg px-2 py-2 text-sm font-black transition ' + (tableView === 'orders' ? 'bg-[#ffca28] text-[#09283b]' : 'text-slate-200 hover:bg-[#23485d]')}>
+            Pedidos enviados ({details.orders.length})
+          </button>
+          <button type="button" role="tab" aria-selected={tableView === 'new'} onClick={() => setTableView('new')}
+            className={'min-h-12 rounded-lg px-2 py-2 text-sm font-black transition ' + (tableView === 'new' ? 'bg-[#ffca28] text-[#09283b]' : 'text-slate-200 hover:bg-[#23485d]')}>
+            + Novo pedido{draftCount > 0 ? ' (' + draftCount + ')' : ''}
+          </button>
+        </div>
+        {tableView === 'orders' && <div role="tabpanel" className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-base font-black">Pedidos já enviados</h4>
+            <span className="text-xs text-slate-300">Consumo da mesa: {brl(details.totalSpent)}</span>
+          </div>
           {details.orders.length === 0 && <p className="rounded-lg bg-[#193e53] px-3 py-2 text-sm text-slate-300">Nenhum pedido nesta comanda.</p>}
           {details.orders.map((order, index) => <details key={order.id} className={'group rounded-xl border ' + (order.status === 'COMPLETED' ? 'border-[#52dd91] bg-[#164e37]' : 'border-[#466b7f] bg-[#193e53]')}>
             <summary className="flex cursor-pointer list-none items-center gap-2 p-3 marker:hidden">
@@ -301,17 +319,18 @@ export default function AdminTables({ token, products, categories }: Props) {
               {['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status) && <button type="button" disabled={busy} onClick={() => void removeOrder(order.id)} className="min-h-10 rounded-lg border border-red-300 px-3 text-xs font-bold text-red-100 disabled:opacity-40">Cancelar pedido</button>}
             </div>
           </details>)}
+          <button type="button" onClick={() => setTableView('new')} className="min-h-11 w-full rounded-lg border border-[#63899a] bg-[#193e53] px-4 text-sm font-bold text-white">+ Adicionar outro pedido</button>
         </div>
-        <div className="space-y-4 border-t border-[#486f83] pt-5">
+        {tableView === 'new' && <div role="tabpanel" className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h4 className="text-lg font-black">Adicionar produtos</h4>
-            <a href="#table-cart-summary" className="rounded-lg bg-[#ffca28] px-3 py-2 text-sm font-black text-[#102b40]">Comanda ({draftCount}) · {brl(cartTotal(cart))}</a>
+            <div><h4 className="text-lg font-black">Novo pedido</h4><p className="text-xs text-slate-300">Os itens abaixo ainda não foram enviados.</p></div>
+            <a href="#table-cart-summary" className="rounded-lg bg-[#ffca28] px-3 py-2 text-sm font-black text-[#102b40]">Em montagem ({draftCount}) · {brl(cartTotal(cart))}</a>
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,330px)]">
             <aside id="table-cart-summary" className="order-table-cart-panel min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
           <form onSubmit={event => void createOrder(event)} className="grid gap-2 rounded-xl border border-[#527b8e] bg-[#193e53] p-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="flex items-center justify-between gap-2 sm:col-span-2 lg:col-span-1">
-              <h4 className="text-base font-black text-white">Comanda da mesa {details.number}</h4>
+              <h4 className="text-base font-black text-white">Pedido em montagem</h4>
               <span className="rounded-full bg-[#ffca28] px-3 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
             </div>
             <div className="space-y-2 sm:col-span-2">
@@ -330,7 +349,7 @@ export default function AdminTables({ token, products, categories }: Props) {
             </div>
             <label className="text-sm font-bold sm:col-span-2">Observações<textarea maxLength={500} rows={2} className={field + ' mt-1'} value={observation} onChange={event => setObservation(event.target.value)} /></label>
             <div className="flex items-center justify-between gap-3 rounded-lg border-t border-[#547b8e] pt-3 sm:col-span-2"><span className="font-black">Total do pedido</span><strong className="text-lg text-amber-200">{brl(cartTotal(cart))}</strong></div>
-            <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido para mesa ' + details.number}</button>
+            <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido à mesa ' + details.number}</button>
           </form>
             </aside>
             <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
@@ -358,7 +377,7 @@ export default function AdminTables({ token, products, categories }: Props) {
 
             </div>
           </div>
-        </div>
+        </div>}
       </>}
     </div>}
     {product && (
