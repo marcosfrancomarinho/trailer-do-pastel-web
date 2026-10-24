@@ -44,6 +44,11 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   }, [token, requestedDate, refreshKey])
 
   const total = comandas.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
+  const completedOrders = comandas.flatMap(({ tableNumber, session }) =>
+    session.orders.filter(order => order.status === 'COMPLETED')
+      .map(order => ({ tableNumber, session, order }))
+  )
+  const completedTotal = completedOrders.reduce((sum, { order }) => sum + Number(order.total), 0)
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
     <div>
@@ -66,6 +71,11 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         <span className="text-sm font-bold">{comandas.length} {comandas.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
         <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
       </div>
+      <button type="button" disabled={loading || !!error || completedOrders.length === 0 || date !== requestedDate}
+        onClick={() => window.print()}
+        className="min-h-11 w-full rounded-xl border border-[#ffca28] bg-[#ffca28] px-4 py-2 text-sm font-bold text-[#102c40] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto">
+        🖨️ Imprimir relatório de realizados
+      </button>
       {!error && comandas.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada na data selecionada.</p>}
       <div className="space-y-2">
         {comandas.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
@@ -121,5 +131,47 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         </article>)}
       </div>
     </>}
+    <section className="comanda-history-print" aria-label="Relatório de pedidos realizados">
+      <header className="comanda-history-print-header">
+        <h1>TRAILER DO PASTEL</h1>
+        <h2>RELATÓRIO DE PEDIDOS REALIZADOS</h2>
+        <p>Data de encerramento: {requestedDate.split('-').reverse().join('/')}</p>
+        <p>Emitido em: {dateTime(new Date().toISOString())}</p>
+      </header>
+      <div className="comanda-history-print-summary">
+        <p>Comandas com pedidos realizados: {new Set(completedOrders.map(item => item.session.id)).size}</p>
+        <p>Pedidos realizados: {completedOrders.length}</p>
+        <strong>Total realizado: {brl(completedTotal)}</strong>
+      </div>
+      {comandas.filter(({ session }) => session.orders.some(order => order.status === 'COMPLETED')).map(({ tableNumber, session }) =>
+        <section key={session.id} className="comanda-history-print-comanda">
+          <header>
+            <strong>Mesa {tableNumber} · Comanda {session.id.slice(0, 8).toUpperCase()}</strong>
+            <span>Encerrada: {session.closedAt ? dateTime(session.closedAt) : '—'}</span>
+          </header>
+          {session.orders.filter(order => order.status === 'COMPLETED').map(order =>
+            <div key={order.id} className="comanda-history-print-order">
+              <div className="comanda-history-print-line">
+                <strong>Pedido #{order.id.slice(0, 8).toUpperCase()}</strong>
+                <strong>{brl(order.total)}</strong>
+              </div>
+              {order.items.map((item, index) =>
+                <div key={index}>
+                  <p>{item.quantity}× {item.productName}</p>
+                  {item.additions.map((addition, i) =>
+                    <p key={i} className="comanda-history-print-addition">+ {addition.quantity}× {addition.additionName}</p>
+                  )}
+                </div>
+              )}
+              {order.observation && <p>Obs.: {order.observation}</p>}
+            </div>
+          )}
+          <p className="comanda-history-print-subtotal">
+            Subtotal realizado da comanda: {brl(session.orders.filter(order => order.status === 'COMPLETED').reduce((sum, order) => sum + Number(order.total), 0))}
+          </p>
+        </section>
+      )}
+      <footer className="comanda-history-print-footer">Somente pedidos concluídos. Pedidos cancelados não integram este relatório.</footer>
+    </section>
   </section>
 }
