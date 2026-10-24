@@ -320,7 +320,7 @@ export default function AdminTables({ token, products, categories }: Props) {
             </div>
           </details>)}
           <button type="button" onClick={() => setTableView('new')} className="min-h-11 w-full rounded-lg border border-[#63899a] bg-[#193e53] px-4 text-sm font-bold text-white">+ Adicionar outro pedido</button>
-        </div>
+        </div>}
         {tableView === 'new' && <div role="tabpanel" className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><h4 className="text-lg font-black">Novo pedido</h4><p className="text-xs text-slate-300">Os itens abaixo ainda não foram enviados.</p></div>
