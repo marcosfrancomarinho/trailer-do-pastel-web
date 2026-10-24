@@ -121,6 +121,8 @@ function OrderCard({
 
 export default function AdminOrders({ token }: { token: string }) {
   const [tab, setTab] = useState<Tab>('pending')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [pending, setPending] = useState<PendingOrder[]>([])
   const [preparing, setPreparing] = useState<PreparingOrder[]>([])
   const [history, setHistory] = useState<OrderHistoryItem[]>([])
@@ -140,6 +142,11 @@ export default function AdminOrders({ token }: { token: string }) {
   const seenPendingRef = useRef<Set<string>>(new Set())
   const seenDateRef = useRef('')
   const { confirm, notify, dialog } = useActionDialog()
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
+    return () => window.clearTimeout(timer)
+  }, [search])
 
   const visibleDate = dateMode === 'today' ? todayKey : chosenDate
   const currentFilterRef = useRef('')
@@ -369,6 +376,19 @@ export default function AdminOrders({ token }: { token: string }) {
   const canceled = history.filter(order => order.status === 'CANCELED')
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
   const currentOrders = onlyRequestedDay(groups[tab], visibleDate)
+  const normalizedSearch = debouncedSearch.toLocaleLowerCase('pt-BR')
+  const searchDigits = debouncedSearch.replace(/\D/g, '')
+  const filteredOrders = currentOrders.filter(order => {
+    if (!normalizedSearch) return true
+    return order.customerName.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+      order.customerPhone.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+      (searchDigits.length >= 3 && order.customerPhone.replace(/\D/g, '').includes(searchDigits)) ||
+      order.id.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+      (order.tableNumber != null && (
+        String(order.tableNumber) === normalizedSearch ||
+        ('mesa ' + order.tableNumber).includes(normalizedSearch)
+      ))
+  })
   const selectedOrder = currentOrders.find(order => order.id === selectedId)
   const printOrder = currentOrders.find(order => order.id === printId)
 
@@ -474,6 +494,28 @@ export default function AdminOrders({ token }: { token: string }) {
         </span>
       </div>
 
+      <div className="rounded-xl border border-[#315970] bg-[#102b40] p-3">
+        <label htmlFor="admin-order-search" className="mb-2 block text-sm font-bold text-slate-100">
+          Buscar pedido
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="admin-order-search"
+            type="search"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            placeholder="Nome, telefone, pedido ou mesa"
+            autoComplete="off"
+            className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#79a5ba] bg-white px-3 py-2 text-base text-[#09283b] placeholder:text-slate-500"
+          />
+          {search && <button type="button" onClick={() => { setSearch(''); setDebouncedSearch('') }}
+            className="min-h-11 rounded-xl border border-[#467991] px-3 text-sm font-bold text-white">
+            Limpar
+          </button>}
+        </div>
+        <p className="mt-2 text-xs text-slate-300">Pesquisa nos pedidos da data e situação selecionadas.</p>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
         {tabs.map(option => (
           <button
@@ -490,7 +532,7 @@ export default function AdminOrders({ token }: { token: string }) {
             }
           >
             <span className="block">{option.label}</span>
-            {tab === option.id && <strong className="mt-1 block text-lg">{currentOrders.length}</strong>}
+            {tab === option.id && <strong className="mt-1 block text-lg">{filteredOrders.length}</strong>}
           </button>
         ))}
       </div>
@@ -498,13 +540,13 @@ export default function AdminOrders({ token }: { token: string }) {
       {error && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{error}</p>}
       {loading ? (
         <p className="text-slate-200">Carregando pedidos...</p>
-      ) : currentOrders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <p className="rounded-xl border border-[#345971] bg-[#112e43] p-6 text-center text-slate-200">
-          Nenhum pedido em {tabs.find(option => option.id === tab)?.label.toLowerCase()}.
+          {debouncedSearch ? 'Nenhum pedido encontrado para esta pesquisa.' : `Nenhum pedido em ${tabs.find(option => option.id === tab)?.label.toLowerCase()}.`}
         </p>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {currentOrders.map(order => (
+          {filteredOrders.map(order => (
             <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} onOpen={order => setSelectedId(order.id)} onPrint={order => setPrintId(order.id)} />
           ))}
         </div>
