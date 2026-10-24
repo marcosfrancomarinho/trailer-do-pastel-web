@@ -69,7 +69,11 @@ export default function OrderDetails({
           )}
         </div>
 
-        {order.tableNumber != null && <p className="mt-4 rounded-lg border border-amber-300 bg-[#4e3b1e] p-3 text-base font-black text-amber-100">🪑 Mesa {order.tableNumber}</p>}
+        {order.tableId != null && <div className="mt-4 rounded-xl border border-amber-300/70 bg-[#4e3b1e] p-3 text-amber-100">
+          <p className="text-xs font-bold uppercase tracking-wide">Comanda da mesa</p>
+          <p className="mt-1 text-base font-black">🪑 {order.tableNumber != null ? 'Mesa ' + order.tableNumber : 'Pedido de mesa'}</p>
+          <p className="mt-1 text-xs text-amber-100/80">Pedido #{order.id.slice(0, 8)}</p>
+        </div>}
         {order.observation && <div className="mt-4 rounded-xl border border-amber-300 bg-[#4c3d1d] p-4"><strong>Observações do cliente</strong><p className="mt-1 whitespace-pre-wrap text-sm text-white">{order.observation}</p></div>}
         <h3 className="mt-6 mb-3 text-lg font-extrabold">Itens do pedido</h3>
         <div className="divide-y divide-[#365f74] rounded-xl border border-[#365f74]">
