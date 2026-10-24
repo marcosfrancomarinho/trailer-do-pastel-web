@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../domain/models'
 import { brl } from '../../api'
 
@@ -16,11 +17,31 @@ const date = (value: string) => new Date(value).toLocaleString('pt-BR', { timeZo
 
 export default function OrderDetails({
   order,
+  token,
   onClose,
 }: {
   order: AdminOrder
+  token: string
   onClose: () => void
 }) {
+  const [comandaId, setComandaId] = useState<string | null>(null)
+  const [comandaLoading, setComandaLoading] = useState(false)
+
+  useEffect(() => {
+    if (!order.tableId) return
+    let active = true
+    setComandaId(null)
+    setComandaLoading(true)
+    void restaurantAdapter.tableSessions(token, order.tableId).then(result => {
+      if (active) setComandaId(result.sessions.find(session => session.orders.some(item => item.id === order.id))?.id ?? null)
+    }).catch(() => {
+      if (active) setComandaId(null)
+    }).finally(() => {
+      if (active) setComandaLoading(false)
+    })
+    return () => { active = false }
+  }, [order.id, order.tableId, token])
+
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -72,7 +93,7 @@ export default function OrderDetails({
         {order.tableId != null && <div className="mt-4 rounded-xl border border-amber-300/70 bg-[#4e3b1e] p-3 text-amber-100">
           <p className="text-xs font-bold uppercase tracking-wide">Comanda da mesa</p>
           <p className="mt-1 text-base font-black">🪑 {order.tableNumber != null ? 'Mesa ' + order.tableNumber : 'Pedido de mesa'}</p>
-          <p className="mt-1 text-xs text-amber-100/80">Pedido #{order.id.slice(0, 8)}</p>
+          <p className="mt-1 break-all text-sm font-bold">ID da comanda: {comandaLoading ? 'Carregando...' : comandaId ? comandaId.slice(0, 8).toUpperCase() : 'Não disponível'}</p>
         </div>}
         {order.observation && <div className="mt-4 rounded-xl border border-amber-300 bg-[#4c3d1d] p-4"><strong>Observações do cliente</strong><p className="mt-1 whitespace-pre-wrap text-sm text-white">{order.observation}</p></div>}
         <h3 className="mt-6 mb-3 text-lg font-extrabold">Itens do pedido</h3>
