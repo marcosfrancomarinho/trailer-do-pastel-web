@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cartTotal, toOrderPayload, type CartItem } from '../../domain/cart'
 import { brl } from '../../api'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
-import type { Addition, Category, Product, RestaurantTable, TableOrders, TableSessions } from '../../domain/models'
+import type { Addition, Category, Product, RestaurantTable, TableOrders } from '../../domain/models'
 import { useActionDialog } from '../molecules/ActionDialog'
 
 type Props = { token: string; products: Product[]; categories: Category[] }
@@ -24,7 +24,6 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
-  const [sessions, setSessions] = useState<TableSessions | null>(null)
   const [number, setNumber] = useState('')
   const [observation, setObservation] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
@@ -92,13 +91,11 @@ export default function AdminTables({ token, products, categories }: Props) {
     if (selected === id) {
       setSelected(null)
       setDetails(null)
-      setSessions(null)
-      setProduct(null)
+        setProduct(null)
       setError('')
       return
     }
     setSelected(id)
-    setSessions(null)
     setDetails(null)
     setProduct(null)
     setCart([])
@@ -206,8 +203,7 @@ export default function AdminTables({ token, products, categories }: Props) {
       await restaurantAdapter.archiveTable(token, tableId)
       setSelected(null)
       setDetails(null)
-      setSessions(null)
-      await refresh()
+        await refresh()
       notify({
         title: 'Mesa retirada de uso',
         message: 'A mesa ' + tableNumber + ' foi arquivada com sucesso. O histórico foi preservado.',
@@ -233,11 +229,6 @@ export default function AdminTables({ token, products, categories }: Props) {
     finally { setBusy(false) }
   }
 
-  async function showSessions() {
-    if (!selected) return
-    try { setSessions(await restaurantAdapter.tableSessions(token, selected)) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Erro ao carregar histórico.') }
-  }
 
   return <section className="space-y-5 text-white">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -268,7 +259,6 @@ export default function AdminTables({ token, products, categories }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h3 className="text-xl font-black">Mesa {details.number}</h3><p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · Total consumido: <strong>{brl(details.totalSpent)}</strong></p></div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={button} onClick={() => void showSessions()}>Histórico</button>
             {details.status === 'OCCUPIED' ? (
               <button disabled={busy} type="button" className={button} onClick={() => void release()}>Liberar mesa</button>
             ) : (
@@ -364,7 +354,6 @@ export default function AdminTables({ token, products, categories }: Props) {
             </div>
           </div>
         </div>
-        {sessions && <div className="space-y-2"><h4 className="font-black">Sessões anteriores e atuais</h4>{sessions.sessions.map(session => <div key={session.id} className="rounded-xl border border-[#446d82] p-3 text-sm"><p>{new Date(session.openedAt).toLocaleString('pt-BR')} — {session.closedAt ? new Date(session.closedAt).toLocaleString('pt-BR') : 'Em andamento'}</p><p>{session.orders.length} pedidos · {session.closedTotal ? brl(session.closedTotal) : 'Aberta'}</p></div>)}</div>}
       </>}
     </div>}
     {product && (
