@@ -645,3 +645,35 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
   .comanda-history-print-subtotal{text-align:right;font-weight:bold;margin:8px 0 0}
   .comanda-history-print-footer{font-size:9pt;text-align:center;margin-top:18px}
 }
+
+/* Impressão do relatório: retira o conteúdo da área de rolagem do painel administrativo. */
+@media print{
+  body.printing-comanda-history,
+  body.printing-comanda-history html,
+  body.printing-comanda-history #root,
+  body.printing-comanda-history .restaurant-app,
+  body.printing-comanda-history .admin-layout{
+    overflow:visible!important;height:auto!important;min-height:0!important;
+    max-height:none!important;transform:none!important;filter:none!important;
+  }
+  body.printing-comanda-history .comanda-history-print{
+    display:block!important;
+    position:fixed!important;
+    inset:0 auto auto 0!important;
+    z-index:2147483647!important;
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+    padding:8mm 12mm!important;
+    margin:0!important;
+    color:#111!important;
+    background:#fff!important;
+    transform:none!important;
+  }
+  body.printing-comanda-history .comanda-history-print,
+  body.printing-comanda-history .comanda-history-print *{
+    visibility:visible!important;
+  }
+}
