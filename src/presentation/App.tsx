@@ -430,6 +430,7 @@ export default function App() {
       })
       saveAdminSession(logged.accessToken)
       sessionStorage.setItem('trailer-admin-role', logged.role)
+      sessionStorage.setItem('trailer-admin-name', logged.name)
       setAdminRole(logged.role)
       setAdminToken(logged.accessToken); setAdminPassword('')
       navigate('/mesas')
@@ -594,7 +595,7 @@ export default function App() {
             onClick={() => {saveAdminSession(''); setAdminToken(''); sessionStorage.removeItem('trailer-admin-role'); setAdminRole('EMPLOYEE'); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
-          {adminRole !== 'ADMIN' || adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'comanda-history' ? <AdminComandaHistory token={adminToken} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
+          {adminRole !== 'ADMIN' || adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'comanda-history' ? <AdminComandaHistory token={adminToken} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' ? <AdminUsers token={adminToken} currentUserName={sessionStorage.getItem('trailer-admin-name') ?? ''} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div></>}
     </main>} />
