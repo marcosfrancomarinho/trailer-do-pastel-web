@@ -124,7 +124,7 @@ function CustomerOrderDetails({
   )
 }
 
-export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }: Props) {
+export default function CustomerOrders({ orders, statuses, onRemove }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null)
   const { confirm, notify, dialog } = useActionDialog()
   const selected = orders.find(order => order.trackingToken === selectedToken)
@@ -182,7 +182,6 @@ export default function CustomerOrders({ orders, statuses, onRemove, onRefresh }
                   </div>
                 </button>
                 <div className="customer-card-footer">
-                  <button type="button" onClick={() => onRefresh(order.trackingToken)}>Atualizar status</button>
                   <button type="button" onClick={() => { void remove(order) }}>Excluir</button>
                 </div>
               </article>
