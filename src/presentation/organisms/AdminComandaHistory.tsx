@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { brl } from '../../api'
 import type { ClosedComanda } from '../../domain/models'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
+import { printComandaReport } from './print-comanda-report'
 
 const dateKey = (value: string | Date) => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -43,20 +44,6 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     return () => { active = false }
   }, [token, requestedDate, refreshKey])
 
-  useEffect(() => {
-    const clearPrintMode = () => document.body.classList.remove('printing-comanda-history')
-    window.addEventListener('afterprint', clearPrintMode)
-    return () => {
-      window.removeEventListener('afterprint', clearPrintMode)
-      clearPrintMode()
-    }
-  }, [])
-
-  const printReport = () => {
-    document.body.classList.add('printing-comanda-history')
-    window.print()
-  }
-
   const total = comandas.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
   const completedOrders = comandas.flatMap(({ tableNumber, session }) =>
     session.orders.filter(order => order.status === 'COMPLETED')
@@ -86,7 +73,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
       </div>
       <button type="button" disabled={loading || !!error || completedOrders.length === 0 || date !== requestedDate}
-        onClick={printReport}
+        onClick={() => printComandaReport(comandas, requestedDate)}
         className="min-h-11 w-full rounded-xl border border-[#ffca28] bg-[#ffca28] px-4 py-2 text-sm font-bold text-[#102c40] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto">
         🖨️ Imprimir relatório de realizados
       </button>
@@ -145,47 +132,6 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         </article>)}
       </div>
     </>}
-    <section className="comanda-history-print" aria-label="Relatório de pedidos realizados">
-      <header className="comanda-history-print-header">
-        <h1>TRAILER DO PASTEL</h1>
-        <h2>RELATÓRIO DE PEDIDOS REALIZADOS</h2>
-        <p>Data de encerramento: {requestedDate.split('-').reverse().join('/')}</p>
-        <p>Emitido em: {dateTime(new Date().toISOString())}</p>
-      </header>
-      <div className="comanda-history-print-summary">
-        <p>Comandas com pedidos realizados: {new Set(completedOrders.map(item => item.session.id)).size}</p>
-        <p>Pedidos realizados: {completedOrders.length}</p>
-        <strong>Total realizado: {brl(completedTotal)}</strong>
-      </div>
-      {comandas.filter(({ session }) => session.orders.some(order => order.status === 'COMPLETED')).map(({ tableNumber, session }) =>
-        <section key={session.id} className="comanda-history-print-comanda">
-          <header>
-            <strong>Mesa {tableNumber} · Comanda {session.id.slice(0, 8).toUpperCase()}</strong>
-            <span>Encerrada: {session.closedAt ? dateTime(session.closedAt) : '—'}</span>
-          </header>
-          {session.orders.filter(order => order.status === 'COMPLETED').map(order =>
-            <div key={order.id} className="comanda-history-print-order">
-              <div className="comanda-history-print-line">
-                <strong>Pedido #{order.id.slice(0, 8).toUpperCase()}</strong>
-                <strong>{brl(order.total)}</strong>
-              </div>
-              {order.items.map((item, index) =>
-                <div key={index}>
-                  <p>{item.quantity}× {item.productName}</p>
-                  {item.additions.map((addition, i) =>
-                    <p key={i} className="comanda-history-print-addition">+ {addition.quantity}× {addition.additionName}</p>
-                  )}
-                </div>
-              )}
-              {order.observation && <p>Obs.: {order.observation}</p>}
-            </div>
-          )}
-          <p className="comanda-history-print-subtotal">
-            Subtotal realizado da comanda: {brl(session.orders.filter(order => order.status === 'COMPLETED').reduce((sum, order) => sum + Number(order.total), 0))}
-          </p>
-        </section>
-      )}
-      <footer className="comanda-history-print-footer">Somente pedidos concluídos. Pedidos cancelados não integram este relatório.</footer>
-    </section>
+
   </section>
 }
