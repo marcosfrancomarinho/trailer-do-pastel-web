@@ -285,7 +285,6 @@ export default function AdminTables({ token, products, categories }: Props) {
               </div>)}
               {cart.length === 0 && <p className="text-sm text-slate-200">Selecione um produto acima para começar.</p>}
             </div>
-            <p className="rounded-lg border border-[#547b8e] bg-[#102c40] p-3 text-sm text-slate-200 sm:col-span-2 lg:col-span-1">Pedido interno vinculado à mesa, sem necessidade de informar nome ou telefone do cliente.</p>
             <label className="text-sm font-bold sm:col-span-2">Observações<textarea maxLength={500} rows={2} className={field + ' mt-1'} value={observation} onChange={event => setObservation(event.target.value)} /></label>
             <div className="flex items-center justify-between gap-3 rounded-lg border-t border-[#547b8e] pt-3 sm:col-span-2"><span className="font-black">Total do pedido</span><strong className="text-lg text-amber-200">{brl(cartTotal(cart))}</strong></div>
             <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido para mesa ' + details.number}</button>
