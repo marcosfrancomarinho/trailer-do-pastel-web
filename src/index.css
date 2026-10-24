@@ -619,7 +619,6 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 /* Relatório administrativo A4: impressão isolada do histórico de realizados. */
 .comanda-history-print{display:none}
 @media print{
-  body:has(.comanda-history-print) @page{margin:12mm}
   body:has(.comanda-history-print) .receipt-print,body:has(.comanda-history-print) .receipt-print *{visibility:hidden!important}
   body:has(.comanda-history-print) .comanda-history-print{
     display:block!important;visibility:visible!important;position:absolute!important;top:0!important;left:0!important;
