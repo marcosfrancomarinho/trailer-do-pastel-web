@@ -33,7 +33,7 @@ export default function AdminUsers({ token }: { token: string }) {
   }
 
   return <section className="space-y-4 text-white">
-    <div className="flex items-center justify-between gap-2"><h2 className="text-2xl font-black">Gerenciar usuários</h2><button type="button" className="rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#09283b]" onClick={() => void refresh()}>Atualizar</button></div>
+    <h2 className="text-2xl font-black">Gerenciar usuários</h2>
     <p className="text-sm text-slate-200">Somente administradores podem listar ou excluir contas.</p>
     {error && <p role="alert" className="rounded-xl bg-[#562c37] p-3">{error}</p>}
     {users.map(user => <article key={user.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#51778b] bg-[#14374d] p-4">
