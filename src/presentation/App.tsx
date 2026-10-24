@@ -564,11 +564,6 @@ export default function App() {
         </div>
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
-          <button type="button" aria-pressed={notificationsOn} onClick={switchNotifications}
-            className={'mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-extrabold ' +
-              (notificationsOn ? 'border-[#dfac29] bg-[#ffca28] text-[#102c40]' : 'border-[#54778b] bg-[#25475b] text-white')}>
-            {notificationsOn ? '🔔 Som / notificações ligados' : '🔕 Som / notificações desligados'}
-          </button>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
             {([['orders', '📋', 'Pedidos'], ['comanda-history', '🧾', 'Histórico de comandas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
               <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
