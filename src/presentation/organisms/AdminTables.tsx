@@ -25,6 +25,8 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const [tableView, setTableView] = useState<'orders' | 'new'>('orders')
   const selectionRequest = useRef(0)
+  const cartPanelRef = useRef<HTMLElement | null>(null)
+  const [cartFocusRequest, setCartFocusRequest] = useState(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
   const [printTable, setPrintTable] = useState<TableOrders | null>(null)
   const [number, setNumber] = useState('')
@@ -157,6 +159,14 @@ export default function AdminTables({ token, products, categories }: Props) {
     finally { setAdditionsBusy(false) }
   }
 
+  useEffect(() => {
+    if (cartFocusRequest === 0 || product) return
+    const frame = window.requestAnimationFrame(() => {
+      cartPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [cartFocusRequest, product])
+
   function addProduct() {
     if (!product || additionsBusy) return
     const selectedAdditions = additions.filter(item => item.available && (amounts[item.id] ?? 0) > 0)
@@ -169,6 +179,7 @@ export default function AdminTables({ token, products, categories }: Props) {
         : [...previous, { key, product, quantity, additions: selectedAdditions }]
     })
     setProduct(null)
+    setCartFocusRequest(value => value + 1)
   }
 
   async function createOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -343,24 +354,26 @@ export default function AdminTables({ token, products, categories }: Props) {
         {tableView === 'new' && <div role="tabpanel" className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div><h4 className="text-base font-black">Novo pedido</h4><p className="text-xs text-slate-300">Selecione os produtos para esta mesa</p></div>
-            <a href="#table-cart-summary" className="shrink-0 rounded-lg border border-[#63899a] px-2 py-2 text-xs font-bold text-white">Ver carrinho ({draftCount})</a>
+            <button type="button" onClick={() => cartPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="shrink-0 rounded-lg border border-[#63899a] px-2 py-2 text-xs font-bold text-white">Ver carrinho ({draftCount})</button>
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,330px)]">
-            <aside id="table-cart-summary" className="order-table-cart-panel min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
+            <aside id="table-cart-summary" ref={cartPanelRef} className="order-table-cart-panel min-w-0 scroll-mt-3 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
           <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl border border-[#527b8e] bg-[#193e53] p-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="flex items-center justify-between gap-2 sm:col-span-2 lg:col-span-1">
               <h4 className="text-base font-black text-white">Pedido em montagem</h4>
               <span className="rounded-md bg-[#ffca28] px-2 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
             </div>
             <div className="space-y-2 sm:col-span-2">
-              {cart.map(item => <div key={item.key} className="rounded-lg border border-[#63899a] bg-[#102c40] p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <strong>{item.quantity}× {item.product.name}</strong><span>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((total, extra) => total + Number(extra.addition.price) * extra.quantity, 0)))}</span>
+              {cart.map((item, index) => <div key={item.key} className="rounded-lg border border-[#4f7286] bg-[#102c40] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1"><span className="mb-1 block text-[11px] font-bold text-slate-300">Item {index + 1}</span><strong className="block break-words text-sm leading-snug text-white">{item.product.name}</strong></div>
+                  <strong className="shrink-0 text-sm text-amber-200">{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((total, extra) => total + Number(extra.addition.price) * extra.quantity, 0)))}</strong>
                 </div>
                 {item.additions.map(extra => <p key={extra.addition.id} className="text-sm text-slate-200">+ {extra.quantity}× {extra.addition.name}</p>)}
-                <div className="mt-3 flex items-center gap-2">
-                  <button type="button" aria-label="Diminuir quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity - 1 } : value).filter(value => value.quantity > 0))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">−</button>
-                  <button type="button" aria-label="Aumentar quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity + 1 } : value))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">+</button>
+                <div className="mt-3 flex items-center gap-2 border-t border-[#345a70] pt-2">
+                  <button type="button" aria-label="Diminuir quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity - 1 } : value).filter(value => value.quantity > 0))} className="grid h-9 w-9 place-items-center rounded-lg bg-[#ffca28] font-bold text-[#102c40]">−</button>
+                  <span className="min-w-6 text-center text-sm font-black">{item.quantity}</span>
+                  <button type="button" aria-label="Aumentar quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity + 1 } : value))} className="grid h-9 w-9 place-items-center rounded-lg bg-[#ffca28] font-bold text-[#102c40]">+</button>
                   <button type="button" onClick={() => setCart(items => items.filter(value => value.key !== item.key))} className="ml-auto text-xs font-bold text-red-200 underline">Remover</button>
                 </div>
               </div>)}
