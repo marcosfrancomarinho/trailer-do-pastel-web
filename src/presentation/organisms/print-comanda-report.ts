@@ -23,6 +23,7 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
     const orderHtml = orders.map(order => `
       <div class="order">
         <div class="line"><strong>Pedido #${escapeHtml(order.id.slice(0, 8).toUpperCase())}</strong><strong>${escapeHtml(brl(order.total))}</strong></div>
+        ${(origin === 'ONLINE' || tableNumber == null) ? `<p class="customer"><strong>Cliente:</strong> ${escapeHtml(order.customerName)}</p>` : ''}
         ${order.items.map(item => `
           <p>${escapeHtml(item.quantity)}× ${escapeHtml(item.productName)}</p>
           ${item.additions.map(addition => `<p class="addition">+ ${escapeHtml(addition.quantity)}× ${escapeHtml(addition.additionName)}</p>`).join('')}
@@ -66,6 +67,7 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
   .order { padding: 7px 0; border-bottom: 1px dashed #bbb; }
   .order p { margin: 2px 0; overflow-wrap: anywhere; }
   .addition { padding-left: 15px; font-size: 9pt; }
+  .customer { margin: 4px 0; overflow-wrap: anywhere; }
   .subtotal { text-align: right; font-weight: bold; margin: 8px 0 0; }
   footer { font-size: 9pt; text-align: center; margin-top: 18px; }
   @media print { main { padding: 0; } }
