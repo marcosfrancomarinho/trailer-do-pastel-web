@@ -6,7 +6,7 @@ import { restaurantDateKey, todayRestaurantDate } from '../../domain/order-date'
 import OrderDetails from './OrderDetails'
 import OrderReceipt from './OrderReceipt'
 import { useActionDialog } from '../molecules/ActionDialog'
-import { OrderAlert } from '../audio/order-alert'
+import { orderAlert } from '../audio/order-alert'
 
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
@@ -134,8 +134,7 @@ export default function AdminOrders({ token }: { token: string }) {
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
   const [soundEnabled, setSoundEnabled] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
   const [newOrderCount, setNewOrderCount] = useState(0)
-  const [soundReady, setSoundReady] = useState(false)
-  const alertRef = useRef<OrderAlert | null>(null)
+  const [soundReady, setSoundReady] = useState(() => orderAlert.isReady())
   const soundEnabledRef = useRef(soundEnabled)
   soundEnabledRef.current = soundEnabled
   const seenPendingRef = useRef<Set<string>>(new Set())
@@ -161,40 +160,39 @@ export default function AdminOrders({ token }: { token: string }) {
       const added = filtered.filter(order => !seenPendingRef.current.has(order.id))
       if (added.length > 0 && date === todayRestaurantDate()) {
         setNewOrderCount(previous => previous + added.length)
-        if (soundEnabledRef.current) alertRef.current?.play()
+        if (soundEnabledRef.current) orderAlert.play()
       }
       for (const id of ids) seenPendingRef.current.add(id)
     }
     setPending(filtered)
   }, [onlyRequestedDay])
 
-  useEffect(() => {
-    const alert = new OrderAlert()
-    alertRef.current = alert
-    return () => {
-      alertRef.current = null
-      alert.close()
-    }
-  }, [])
-
-  // Preferência ligada por padrão. Libera o AudioContext na primeira interação
-  // do administrador, conforme as regras de autoplay dos navegadores.
+  // Mantém o áudio entre as telas. Se o navegador suspender a saída,
+  // reativa no próximo gesto permitido pelo navegador.
   useEffect(() => {
     if (!soundEnabled) return
+    let active = true
     const unlock = () => {
-      void alertRef.current?.enable().then(() => {
-        setSoundReady(true)
-        document.removeEventListener('pointerdown', unlock)
-        document.removeEventListener('keydown', unlock)
+      if (orderAlert.isReady()) {
+        if (active) setSoundReady(true)
+        return
+      }
+      void orderAlert.enable().then(() => {
+        if (active) setSoundReady(true)
       }).catch(() => {
-        // O próximo gesto do usuário fará uma nova tentativa.
+        if (active) setSoundReady(false)
       })
     }
     document.addEventListener('pointerdown', unlock)
     document.addEventListener('keydown', unlock)
+    document.addEventListener('visibilitychange', unlock)
+    window.addEventListener('focus', unlock)
     return () => {
+      active = false
       document.removeEventListener('pointerdown', unlock)
       document.removeEventListener('keydown', unlock)
+      document.removeEventListener('visibilitychange', unlock)
+      window.removeEventListener('focus', unlock)
     }
   }, [soundEnabled])
 
@@ -203,16 +201,15 @@ export default function AdminOrders({ token }: { token: string }) {
       setSoundEnabled(false)
       setSoundReady(false)
       window.localStorage.setItem('admin-order-sound', 'off')
-      alertRef.current?.close()
-      alertRef.current = new OrderAlert()
+      orderAlert.close()
       return
     }
     try {
-      await alertRef.current?.enable()
+      await orderAlert.enable()
       setSoundEnabled(true)
       setSoundReady(true)
       window.localStorage.setItem('admin-order-sound', 'on')
-      alertRef.current?.play()
+      orderAlert.play()
     } catch {
       notify({
         title: 'Áudio bloqueado',
@@ -224,7 +221,7 @@ export default function AdminOrders({ token }: { token: string }) {
 
   const unlockSound = async () => {
     try {
-      await alertRef.current?.enable()
+      await orderAlert.enable()
       setSoundReady(true)
     } catch {
       setSoundReady(false)
