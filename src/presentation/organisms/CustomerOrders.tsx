@@ -50,7 +50,7 @@ function CustomerOrderDetails({
         role="dialog"
         aria-modal="true"
         aria-labelledby="customer-order-title"
-        className={'customer-dialog ' + (status === 'COMPLETED' ? 'customer-dialog-ready' : status === 'CANCELED' ? 'customer-dialog-canceled' : '')}
+        className={'customer-dialog ' + (status === 'COMPLETED' ? 'customer-dialog-ready' : status === 'CANCELED' ? 'customer-dialog-canceled' : status === 'PREPARING' ? 'customer-dialog-preparing' : '')}
       >
         <header className="customer-dialog-heading">
           <div>
@@ -60,7 +60,7 @@ function CustomerOrderDetails({
           <button type="button" autoFocus onClick={onClose} aria-label="Fechar detalhes" className="customer-close">✕</button>
         </header>
 
-        <div className={'customer-detail-status ' + (status === 'COMPLETED' ? 'customer-detail-ready' : status === 'CANCELED' ? 'customer-detail-canceled' : '')}>
+        <div className={'customer-detail-status ' + (status === 'COMPLETED' ? 'customer-detail-ready' : status === 'CANCELED' ? 'customer-detail-canceled' : status === 'PREPARING' ? 'customer-detail-preparing' : '')}>
           <span>Situação atual</span>
           <strong>{labels[status] ?? status}</strong>
         </div>
@@ -156,7 +156,7 @@ export default function CustomerOrders({ orders, statuses, onRemove }: Props) {
             const status = statuses[order.trackingToken] ?? order.status
             const quantity = order.details?.items.reduce((sum, item) => sum + item.quantity, 0)
             return (
-              <article key={order.trackingToken} className={'customer-order-card ' + (status === 'COMPLETED' ? 'customer-order-ready' : status === 'CANCELED' ? 'customer-order-canceled' : '')}>
+              <article key={order.trackingToken} className={'customer-order-card ' + (status === 'COMPLETED' ? 'customer-order-ready' : status === 'CANCELED' ? 'customer-order-canceled' : status === 'PREPARING' ? 'customer-order-preparing' : '')}>
                 <button
                   type="button"
                   onClick={() => setSelectedToken(order.trackingToken)}
@@ -167,7 +167,7 @@ export default function CustomerOrders({ orders, statuses, onRemove }: Props) {
                     <span className="customer-order-number">Pedido #{order.id.slice(0, 8)}</span>
                     <span className="customer-card-chevron" aria-hidden="true">›</span>
                   </div>
-                  <span className={'customer-order-status ' + (status === 'COMPLETED' ? 'customer-status-ready' : status === 'CANCELED' ? 'customer-status-canceled' : '')}>
+                  <span className={'customer-order-status ' + (status === 'COMPLETED' ? 'customer-status-ready' : status === 'CANCELED' ? 'customer-status-canceled' : status === 'PREPARING' ? 'customer-status-preparing' : '')}>
                     {status === 'COMPLETED' ? '✓ Pronto para retirada' : status === 'CANCELED' ? '✕ Pedido cancelado' : labels[status] ?? status}
                   </span>
                   {status === 'COMPLETED' && (
