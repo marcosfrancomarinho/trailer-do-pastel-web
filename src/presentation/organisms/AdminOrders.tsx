@@ -51,7 +51,7 @@ function OrderCard({
 
   return (
     <article className="min-w-0 overflow-hidden rounded-2xl border border-[#37637b] bg-[#112e43] shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-[#31566e] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#31566e] px-3 py-3 sm:px-4">
         <span className="text-xs font-extrabold tracking-wider text-cyan-200">
           #{order.id.slice(0, 8)}
         </span>
@@ -60,8 +60,8 @@ function OrderCard({
         </span>
       </div>
 
-      <div className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="space-y-3 p-3 sm:p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="break-words text-lg font-black text-white">{order.customerName}</h3>
             <p className="text-sm text-slate-300">{order.customerPhone}</p>
@@ -75,11 +75,11 @@ function OrderCard({
 
         {order.observation && <p className="rounded-lg bg-[#3d3925] p-3 text-sm font-bold text-amber-100">📝 {order.observation}</p>}
         <p className="inline-flex rounded-lg border border-amber-300 bg-[#57431f] px-3 py-1.5 text-sm font-black text-amber-100">{order.tableNumber != null ? `🪑 Mesa ${order.tableNumber}` : '🛍️ Pedido online'}</p>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => onOpen(order)}
-            className="min-h-11 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-4 py-3 text-sm font-bold text-white hover:bg-[#27576f]"
+            className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-4 py-3 text-sm font-bold text-white hover:bg-[#27576f]"
             aria-label={'Ver detalhes do pedido ' + order.id.slice(0, 8)}
           >
             Detalhes
@@ -95,12 +95,12 @@ function OrderCard({
         </div>
 
         {action && (
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               type="button"
               disabled={busy}
               onClick={() => void onStatusChange(order.id, action.next)}
-              className="flex-1 rounded-xl bg-[#ffca28] px-4 py-3 text-sm font-extrabold text-[#082739] disabled:opacity-60"
+              className="min-h-11 min-w-0 rounded-xl bg-[#ffca28] px-2 py-3 sm:px-4 text-sm font-extrabold text-[#082739] disabled:opacity-60"
             >
               {busy ? 'Salvando...' : action.label}
             </button>
@@ -108,7 +108,7 @@ function OrderCard({
               type="button"
               disabled={busy}
               onClick={() => void onStatusChange(order.id, 'COMPLETED')}
-              className="rounded-xl border border-emerald-300 bg-[#146044] px-4 py-3 text-sm font-bold text-white hover:bg-[#187652] disabled:opacity-60"
+              className="min-h-11 min-w-0 rounded-xl border border-emerald-300 bg-[#146044] px-2 py-3 sm:px-4 text-sm font-bold text-white hover:bg-[#187652] disabled:opacity-60"
               title="Concluir o pedido sem passar pelo preparo"
             >
               ✓ Concluir direto
@@ -117,7 +117,7 @@ function OrderCard({
               type="button"
               disabled={busy}
               onClick={() => void onStatusChange(order.id, 'CANCELED')}
-              className="rounded-xl border border-red-300 bg-[#512832] px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
+              className="col-span-2 min-h-11 rounded-xl border border-red-300 bg-[#512832] px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
             >
               Cancelar
             </button>
@@ -432,12 +432,12 @@ export default function AdminOrders({ token }: { token: string }) {
 
   return (
     <section className="space-y-4" aria-label="Painel de pedidos">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-black text-white sm:text-2xl">Pedidos</h2>
           <p className="text-xs text-slate-300">{tab === 'pending' ? 'Atualização automática' : 'Consulte os pedidos por situação'}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => { void toggleSound() }}
@@ -478,7 +478,7 @@ export default function AdminOrders({ token }: { token: string }) {
       )}
 
       <div className="flex flex-col gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3 sm:flex-row sm:items-center">
-        <div className="flex shrink-0 items-center gap-2" role="group" aria-label="Período dos pedidos">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Período dos pedidos">
           <button type="button" aria-pressed={dateMode === 'today'} onClick={() => setDateMode('today')}
             className={'min-h-10 rounded-lg px-3 text-sm font-bold ' + (dateMode === 'today' ? 'bg-[#ffca28] text-[#082739]' : 'bg-[#1b4258] text-white')}>Hoje</button>
           <button type="button" aria-pressed={dateMode === 'custom'}
@@ -487,7 +487,7 @@ export default function AdminOrders({ token }: { token: string }) {
         </div>
         {dateMode === 'custom' && <input type="date" lang="pt-BR" max={todayKey} value={chosenDate}
           onChange={event => { const date = event.target.value; if (date && date <= todayKey) setChosenDate(date) }}
-          className="min-h-10 rounded-lg border border-[#79a5ba] bg-white px-2 text-sm font-bold text-[#09283b]"
+          className="min-h-10 w-full min-w-0 rounded-lg border border-[#79a5ba] bg-white px-2 sm:w-auto text-sm font-bold text-[#09283b]"
           aria-label="Selecionar data dos pedidos" />}
         <div className="relative min-w-0 flex-1">
           <label className="sr-only" htmlFor="admin-order-search">Buscar pedido</label>
@@ -499,7 +499,7 @@ export default function AdminOrders({ token }: { token: string }) {
         </div>
       </div>
 
-      {!debouncedSearch && (<div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Situação dos pedidos">
+      {!debouncedSearch && (<div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
         {tabs.map(option => (
           <button
             key={option.id}
@@ -508,7 +508,7 @@ export default function AdminOrders({ token }: { token: string }) {
             aria-selected={tab === option.id}
             onClick={() => setTab(option.id)}
             className={
-              'min-h-12 rounded-lg border px-1.5 py-2 text-center text-[11px] font-bold leading-tight sm:px-3 sm:text-sm ' +
+              'min-h-12 min-w-0 rounded-lg border px-2 py-2 text-center text-xs font-bold leading-tight sm:px-3 sm:text-sm ' +
               (tab === option.id
                 ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
                 : 'border-[#34637c] bg-[#173b51] text-white hover:bg-[#24536c]')
@@ -530,7 +530,7 @@ export default function AdminOrders({ token }: { token: string }) {
           {debouncedSearch ? 'Nenhum pedido encontrado para esta pesquisa.' : `Nenhum pedido em ${tabs.find(option => option.id === tab)?.label.toLowerCase()}.`}
         </p>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-3 xl:grid-cols-2 xl:gap-4">
           {filteredOrders.map(order => (
             <OrderCard key={order.id} order={order} busy={busyId === order.id} onStatusChange={changeStatus} onOpen={order => setSelectedId(order.id)} onPrint={order => setPrintId(order.id)} />
           ))}
