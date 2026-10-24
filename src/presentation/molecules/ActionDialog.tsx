@@ -33,6 +33,13 @@ function ActionDialog({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
+  // Avisos informativos desaparecem sozinhos; confirmações precisam da decisão do usuário.
+  useEffect(() => {
+    if (state.confirmation) return
+    const timer = window.setTimeout(onClose, 4500)
+    return () => window.clearTimeout(timer)
+  }, [state.confirmation, onClose])
+
   const symbol = state.tone === 'success' ? '✓'
     : state.tone === 'error' ? '!'
       : state.tone === 'warning' ? '?' : 'i'
