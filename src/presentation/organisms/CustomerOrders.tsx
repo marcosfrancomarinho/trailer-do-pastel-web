@@ -80,6 +80,7 @@ function CustomerOrderDetails({
               <strong>{details.customerName}</strong>
               <p>{details.customerPhone}</p>
               <p>Feito em {new Date(details.createdAt).toLocaleString('pt-BR')}</p>
+              {details.observation && <p className="mt-2 rounded-lg bg-[#254960] p-3 text-sm font-semibold text-white">Observação: {details.observation}</p>}
             </div>
             <div className="customer-details-section">
               <h3>Itens do pedido</h3>
