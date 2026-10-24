@@ -19,7 +19,6 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
   const [imageUrl, setImageUrl] = useState('')
   const [additionIds, setAdditionIds] = useState<string[]>([])
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'ADMIN' | 'EMPLOYEE'>('EMPLOYEE')
   const [available, setAvailable] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
@@ -48,12 +47,12 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
       ? { name: name.trim(), description: description.trim(), price, categoryId, imageUrl: imageUrl.trim() || null, additionIds, available }
       : section === 'addition'
         ? { name: name.trim(), price, available }
-        : section === 'category' ? { name: name.trim() } : { name: name.trim(), password, role }
+        : section === 'category' ? { name: name.trim() } : { name: name.trim(), password }
     try {
       await restaurant.createRecord(path.slice(1) as 'products' | 'additions' | 'categories' | 'users', token, body)
       setSuccess(section === 'product' ? 'Produto cadastrado com sucesso!' : section === 'addition' ? 'Adicional cadastrado com sucesso!' : section === 'category' ? 'Categoria cadastrada com sucesso!' : 'Usuário cadastrado com sucesso!')
       notify({ title: 'Cadastro realizado', message: 'As informações foram cadastradas com sucesso.', tone: 'success' })
-      setName(''); setPassword(''); setRole('EMPLOYEE'); setPrice(''); setDescription(''); setImageUrl(''); setAdditionIds([]); setAvailable(true)
+      setName(''); setPassword(''); setPrice(''); setDescription(''); setImageUrl(''); setAdditionIds([]); setAvailable(true)
       if (section === 'product' || section === 'category') await onProductCreated()
       if (section === 'addition') await loadOptions()
     } catch (err) {
@@ -78,12 +77,7 @@ export default function AdminRegisters({ token, section, onProductCreated }: Pro
           <label className={labelClass}>Senha
             <input className={inputClass} type="password" autoComplete="new-password" required minLength={8} value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
           </label>
-          <label className={labelClass}>Tipo de usuário
-            <select className={inputClass} value={role} onChange={e => setRole(e.target.value as 'ADMIN' | 'EMPLOYEE')}>
-              <option value="EMPLOYEE">Funcionário</option>
-              <option value="ADMIN">Administrador</option>
-            </select>
-          </label>
+          <p className="self-center rounded-xl border border-[#557b8e] bg-[#183e53] p-3 text-sm font-semibold text-white">O novo usuário será cadastrado como funcionário.</p>
         </>
         
         : <>
