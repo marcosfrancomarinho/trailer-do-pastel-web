@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cartTotal, toOrderPayload, type CartItem } from '../../domain/cart'
 import { brl } from '../../api'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
@@ -14,6 +14,7 @@ const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#0928
 export default function AdminTables({ token, products, categories }: Props) {
   const [tables, setTables] = useState<RestaurantTable[]>([])
   const [selected, setSelected] = useState<string | null>(null)
+  const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
   const [sessions, setSessions] = useState<TableSessions | null>(null)
   const [number, setNumber] = useState('')
@@ -50,14 +51,30 @@ export default function AdminTables({ token, products, categories }: Props) {
   }, [token])
 
   async function openTable(id: string) {
+    const request = ++selectionRequest.current
+    if (selected === id) {
+      setSelected(null)
+      setDetails(null)
+      setSessions(null)
+      setProduct(null)
+      setError('')
+      return
+    }
     setSelected(id)
     setSessions(null)
     setDetails(null)
+    setProduct(null)
     setCart([])
     setAddedMessage('')
     setError('')
-    try { setDetails(await restaurantAdapter.tableOrders(token, id)) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Erro ao abrir mesa.') }
+    try {
+      const result = await restaurantAdapter.tableOrders(token, id)
+      if (selectionRequest.current === request) setDetails(result)
+    } catch (cause) {
+      if (selectionRequest.current === request) {
+        setError(cause instanceof Error ? cause.message : 'Erro ao abrir mesa.')
+      }
+    }
   }
 
   async function createTable(event: React.FormEvent<HTMLFormElement>) {
@@ -199,16 +216,19 @@ export default function AdminTables({ token, products, categories }: Props) {
     {error && <p role="alert" className="rounded-xl border border-red-400 bg-[#562932] p-3 text-white">{error}</p>}
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
       {tables.map(table => <button key={table.id} type="button" onClick={() => void openTable(table.id)}
-        className={'min-h-32 rounded-2xl border-2 p-3 text-left transition ' +
+        aria-expanded={selected === table.id}
+        aria-controls="table-expanded-details"
+        className={'min-h-32 rounded-2xl border-2 p-3 text-left transition-all duration-200 ' +
           (table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
-          (selected === table.id ? ' outline outline-2 outline-white' : '')}>
+          (selected === table.id ? ' outline outline-2 outline-white shadow-lg ring-2 ring-[#ffca28] scale-[1.02]' : ' hover:-translate-y-0.5')}>
         <strong className="block text-xl">Mesa {table.number}</strong>
         <span className="mt-2 block text-sm font-bold">{table.status === 'FREE' ? '✓ Livre' : '● Ocupada'}</span>
         <span className="mt-2 block font-black">{brl(table.totalSpent)}</span>
+        <span className="mt-2 block text-xs font-bold text-white/80">{selected === table.id ? "▲ Minimizar detalhes" : "▼ Ver detalhes"}</span>
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
-    {selected && <div className="space-y-4 rounded-2xl border border-[#537d90] bg-[#112e43] p-4 sm:p-6">
+    {selected && <div id="table-expanded-details" className="table-details-expanded space-y-4 rounded-2xl border border-[#537d90] bg-[#112e43] p-4 sm:p-6">
       {!details ? <p>Carregando detalhes...</p> : <>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h3 className="text-xl font-black">Mesa {details.number}</h3><p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · Total consumido: <strong>{brl(details.totalSpent)}</strong></p></div>
