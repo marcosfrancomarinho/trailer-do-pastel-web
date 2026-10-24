@@ -43,7 +43,6 @@ export default function AdminStore({ token }: { token: string }) {
     <div className="flex flex-wrap gap-3">
       <button type="button" disabled={busy || !store || store.status === 'OPEN'} onClick={() => void change(true)} className="min-h-12 rounded-xl bg-green-300 px-5 font-black text-[#10382b] disabled:opacity-40">Abrir loja</button>
       <button type="button" disabled={busy || !store || store.status === 'CLOSED'} onClick={() => void change(false)} className="min-h-12 rounded-xl bg-amber-300 px-5 font-black text-[#422910] disabled:opacity-40">Fechar loja</button>
-      <button type="button" onClick={() => void restaurantAdapter.storeStatus().then(setStore).catch(cause => setError(String(cause)))} className="min-h-12 rounded-xl border border-[#668a9f] px-5 font-bold">Atualizar</button>
     </div>
     {dialog}
   </section>
