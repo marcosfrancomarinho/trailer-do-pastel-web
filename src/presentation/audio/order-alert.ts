@@ -2,6 +2,10 @@
 export class OrderAlert {
   private context: AudioContext | null = null
 
+  isReady(): boolean {
+    return this.context?.state === 'running'
+  }
+
   async enable(): Promise<void> {
     const context = this.context ?? new AudioContext()
     this.context = context
@@ -11,7 +15,12 @@ export class OrderAlert {
 
   play(): void {
     const context = this.context
-    if (!context || context.state !== 'running') return
+    if (!context) return
+    if (context.state === 'suspended') {
+      void context.resume().then(() => { if (this.context === context && context.state === 'running') this.play() }).catch(() => {})
+      return
+    }
+    if (context.state !== 'running') return
 
     const now = context.currentTime
     // Duas sequências de campainha, com ataque rápido e harmônicos.
@@ -39,3 +48,6 @@ export class OrderAlert {
     if (current) void current.close()
   }
 }
+
+// Mantém o contexto de áudio entre mudanças de tela no painel administrativo.
+export const orderAlert = new OrderAlert()
