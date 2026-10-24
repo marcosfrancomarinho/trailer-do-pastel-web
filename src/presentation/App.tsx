@@ -383,7 +383,7 @@ export default function App() {
                 <span aria-hidden="true">{icon}</span><span>{label}</span>
               </button>)}
           </nav>
-          <button type="button" className="mt-3 w-full rounded-xl border border-cyan-200 px-3 py-3 text-sm font-bold text-[#143b50] hover:bg-cyan-50"
+          <button type="button" className="mt-3 min-h-11 w-full rounded-xl border border-[#315970] bg-[#153c53] px-3 py-3 text-sm font-extrabold text-white hover:bg-[#24556c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffca28]"
             onClick={() => {saveAdminSession(''); setAdminToken(''); sessionStorage.removeItem('trailer-admin-role'); setAdminRole('EMPLOYEE'); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
