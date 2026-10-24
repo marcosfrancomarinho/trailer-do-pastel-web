@@ -20,6 +20,7 @@ export class RestaurantHttpAdapter implements CatalogPort, OrderPort {
   setStoreOpen(token: string, open: boolean) { return api<StoreState>(open ? '/store/open' : '/store/close', { method: 'POST', headers: auth(token) }) }
   tables(token: string) { return api<RestaurantTable[]>('/tables', { headers: auth(token) }) }
   createTable(token: string, number: number) { return api<RestaurantTable>('/tables', { method: 'POST', headers: auth(token), body: JSON.stringify({ number }) }) }
+  archiveTable(token: string, tableId: string) { return api<void>('/tables/' + encodeURIComponent(tableId), { method: 'DELETE', headers: auth(token) }) }
   tableOrders(token: string, tableId: string) { return api<TableOrders>('/tables/' + encodeURIComponent(tableId) + '/orders', { headers: auth(token) }) }
   tableSessions(token: string, tableId: string) { return api<TableSessions>('/tables/' + encodeURIComponent(tableId) + '/sessions', { headers: auth(token) }) }
   releaseTable(token: string, tableId: string) { return api<{ id: string; status: 'FREE'; closedTotal: string }>('/tables/' + encodeURIComponent(tableId) + '/release', { method: 'PATCH', headers: auth(token) }) }
