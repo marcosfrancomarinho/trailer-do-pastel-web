@@ -6,6 +6,11 @@ import { cartTotal, toOrderPayload, type CartItem } from '../domain/cart'
 import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
 import { trackOrder } from '../application/order-service'
 import AdminOrders from './organisms/AdminOrders'
+import AdminTables from './organisms/AdminTables'
+import AdminStore from './organisms/AdminStore'
+import AdminUsers from './organisms/AdminUsers'
+import { restaurantAdapter } from '../infrastructure/http/restaurant-adapter'
+import type { StoreState } from '../domain/models'
 import CustomerOrders from './organisms/CustomerOrders'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
@@ -60,12 +65,15 @@ const pathViews: Record<string, View> = {
   '/pedidos': 'tracking',
   '/admin': 'admin',
 }
-type AdminSection = 'orders' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
+type AdminSection = 'orders' | 'tables' | 'store' | 'users-list' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const view = pathViews[location.pathname] ?? 'menu'
   const [adminToken, setAdminToken] = useState(readAdminSession)
+  const [adminRole, setAdminRole] = useState<'ADMIN' | 'EMPLOYEE'>(() => sessionStorage.getItem('trailer-admin-role') === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE')
+  const [storeState, setStoreState] = useState<StoreState | null>(null)
+  const [observation, setObservation] = useState('')
   const [cartToast, setCartToast] = useState<{ message: string; id: number } | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -101,6 +109,11 @@ export default function App() {
     finally { setLoading(false) }
   }
   useEffect(() => { void loadCatalog() }, [])
+  useEffect(() => {
+    let active = true
+    restaurantAdapter.storeStatus().then(value => { if (active) setStoreState(value) }).catch(() => {})
+    return () => { active = false }
+  }, [view])
 
   useEffect(() => { saveCart(cart) }, [cart])
 
@@ -147,9 +160,11 @@ export default function App() {
     if (!cart.length || sending) return
     setSending(true); setError('')
     try {
-      await restaurant.createOrder(toOrderPayload(customerName, customerPhone, cart), {
+      if (storeState?.status === 'CLOSED') throw new Error('A loja está fechada para novos pedidos.')
+      await restaurant.createOrder({ ...toOrderPayload(customerName, customerPhone, cart), observation: observation.trim() || null }, {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
+        observation: observation.trim() || null,
         createdAt: new Date().toISOString(),
         items: cart.map(item => ({
           productName: item.product.name,
@@ -163,7 +178,7 @@ export default function App() {
         })),
       })
       setOrders(restaurant.recentOrders())
-      setCart([]); go('tracking')
+      setCart([]); setObservation(''); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
     finally { setSending(false) }
   }
@@ -243,10 +258,12 @@ export default function App() {
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setAdminBusy(true); setAdminError('')
     try {
-      const logged = await api<{ name: string; accessToken: string }>('/login', {
+      const logged = await api<{ name: string; role: 'ADMIN' | 'EMPLOYEE'; accessToken: string }>('/login', {
         method: 'POST', body: JSON.stringify({ name: adminName, password: adminPassword })
       })
       saveAdminSession(logged.accessToken)
+      sessionStorage.setItem('trailer-admin-role', logged.role)
+      setAdminRole(logged.role)
       setAdminToken(logged.accessToken); setAdminPassword('')
       setAdminBusy(false)
     } catch (err) { setAdminError(err instanceof Error ? err.message : 'Não foi possível entrar'); setAdminBusy(false) }
@@ -285,7 +302,7 @@ export default function App() {
       <Route path="/carrinho" element={<main className="inner-page mx-auto max-w-5xl px-4 py-12"><button className="mb-6 text-sm font-bold text-[#008b9e]" onClick={() => go('menu')}>← Voltar ao cardápio</button><h1 className="mb-8 text-4xl font-black">Seu carrinho</h1>
       {cart.length === 0 ? <div className="rounded-3xl bg-white p-12 text-center"><p className="mb-5">Seu carrinho está vazio.</p><button className="rounded-full bg-[#ffc629] px-6 py-3 font-bold text-[#113548]" onClick={() => go('menu')}>Escolher pastéis</button></div> :
       <div className="grid gap-8 md:grid-cols-[1.3fr_1fr]"><div className="space-y-3">{cart.map(item => <div key={item.key} className="rounded-2xl bg-white p-5 shadow-sm"><div className="flex justify-between gap-3"><div><h3 className="text-lg font-extrabold">{item.product.name}</h3>{item.additions.map(a => <p key={a.addition.id} className="text-sm text-[#557383]">+ {a.quantity}× {a.addition.name}</p>)}</div><strong>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((n,a) => n + Number(a.addition.price)*a.quantity,0)))}</strong></div><div className="mt-4 flex items-center gap-4"><button aria-label="Diminuir quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity: x.quantity-1}:x).filter(x => x.quantity > 0))}>−</button><b>{item.quantity}</b><button aria-label="Aumentar quantidade" className="rounded-lg bg-[#e8faff] px-3 py-1" onClick={() => setCart(c => c.map(x => x.key === item.key ? {...x,quantity:x.quantity+1}:x))}>+</button><button className="ml-auto text-sm text-red-600" onClick={() => setCart(c => c.filter(x => x.key !== item.key))}>Remover</button></div></div>)}</div>
-        <form onSubmit={e => void checkout(e)} className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Finalizar pedido</h2><label className="block text-sm font-semibold">Seu nome<input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="Como podemos chamar você?"/></label><label className="block text-sm font-semibold">Telefone<input required type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="(99) 99999-9999"/></label><div className="flex justify-between border-t border-cyan-100 pt-4 text-lg"><span>Total estimado</span><strong>{brl(total)}</strong></div><p className="text-xs text-[#557383]">O preço final será validado pela pastelaria no servidor.</p>{error && <p role="alert" className="text-sm text-red-600">{error}</p>}<button disabled={sending} className="w-full rounded-full bg-[#ffc629] py-4 font-black text-[#113548] disabled:opacity-60">{sending ? 'Enviando pedido...' : 'Confirmar pedido →'}</button></form></div>}
+        <form onSubmit={e => void checkout(e)} className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Finalizar pedido</h2><label className="block text-sm font-semibold">Seu nome<input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="Como podemos chamar você?"/></label><label className="block text-sm font-semibold">Telefone<input required type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 p-3 outline-cyan-400" placeholder="(99) 99999-9999"/></label><label className="block text-sm font-semibold">Observações do pedido (opcional)<textarea rows={3} maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className="mt-2 w-full rounded-xl border border-cyan-100 bg-white p-3 text-[#102c40]" placeholder="Ex.: Sem cebola, pouco sal..." /></label>{storeState?.status === 'CLOSED' && <p role="alert" className="rounded-xl border border-red-300 bg-red-100 p-3 text-sm font-bold text-red-900">A loja está fechada e não está aceitando pedidos no momento.</p>}<div className="flex justify-between border-t border-cyan-100 pt-4 text-lg"><span>Total estimado</span><strong>{brl(total)}</strong></div><p className="text-xs text-[#557383]">O preço final será validado pela pastelaria no servidor.</p>{error && <p role="alert" className="text-sm text-red-600">{error}</p>}<button disabled={sending || storeState?.status === 'CLOSED'} className="w-full rounded-full bg-[#ffc629] py-4 font-black text-[#113548] disabled:opacity-60">{sending ? 'Enviando pedido...' : 'Confirmar pedido →'}</button></form></div>}
     </main>} />
       <Route path="/pedidos" element={<>
       {trackingError && <p role="alert" className="mx-auto max-w-3xl px-4 pt-4 text-red-200">{trackingError}</p>}
@@ -323,17 +340,17 @@ export default function App() {
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
-            {([['orders', '📋', 'Pedidos'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ['user', '👤', 'Usuários'], ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
+            {([['orders', '📋', 'Pedidos'], ['tables', '🪑', 'Mesas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
               <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffc629] text-[#143b50] shadow-sm' : 'text-[#416476] hover:bg-cyan-50')}>
                 <span aria-hidden="true">{icon}</span><span>{label}</span>
               </button>)}
           </nav>
           <button type="button" className="mt-3 w-full rounded-xl border border-cyan-200 px-3 py-3 text-sm font-bold text-[#143b50] hover:bg-cyan-50"
-            onClick={() => {saveAdminSession(''); setAdminToken(''); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
+            onClick={() => {saveAdminSession(''); setAdminToken(''); sessionStorage.removeItem('trailer-admin-role'); setAdminRole('EMPLOYEE'); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
-          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
+          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'tables' ? <AdminTables token={adminToken} products={products} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div>}
     </main>} />
