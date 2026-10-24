@@ -69,6 +69,8 @@ export default function OrderDetails({
           )}
         </div>
 
+        {order.tableId && <p className="mt-4 rounded-lg bg-[#264b5e] p-3 text-sm font-bold">🪑 Pedido vinculado a uma mesa</p>}
+        {order.observation && <div className="mt-4 rounded-xl border border-amber-300 bg-[#4c3d1d] p-4"><strong>Observações do cliente</strong><p className="mt-1 whitespace-pre-wrap text-sm text-white">{order.observation}</p></div>}
         <h3 className="mt-6 mb-3 text-lg font-extrabold">Itens do pedido</h3>
         <div className="divide-y divide-[#365f74] rounded-xl border border-[#365f74]">
           {order.items.map((item, index) => (
