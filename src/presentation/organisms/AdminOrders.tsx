@@ -91,7 +91,7 @@ function OrderCard({
         </p>
 
         {order.observation && <p className="rounded-lg bg-[#3d3925] p-3 text-sm font-bold text-amber-100">📝 {order.observation}</p>}
-        {order.tableId && <p className="text-sm font-bold text-cyan-200">🪑 Pedido de mesa</p>}
+        {order.tableNumber != null && <p className="inline-flex rounded-lg border border-amber-300 bg-[#57431f] px-3 py-1.5 text-sm font-black text-amber-100">🪑 Mesa {order.tableNumber}</p>}
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
