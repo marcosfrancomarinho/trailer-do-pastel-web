@@ -104,6 +104,15 @@ function OrderCard({
             >
               {busy ? 'Salvando...' : action.label}
             </button>
+            {order.status === 'PENDING' && <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onStatusChange(order.id, 'COMPLETED')}
+              className="rounded-xl border border-emerald-300 bg-[#146044] px-4 py-3 text-sm font-bold text-white hover:bg-[#187652] disabled:opacity-60"
+              title="Concluir o pedido sem passar pelo preparo"
+            >
+              ✓ Concluir direto
+            </button>}
             <button
               type="button"
               disabled={busy}
@@ -354,8 +363,8 @@ export default function AdminOrders({ token }: { token: string }) {
     }
     const verb = actionLabel[status] ?? 'alterar'
     const approved = await confirm({
-      title: status === 'CANCELED' ? 'Cancelar pedido?' : 'Confirmar alteração?',
-      message: 'Deseja ' + verb + ' o pedido #' + id.slice(0, 8) + '?',
+      title: status === 'CANCELED' ? 'Cancelar pedido?' : status === 'COMPLETED' ? 'Concluir pedido?' : 'Confirmar alteração?',
+      message: status === 'COMPLETED' ? 'Confirmar que o pedido #' + id.slice(0, 8) + ' já foi atendido? Ele será concluído sem passar por Em andamento.' : 'Deseja ' + verb + ' o pedido #' + id.slice(0, 8) + '?',
       confirmLabel: status === 'CANCELED' ? 'Sim, cancelar' : 'Confirmar',
       tone: status === 'CANCELED' ? 'warning' : 'info',
     })
