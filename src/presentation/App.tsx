@@ -52,18 +52,20 @@ function saveAdminSession(token: string): void {
   }
 }
 
-type View = 'menu' | 'cart' | 'tracking' | 'admin'
+type View = 'menu' | 'cart' | 'tracking' | 'admin' | 'tables'
 const pagePaths: Record<View, string> = {
   menu: '/',
   cart: '/carrinho',
   tracking: '/pedidos',
   admin: '/admin',
+  tables: '/mesas',
 }
 const pathViews: Record<string, View> = {
   '/': 'menu',
   '/carrinho': 'cart',
   '/pedidos': 'tracking',
   '/admin': 'admin',
+  '/mesas': 'tables',
 }
 type AdminSection = 'orders' | 'tables' | 'store' | 'users-list' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
@@ -277,6 +279,7 @@ export default function App() {
       sessionStorage.setItem('trailer-admin-role', logged.role)
       setAdminRole(logged.role)
       setAdminToken(logged.accessToken); setAdminPassword('')
+      navigate('/mesas')
       setAdminBusy(false)
     } catch (err) { setAdminError(err instanceof Error ? err.message : 'Não foi possível entrar'); setAdminBusy(false) }
   }
@@ -340,7 +343,20 @@ export default function App() {
         }}
       />
     </>} />
-      <Route path="/admin" element={<main className="inner-page mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#008b9e]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
+      <Route path="/mesas" element={adminToken ? (
+        <main className="inner-page mx-auto max-w-6xl space-y-5 px-4 py-7 sm:py-10">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-4 text-white">
+            <div><p className="text-xs font-bold text-[#a2dbf3]">ÁREA DO FUNCIONÁRIO</p><h1 className="text-2xl font-black">Mesas e comandas</h1></div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => navigate('/admin')} className="min-h-11 rounded-xl bg-[#ffca28] px-4 font-extrabold text-[#102b40]">Painel administrativo</button>
+              <button type="button" onClick={() => { saveAdminSession(''); sessionStorage.removeItem('trailer-admin-role'); setAdminToken(''); navigate('/admin') }} className="min-h-11 rounded-xl border border-[#81a4b6] px-4 font-bold text-white">Sair</button>
+            </div>
+          </div>
+          <AdminStore token={adminToken} />
+          <AdminTables token={adminToken} products={products} categories={categories} />
+        </main>
+      ) : <Navigate to="/admin" replace />} />
+      <Route path="/admin" element={<main className="inner-page mx-auto max-w-5xl px-4 py-14"><p className="font-bold tracking-widest text-[#008b9e]">GESTÃO DA PASTELARIA</p><h1 className="mt-3 text-4xl font-black">Painel administrativo</h1>{adminToken && <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => navigate('/mesas')} className="min-h-11 rounded-xl bg-[#ffca28] px-4 font-extrabold text-[#102b40]">🪑 Mesas e comandas</button><button type="button" onClick={() => setAdminSection('store')} className="min-h-11 rounded-xl border border-[#65a6ba] bg-[#123e52] px-4 font-bold text-white">🏪 Abrir / fechar loja</button></div>}{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
       <div className="admin-layout mt-8 grid min-w-0 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
@@ -353,8 +369,8 @@ export default function App() {
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
-            {([['orders', '📋', 'Pedidos'], ['tables', '🪑', 'Mesas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
-              <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
+            {([['orders', '📋', 'Pedidos'], ['tables', '🪑', 'Abrir mapa de mesas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
+              <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { if (key === 'tables') navigate('/mesas'); else setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffc629] text-[#143b50] shadow-sm' : 'text-[#416476] hover:bg-cyan-50')}>
                 <span aria-hidden="true">{icon}</span><span>{label}</span>
               </button>)}
@@ -363,7 +379,7 @@ export default function App() {
             onClick={() => {saveAdminSession(''); setAdminToken(''); sessionStorage.removeItem('trailer-admin-role'); setAdminRole('EMPLOYEE'); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
-          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'tables' ? <AdminTables token={adminToken} products={products} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
+          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'tables' ? <AdminTables token={adminToken} products={products} categories={categories} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div>}
     </main>} />
