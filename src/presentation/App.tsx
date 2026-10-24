@@ -22,6 +22,31 @@ import type { Addition, Category, Product } from '../api'
 import type { SavedCustomerOrder } from '../domain/models'
 
 const ADMIN_SESSION_KEY = 'trailer-pastel-admin-session'
+const CUSTOMER_INFO_KEY = 'trailer-pastel-customer-info'
+
+function readCustomerInfo(): { name: string; phone: string } {
+  try {
+    const stored = window.localStorage.getItem(CUSTOMER_INFO_KEY)
+    if (!stored) return { name: '', phone: '' }
+    const parsed: unknown = JSON.parse(stored)
+    if (typeof parsed !== 'object' || parsed === null) return { name: '', phone: '' }
+    const info = parsed as Record<string, unknown>
+    return {
+      name: typeof info.name === 'string' ? info.name : '',
+      phone: typeof info.phone === 'string' ? info.phone : '',
+    }
+  } catch {
+    return { name: '', phone: '' }
+  }
+}
+
+function saveCustomerInfo(name: string, phone: string): void {
+  try {
+    window.localStorage.setItem(CUSTOMER_INFO_KEY, JSON.stringify({ name, phone }))
+  } catch {
+    // O pedido continua funcionando se o navegador bloquear o armazenamento.
+  }
+}
 
 function readAdminSession(): string {
   try {
@@ -90,8 +115,9 @@ export default function App() {
   const [amounts, setAmounts] = useState<Record<string, number>>({})
   const [quantity, setQuantity] = useState(1)
   const [cart, setCart] = useState<CartItem[]>(readCart)
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
+  const [savedCustomerInfo] = useState(readCustomerInfo)
+  const [customerName, setCustomerName] = useState(savedCustomerInfo.name)
+  const [customerPhone, setCustomerPhone] = useState(savedCustomerInfo.phone)
   const [sending, setSending] = useState(false)
   const [orders, setOrders] = useState<SavedCustomerOrder[]>(() => restaurant.recentOrders())
   const [statuses, setStatuses] = useState<Record<string, string>>({})
@@ -192,6 +218,7 @@ export default function App() {
           })),
         })),
       })
+      saveCustomerInfo(customerName.trim(), customerPhone.trim())
       setOrders(restaurant.recentOrders())
       setCart([]); setObservation(''); go('tracking')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível concluir o pedido') }
