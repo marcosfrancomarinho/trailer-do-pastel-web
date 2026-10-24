@@ -131,19 +131,6 @@ export default function App() {
   const [adminBusy, setAdminBusy] = useState(false)
   const [adminError, setAdminError] = useState('')
   const [notificationsOn, setNotificationsOn] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
-  const switchNotifications = () => {
-    const next = !notificationsOn
-    setNotificationsOn(next)
-    window.localStorage.setItem('admin-order-sound', next ? 'on' : 'off')
-    if (!next) {
-      orderAlert.close()
-      setNewPendingCount(0)
-      setCancelAlerts([])
-    } else {
-      void orderAlert.enable().catch(() => {})
-    }
-    window.dispatchEvent(new Event('admin-notification-preference'))
-  }
   useEffect(() => {
     const sync = () => {
       const enabled = window.localStorage.getItem('admin-order-sound') !== 'off'
