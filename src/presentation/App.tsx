@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
-import type { PreparingOrder } from '../domain/models'
+import type { PendingOrder, PreparingOrder } from '../domain/models'
 import { orderAlert } from './audio/order-alert'
 import { cartTotal, toOrderPayload, type CartItem } from '../domain/cart'
 import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
@@ -157,9 +157,9 @@ export default function App() {
       window.removeEventListener('storage', sync)
     }
   }, [])
-  const [cancelAlerts, setCancelAlerts] = useState<PreparingOrder[]>([])
+  const [cancelAlerts, setCancelAlerts] = useState<(PendingOrder | PreparingOrder)[]>([])
   const acknowledgedCancellationIds = useRef(new Set<string>())
-  const preparationSnapshot = useRef<Map<string, PreparingOrder> | null>(null)
+  const preparationSnapshot = useRef<Map<string, PendingOrder | PreparingOrder> | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [newPendingCount, setNewPendingCount] = useState(0)
   const pendingSeenRef = useRef<Set<string> | null>(null)
@@ -218,12 +218,13 @@ export default function App() {
     const check = async () => {
       try {
         const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-        const [ongoing, history] = await Promise.all([
+        const [pending, ongoing, history] = await Promise.all([
+          restaurant.pendingOrders(adminToken, day),
           restaurant.preparingOrders(adminToken, day),
           restaurant.orderHistory(adminToken, day),
         ])
         if (!active) return
-        const current = new Map(ongoing.map(order => [order.id, order] as const))
+        const current = new Map([...pending, ...ongoing].map(order => [order.id, order] as const))
         if (daySnapshot === day && preparationSnapshot.current) {
           const canceled = new Set(history.filter(order => order.status === 'CANCELED').map(order => order.id))
           const matches = [...preparationSnapshot.current.values()].filter(order =>
