@@ -16,14 +16,14 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
     return
   }
 
-  const finished = comandas.map(({ tableNumber, session }) => ({
-    tableNumber, session, orders: session.orders.filter(order => order.status === 'COMPLETED'),
+  const finished = comandas.map(({ tableNumber, origin, session }) => ({
+    tableNumber, origin, session, orders: session.orders.filter(order => order.status === 'COMPLETED'),
   })).filter(entry => entry.orders.length > 0)
   const orderCount = finished.reduce((sum, entry) => sum + entry.orders.length, 0)
   const total = finished.reduce((sum, entry) =>
     sum + entry.orders.reduce((subtotal, order) => subtotal + Number(order.total), 0), 0)
 
-  const rows = finished.map(({ tableNumber, session, orders }) => {
+  const rows = finished.map(({ tableNumber, origin, session, orders }) => {
     const subtotal = orders.reduce((sum, order) => sum + Number(order.total), 0)
     const orderHtml = orders.map(order => `
       <div class="order">
@@ -38,8 +38,8 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
     return `
       <section class="comanda">
         <header class="line comanda-header">
-          <strong>Mesa ${escapeHtml(tableNumber)} · Comanda ${escapeHtml(session.id.slice(0, 8).toUpperCase())}</strong>
-          <span>Encerrada: ${session.closedAt ? escapeHtml(dateTime(session.closedAt)) : '—'}</span>
+          <strong>${origin === 'ONLINE' || tableNumber == null ? 'Pedido online' : `Mesa ${escapeHtml(tableNumber)}`} · Comanda ${escapeHtml(session.id.slice(0, 8).toUpperCase())}</strong>
+          <span>Finalizado: ${session.closedAt ? escapeHtml(dateTime(session.closedAt)) : '—'}</span>
         </header>
         ${orderHtml}
         <p class="subtotal">Subtotal realizado da comanda: ${escapeHtml(brl(subtotal))}</p>
@@ -84,7 +84,7 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
   <header class="report-header">
     <h1>TRAILER DO PASTEL</h1>
     <h2>RELATÓRIO DE PEDIDOS REALIZADOS</h2>
-    <p>Data de encerramento: ${escapeHtml(date.split('-').reverse().join('/'))}</p>
+    <p>Data de finalização: ${escapeHtml(date.split('-').reverse().join('/'))}</p>
     <p>Emitido em: ${escapeHtml(dateTime(new Date().toISOString()))}</p>
   </header>
   <section class="summary">
