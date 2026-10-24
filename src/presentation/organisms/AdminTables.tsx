@@ -370,9 +370,10 @@ export default function AdminTables({ token, products, categories }: Props) {
               <span className="text-xs text-cyan-100 group-open:rotate-180" aria-hidden="true">▼</span>
             </summary>
             <div className="space-y-2 border-t border-[#466b7f] px-3 py-3">
-              {order.createdBy && <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#527b8e] bg-[#102f43] p-2.5" aria-label={'Pedido lançado por ' + order.createdBy.name}>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ffca28] text-sm font-black text-[#102c40]" aria-hidden="true">{order.createdBy.name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('')}</span>
-                <div className="min-w-0"><p className="truncate text-sm font-bold text-white">{order.createdBy.name}</p><p className="text-xs text-slate-300">{order.createdBy.role === 'ADMIN' ? 'Administrador' : 'Funcionário'} · Lançou o pedido</p></div>
+              {order.createdBy && <div className="mb-2 flex min-w-0 items-center gap-1.5 text-xs text-slate-300" aria-label={'Pedido lançado por ' + order.createdBy.name}>
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#31576b] text-[10px] font-bold text-white" aria-hidden="true">{order.createdBy.name.trim().charAt(0).toUpperCase()}</span>
+                <span className="min-w-0 truncate text-slate-100" title={order.createdBy.name}>{order.createdBy.name}</span>
+                <span className="shrink-0 text-[11px] text-slate-400">· {order.createdBy.role === 'ADMIN' ? 'Admin' : 'Funcionário'}</span>
               </div>}
               {order.items.map((item, itemIndex) => <div key={itemIndex} className="text-sm text-white">
                 <p className="font-bold">{item.quantity}× {item.productName}</p>
