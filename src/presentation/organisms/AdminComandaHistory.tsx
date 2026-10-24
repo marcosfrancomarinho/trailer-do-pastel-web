@@ -17,6 +17,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [requestedDate, setRequestedDate] = useState(date)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -40,7 +41,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     }
     void load()
     return () => { active = false }
-  }, [token, requestedDate])
+  }, [token, requestedDate, refreshKey])
 
   const filtered = comandas
   const total = filtered.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
@@ -57,7 +58,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
           onChange={event => setDate(event.target.value)}
           className="mt-1 min-h-11 w-full rounded-lg border border-[#84a8b9] bg-white px-3 text-[#123449]" />
       </label>
-      <button type="button" disabled={loading || !date || date === requestedDate} onClick={() => { setExpanded(null); setRequestedDate(date) }}
+      <button type="button" disabled={loading || !date} onClick={() => { setExpanded(null); setRequestedDate(date); setRefreshKey(value => value + 1) }}
         className="min-h-11 rounded-lg bg-[#ffca28] px-4 text-sm font-bold text-[#102c40] disabled:opacity-55">Buscar por data</button>
     </div>
     {error && <p role="alert" className="rounded-lg bg-[#563039] p-3 text-sm text-white">{error}</p>}
