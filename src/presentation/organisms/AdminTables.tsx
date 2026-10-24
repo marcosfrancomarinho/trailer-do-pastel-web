@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { cartTotal, toOrderPayload, type CartItem } from '../../domain/cart'
-import ProductCard from '../components/ProductCard'
 import { brl } from '../../api'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
 import type { Addition, Category, Product, RestaurantTable, TableOrders, TableSessions } from '../../domain/models'
@@ -28,6 +27,7 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [addedMessage, setAddedMessage] = useState('')
+  const draftCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const filteredProducts = useMemo(() => products.filter(item =>
     (category === 'all' || item.categoryId === category) &&
     (item.name + ' ' + item.description).toLowerCase().includes(search.toLowerCase())
@@ -241,20 +241,16 @@ export default function AdminTables({ token, products, categories }: Props) {
         <div className="space-y-4 border-t border-[#486f83] pt-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><h4 className="text-xl font-black">Cardápio da mesa {details.number}</h4><p className="text-sm text-slate-200">Escolha produtos e adicionais como no cardápio do cliente.</p></div>
-            <span className="rounded-full bg-[#ffca28] px-4 py-2 font-black text-[#102b40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens · {brl(cartTotal(cart))}</span>
+            <a href="#table-cart-summary" className="rounded-full bg-[#ffca28] px-4 py-2 font-black text-[#102b40]">Ver comanda · {draftCount} itens · {brl(cartTotal(cart))}</a>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setCategory('all')} className={category === 'all' ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>Todos</button>
-            {categories.map(item => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>{item.name}</button>)}
-          </div>
-          <input className={field} aria-label="Buscar produto da mesa" placeholder="Buscar produto..." value={search} onChange={event => setSearch(event.target.value)} />
-          <div className="product-grid grid gap-4 sm:grid-cols-2">
-            {filteredProducts.map(item => <ProductCard key={item.id} product={item} category={categories.find(cat => cat.id === item.categoryId)?.name ?? 'Especial'} select={item => void chooseProduct(item)} />)}
-          </div>
-          {filteredProducts.length === 0 && <p className="text-sm text-white">Nenhum produto encontrado.</p>}
-          {addedMessage && <p role="status" className="rounded-xl border border-green-400 bg-[#164735] p-3 font-bold text-white">✓ {addedMessage}</p>}
-          <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl bg-[#193e53] p-4 sm:grid-cols-2">
-            <h4 className="font-black sm:col-span-2">Conferir pedido da mesa</h4>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,330px)]">
+            <aside id="table-cart-summary" className="order-table-cart-panel min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
+          <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl border border-[#527b8e] bg-[#193e53] p-4 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="flex items-center justify-between gap-2 sm:col-span-2 lg:col-span-1 lg:col-span-1">
+              <div><p className="text-xs font-bold text-cyan-200">COMANDA EM MONTAGEM</p><h4 className="text-lg font-black text-white">Mesa {details.number}</h4></div>
+              <span className="rounded-full bg-[#ffca28] px-3 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
+            </div>
+            {addedMessage && <p role="status" className="rounded-lg border border-green-400 bg-[#164735] p-2 text-xs font-bold text-white sm:col-span-2 lg:col-span-1">✓ {addedMessage}</p>}
             <div className="space-y-2 sm:col-span-2">
               {cart.map(item => <div key={item.key} className="rounded-xl border border-[#63899a] bg-[#102c40] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -275,6 +271,32 @@ export default function AdminTables({ token, products, categories }: Props) {
             <div className="flex items-center justify-between gap-3 rounded-lg border-t border-[#547b8e] pt-3 sm:col-span-2"><span className="font-black">Total do pedido</span><strong className="text-lg text-amber-200">{brl(cartTotal(cart))}</strong></div>
             <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido para mesa ' + details.number}</button>
           </form>
+            </aside>
+            <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setCategory('all')} className={category === 'all' ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>Todos</button>
+            {categories.map(item => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>{item.name}</button>)}
+          </div>
+          <input className={field} aria-label="Buscar produto da mesa" placeholder="Buscar produto..." value={search} onChange={event => setSearch(event.target.value)} />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-2">
+            {filteredProducts.map(item => <article key={item.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#49758b] bg-[#193b50] p-2.5 shadow-sm">
+              <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#26546a]">
+                {item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span className="text-3xl" aria-hidden="true">🥟</span>}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h5 className="line-clamp-2 text-sm font-extrabold leading-tight text-white">{item.name}</h5>
+                <p className="mt-1 text-base font-black text-amber-200">{brl(item.price)}</p>
+                {!item.available && <span className="text-xs font-bold text-red-200">Indisponível</span>}
+              </div>
+              <button type="button" disabled={!item.available} aria-label={'Adicionar ' + item.name}
+                onClick={() => void chooseProduct(item)}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#ffca28] text-2xl font-black text-[#102c40] disabled:opacity-40">+</button>
+            </article>)}
+          </div>
+          {filteredProducts.length === 0 && <p className="text-sm text-white">Nenhum produto encontrado.</p>}
+
+            </div>
+          </div>
         </div>
         {sessions && <div className="space-y-2"><h4 className="font-black">Sessões anteriores e atuais</h4>{sessions.sessions.map(session => <div key={session.id} className="rounded-xl border border-[#446d82] p-3 text-sm"><p>{new Date(session.openedAt).toLocaleString('pt-BR')} — {session.closedAt ? new Date(session.closedAt).toLocaleString('pt-BR') : 'Em andamento'}</p><p>{session.orders.length} pedidos · {session.closedTotal ? brl(session.closedTotal) : 'Aberta'}</p></div>)}</div>}
       </>}
