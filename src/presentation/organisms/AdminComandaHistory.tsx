@@ -12,11 +12,11 @@ const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', {
 
 export default function AdminComandaHistory({ token }: { token: string }) {
   const [date, setDate] = useState(dateKey(new Date()))
-  const [allDates, setAllDates] = useState(false)
   const [comandas, setComandas] = useState<ClosedComanda[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [requestedDate, setRequestedDate] = useState(date)
 
   useEffect(() => {
     let active = true
@@ -24,17 +24,23 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     setError('')
     async function load() {
       try {
-        const result = await restaurantAdapter.closedComandas(token, allDates ? undefined : date)
+        const result = await restaurantAdapter.closedComandas(token, requestedDate)
         if (active) setComandas(result.comandas)
       } catch (cause) {
-        if (active) setError(cause instanceof Error ? cause.message : 'Falha ao carregar o histórico.')
+        if (active) {
+          setComandas([])
+          const message = cause instanceof Error ? cause.message : 'Falha ao carregar o histórico.'
+          setError(/404|not found|não encontrada/i.test(message)
+            ? 'A rota de histórico de comandas não está disponível no servidor. É necessário publicar a atualização do backend.'
+            : message)
+        }
       } finally {
         if (active) setLoading(false)
       }
     }
     void load()
     return () => { active = false }
-  }, [token, date, allDates])
+  }, [token, requestedDate])
 
   const filtered = comandas
   const total = filtered.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
@@ -42,19 +48,17 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
     <div>
       <h2 className="text-xl font-black">Histórico de comandas</h2>
-      <p className="mt-1 text-sm text-slate-300">Consulte as comandas encerradas e seus pedidos.</p>
+      <p className="mt-1 text-sm text-slate-300">Selecione a data de encerramento para consultar as comandas.</p>
     </div>
     <div className="flex flex-wrap items-end gap-3 rounded-xl bg-[#193e53] p-3">
       <label className="min-w-0 flex-1 text-sm font-bold">
         Data de encerramento
         <input type="date" lang="pt-BR" value={date} max={dateKey(new Date())}
-          disabled={allDates} onChange={event => setDate(event.target.value)}
-          className="mt-1 min-h-11 w-full rounded-lg border border-[#84a8b9] bg-white px-3 text-[#123449] disabled:opacity-50" />
+          onChange={event => setDate(event.target.value)}
+          className="mt-1 min-h-11 w-full rounded-lg border border-[#84a8b9] bg-white px-3 text-[#123449]" />
       </label>
-      <button type="button" aria-pressed={allDates} onClick={() => setAllDates(value => !value)}
-        className={'min-h-11 rounded-lg px-4 text-sm font-bold ' + (allDates ? 'bg-[#ffca28] text-[#102c40]' : 'border border-[#7294a7] text-white')}>
-        {allDates ? 'Todas as datas ✓' : 'Todas as datas'}
-      </button>
+      <button type="button" disabled={loading || !date || date === requestedDate} onClick={() => { setExpanded(null); setRequestedDate(date) }}
+        className="min-h-11 rounded-lg bg-[#ffca28] px-4 text-sm font-bold text-[#102c40] disabled:opacity-55">Buscar por data</button>
     </div>
     {error && <p role="alert" className="rounded-lg bg-[#563039] p-3 text-sm text-white">{error}</p>}
     {loading ? <p role="status" className="p-3 text-slate-200">Carregando histórico...</p> : <>
@@ -62,7 +66,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         <span className="text-sm font-bold">{filtered.length} {filtered.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
         <strong className="text-amber-200">Total: {brl(total)}</strong>
       </div>
-      {filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada nesta data.</p>}
+      {!error && filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada nesta data.</p>}
       <div className="space-y-2">
         {filtered.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
           <button type="button" aria-expanded={expanded === session.id} onClick={() => setExpanded(value => value === session.id ? null : session.id)}
