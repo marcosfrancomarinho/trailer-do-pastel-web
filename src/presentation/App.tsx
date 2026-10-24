@@ -503,7 +503,7 @@ export default function App() {
         <main className="inner-page mx-auto max-w-6xl space-y-5 px-4 py-7 sm:py-10">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-4 text-white">
             <div className="flex min-w-0 items-center gap-3">
-              {adminDisplayName && <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-xs font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>}
+              {adminDisplayName && <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-[11px] font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>}
               <div className="min-w-0"><p className="text-xs font-bold text-[#a2dbf3]">MESAS E COMANDAS</p><h1 className="text-xl font-black sm:text-2xl">{adminDisplayName || 'Área do funcionário'}</h1><p className="text-xs text-slate-300">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</p></div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -567,7 +567,7 @@ export default function App() {
           <button type="button" onClick={() => setNewPendingCount(0)} className="min-h-11 rounded-lg border border-[#fcd34d] px-3 py-2 font-bold">Dispensar</button>
         </div>
       </div>}
-      <div className="admin-layout mt-4 grid min-w-0 gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="admin-layout mt-4 grid min-w-0 gap-4 md:grid-cols-[minmax(0,190px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,210px)_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
             aria-expanded={adminMenuOpen} aria-controls="admin-navigation" onClick={() => setAdminMenuOpen(open => !open)}
@@ -577,9 +577,9 @@ export default function App() {
           </button>
         </div>
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
-          {adminDisplayName && <div className="mb-3 flex min-w-0 items-center gap-2.5 rounded-xl bg-[#f3f8fa] px-3 py-2.5" aria-label="Perfil do usuário conectado">
+          {adminDisplayName && <div className="mb-2 flex min-w-0 items-center gap-2 rounded-lg bg-[#f3f8fa] px-2 py-2" aria-label="Perfil do usuário conectado">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-xs font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>
-            <div className="min-w-0"><strong className="block truncate text-sm font-semibold text-[#17384b]">{adminDisplayName}</strong><span className="text-xs text-[#567484]">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</span></div>
+            <div className="min-w-0 flex-1"><strong title={adminDisplayName} className="block max-w-full truncate whitespace-nowrap text-xs font-semibold text-[#17384b]">{adminDisplayName}</strong><span className="block truncate text-[11px] text-[#567484]">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</span></div>
           </div>}
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
