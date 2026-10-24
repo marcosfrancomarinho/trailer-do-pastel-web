@@ -97,3 +97,4 @@ export default function AdminComandaHistory({ token }: { token: string }) {
       </div>
     </>}
   </section>
+}
