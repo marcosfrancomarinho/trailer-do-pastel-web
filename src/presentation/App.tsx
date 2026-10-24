@@ -7,6 +7,7 @@ import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
 import { trackOrder } from '../application/order-service'
 import AdminOrders from './organisms/AdminOrders'
 import AdminTables from './organisms/AdminTables'
+import AdminComandaHistory from './organisms/AdminComandaHistory'
 import AdminStore from './organisms/AdminStore'
 import AdminUsers from './organisms/AdminUsers'
 import { restaurantAdapter } from '../infrastructure/http/restaurant-adapter'
@@ -67,7 +68,7 @@ const pathViews: Record<string, View> = {
   '/admin': 'admin',
   '/mesas': 'tables',
 }
-type AdminSection = 'orders' | 'store' | 'users-list' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
+type AdminSection = 'orders' | 'comanda-history' | 'store' | 'users-list' | 'product' | 'addition' | 'user' | 'category' | 'manage-products' | 'manage-additions' | 'manage-categories'
 export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -373,13 +374,13 @@ export default function App() {
             aria-expanded={adminMenuOpen} aria-controls="admin-navigation" onClick={() => setAdminMenuOpen(open => !open)}
             className="admin-mobile-menu-trigger flex min-h-11 w-full items-center justify-between rounded-xl border px-3 py-2 text-sm font-bold shadow-sm">
             <span className="flex items-center gap-2"><span aria-hidden="true" className="text-lg">{adminMenuOpen ? '✕' : '☰'}</span> Menu</span>
-            <span className="text-xs text-[#557383]">{adminSection === 'orders' ? 'Pedidos' : adminSection === 'product' ? 'Produtos' : adminSection === 'addition' ? 'Adicionais' : adminSection === 'user' ? 'Usuários' : 'Cadastros'}</span>
+            <span className="text-xs text-[#557383]">{adminSection === 'orders' ? 'Pedidos' : adminSection === 'comanda-history' ? 'Histórico de comandas' : adminSection === 'product' ? 'Produtos' : adminSection === 'addition' ? 'Adicionais' : adminSection === 'user' ? 'Usuários' : 'Cadastros'}</span>
           </button>
         </div>
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
-            {([['orders', '📋', 'Pedidos'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
+            {([['orders', '📋', 'Pedidos'], ['comanda-history', '🧾', 'Histórico de comandas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
               <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffc629] text-[#143b50] shadow-sm' : 'text-[#416476] hover:bg-cyan-50')}>
                 <span aria-hidden="true">{icon}</span><span>{label}</span>
@@ -389,7 +390,7 @@ export default function App() {
             onClick={() => {saveAdminSession(''); setAdminToken(''); sessionStorage.removeItem('trailer-admin-role'); setAdminRole('EMPLOYEE'); setAdminSection('orders'); setAdminMenuOpen(false)}}>Sair do painel</button>
         </aside>
         <section className="min-w-0">
-          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
+          {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'comanda-history' ? <AdminComandaHistory token={adminToken} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
       </div>}
     </main>} />
