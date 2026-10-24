@@ -129,6 +129,32 @@ export default function App() {
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [adminBusy, setAdminBusy] = useState(false)
   const [adminError, setAdminError] = useState('')
+  const [notificationsOn, setNotificationsOn] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
+  const switchNotifications = () => {
+    const next = !notificationsOn
+    setNotificationsOn(next)
+    window.localStorage.setItem('admin-order-sound', next ? 'on' : 'off')
+    if (!next) {
+      orderAlert.close()
+      setNewPendingCount(0)
+    } else {
+      void orderAlert.enable().catch(() => {})
+    }
+    window.dispatchEvent(new Event('admin-notification-preference'))
+  }
+  useEffect(() => {
+    const sync = () => {
+      const enabled = window.localStorage.getItem('admin-order-sound') !== 'off'
+      setNotificationsOn(enabled)
+      if (!enabled) setNewPendingCount(0)
+    }
+    window.addEventListener('admin-notification-preference', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('admin-notification-preference', sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
   const [pendingCount, setPendingCount] = useState(0)
   const [newPendingCount, setNewPendingCount] = useState(0)
   const pendingSeenRef = useRef<Set<string> | null>(null)
@@ -154,7 +180,7 @@ export default function App() {
         const seen = pendingSeenRef.current
         if (seen) {
           const arrivals = results.filter(order => !seen.has(order.id))
-          if (arrivals.length && sectionRef.current !== 'orders') {
+          if (arrivals.length && sectionRef.current !== 'orders' && window.localStorage.getItem('admin-order-sound') !== 'off') {
             setNewPendingCount(count => count + arrivals.length)
             if (window.localStorage.getItem('admin-order-sound') !== 'off') orderAlert.play()
           }
@@ -455,7 +481,7 @@ export default function App() {
         </div>
         {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button type="submit" disabled={adminBusy} aria-busy={adminBusy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ffc629] px-4 py-3 font-bold text-[#113548] disabled:cursor-wait disabled:opacity-75">{adminBusy ? <><span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-[3px] border-[#113548]/25 border-t-[#113548]" /><span>Entrando...</span></> : 'Entrar'}</button></form> :
       <>
-      {newPendingCount > 0 && adminSection !== 'orders' && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-[#fcd34d] bg-[#57431f] p-4 text-[#fef3c7] shadow-lg">
+      {notificationsOn && newPendingCount > 0 && adminSection !== 'orders' && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-[#fcd34d] bg-[#57431f] p-4 text-[#fef3c7] shadow-lg">
         <div><strong className="block text-lg">🔔 {newPendingCount} {newPendingCount === 1 ? 'novo pedido recebido!' : 'novos pedidos recebidos!'}</strong><span className="text-sm">Há pedidos aguardando confirmação.</span></div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => { setAdminSection('orders'); setAdminMenuOpen(false); setNewPendingCount(0) }} className="min-h-11 rounded-lg bg-[#ffca28] px-4 py-2 font-black text-[#102c40]">Ver pedidos</button>
@@ -473,11 +499,16 @@ export default function App() {
         </div>
         <aside id="admin-navigation" aria-label="Menu administrativo" className={(adminMenuOpen ? 'block ' : 'hidden ') + 'admin-sidebar h-fit rounded-3xl border border-cyan-100 bg-white p-3 shadow-sm md:sticky md:top-24 md:block'}>
           <p className="px-3 pb-3 pt-2 text-xs font-black uppercase tracking-widest text-[#557383]">Gerenciamento</p>
+          <button type="button" aria-pressed={notificationsOn} onClick={switchNotifications}
+            className={'mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-extrabold ' +
+              (notificationsOn ? 'border-[#dfac29] bg-[#ffca28] text-[#102c40]' : 'border-[#54778b] bg-[#25475b] text-white')}>
+            {notificationsOn ? '🔔 Som / notificações ligados' : '🔕 Som / notificações desligados'}
+          </button>
           <nav className="grid grid-cols-1 gap-2" aria-label="Seções do painel">
             {([['orders', '📋', 'Pedidos'], ['comanda-history', '🧾', 'Histórico de comandas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
               <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffc629] text-[#143b50] shadow-sm' : 'text-[#416476] hover:bg-cyan-50')}>
-                <span aria-hidden="true">{icon}</span><span>{label}</span>{key === 'orders' && pendingCount > 0 && <span className="ml-auto rounded-full bg-[#b91c1c] px-2 py-0.5 text-xs font-black text-white" aria-label={pendingCount + ' pedidos pendentes'}>{pendingCount}</span>}
+                <span aria-hidden="true">{icon}</span><span>{label}</span>{key === 'orders' && notificationsOn && pendingCount > 0 && <span className="ml-auto rounded-full bg-[#b91c1c] px-2 py-0.5 text-xs font-black text-white" aria-label={pendingCount + ' pedidos pendentes'}>{pendingCount}</span>}
               </button>)}
           </nav>
           <button type="button" className="mt-3 min-h-11 w-full rounded-xl border border-[#315970] bg-[#153c53] px-3 py-3 text-sm font-extrabold text-white hover:bg-[#24556c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffca28]"
