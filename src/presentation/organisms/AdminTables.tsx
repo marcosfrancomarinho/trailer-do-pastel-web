@@ -252,16 +252,21 @@ export default function AdminTables({ token, products, categories }: Props) {
         <button disabled={busy} type="submit" className={button + ' w-full sm:w-auto'}>{busy ? 'Cadastrando...' : 'Cadastrar mesa'}</button>
       </form>
     )}
+    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-slate-100" aria-label="Legenda de situação das mesas">
+      <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#60dcaa]" aria-hidden="true" />Livre</span>
+      <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#ffce56]" aria-hidden="true" />Ocupada · Em andamento</span>
+      <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#61c7fa]" aria-hidden="true" />Ocupada · Pedidos prontos</span>
+    </div>
     {error && <p role="alert" className="rounded-xl border border-red-400 bg-[#562932] p-3 text-white">{error}</p>}
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {tables.map(table => <button key={table.id} type="button" onClick={() => void openTable(table.id)}
         aria-expanded={selected === table.id}
         aria-controls="table-expanded-details"
         className={'flex min-h-16 flex-col justify-center gap-1 rounded-lg border px-3 py-2 text-left transition-all duration-200 ' +
-          (readyTables.has(table.id) ? 'border-[#65e5a0] bg-[#166a45] text-white' : table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
+          (table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : readyTables.has(table.id) ? 'border-[#61c7fa] bg-[#174b73] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
           (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')}>
         <span className="flex w-full items-center justify-between gap-1"><strong className="text-base">Mesa {table.number}</strong><span className="text-xs" aria-hidden="true">{selected === table.id ? '▲' : '▼'}</span></span>
-        <span className="text-xs font-semibold">{readyTables.has(table.id) ? '✓ Pedidos prontos' : table.status === 'FREE' ? '● Livre' : '● Ocupada'} · {brl(table.totalSpent)}</span>
+        <span className="text-xs font-semibold">{table.status === 'FREE' ? '● Livre' : readyTables.has(table.id) ? '✓ Prontos · Ocupada' : '● Ocupada'} · {brl(table.totalSpent)}</span>
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
