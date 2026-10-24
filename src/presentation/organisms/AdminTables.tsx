@@ -34,7 +34,6 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
-  const [addedMessage, setAddedMessage] = useState('')
   const draftCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const filteredProducts = useMemo(() => products.filter(item =>
     (category === 'all' || item.categoryId === category) &&
@@ -99,7 +98,6 @@ export default function AdminTables({ token, products, categories }: Props) {
     setDetails(null)
     setProduct(null)
     setCart([])
-    setAddedMessage('')
     setError('')
     try {
       const result = await restaurantAdapter.tableOrders(token, id)
@@ -148,7 +146,6 @@ export default function AdminTables({ token, products, categories }: Props) {
         ? previous.map(item => item.key === key ? { ...item, quantity: item.quantity + quantity } : item)
         : [...previous, { key, product, quantity, additions: selectedAdditions }]
     })
-    setAddedMessage(quantity + '× ' + product.name + ' adicionado ao pedido da mesa.')
     setProduct(null)
   }
 
@@ -167,8 +164,7 @@ export default function AdminTables({ token, products, categories }: Props) {
       }, token)
       setCart([])
       setObservation('')
-      setAddedMessage('')
-      await refresh(selected)
+        await refresh(selected)
       notify({ title: 'Pedido lançado', message: 'Os produtos foram vinculados à mesa.', tone: 'success' })
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Falha ao lançar pedido.') }
     finally { setBusy(false) }
@@ -308,7 +304,6 @@ export default function AdminTables({ token, products, categories }: Props) {
               <div><p className="text-xs font-bold text-cyan-200">COMANDA EM MONTAGEM</p><h4 className="text-lg font-black text-white">Mesa {details.number}</h4></div>
               <span className="rounded-full bg-[#ffca28] px-3 py-1 text-xs font-black text-[#102c40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens</span>
             </div>
-            {addedMessage && <p role="status" className="rounded-lg border border-green-400 bg-[#164735] p-2 text-xs font-bold text-white sm:col-span-2 lg:col-span-1">✓ {addedMessage}</p>}
             <div className="space-y-2 sm:col-span-2">
               {cart.map(item => <div key={item.key} className="rounded-xl border border-[#63899a] bg-[#102c40] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
