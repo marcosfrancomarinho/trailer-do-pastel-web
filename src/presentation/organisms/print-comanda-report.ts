@@ -10,11 +10,6 @@ const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', {
 })
 
 export function printComandaReport(comandas: ClosedComanda[], date: string): void {
-  const reportWindow = window.open('', '_blank')
-  if (!reportWindow) {
-    window.alert('Não foi possível abrir a impressão. Autorize janelas pop-up neste site e tente novamente.')
-    return
-  }
 
   const finished = comandas.map(({ tableNumber, origin, session }) => ({
     tableNumber, origin, session, orders: session.orders.filter(order => order.status === 'COMPLETED'),
@@ -73,14 +68,11 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
   .addition { padding-left: 15px; font-size: 9pt; }
   .subtotal { text-align: right; font-weight: bold; margin: 8px 0 0; }
   footer { font-size: 9pt; text-align: center; margin-top: 18px; }
-  .actions { padding: 12px 0; text-align: right; }
-  .actions button { border: none; background: #113147; color: #fff; border-radius: 6px; padding: 10px 18px; cursor: pointer; }
-  @media print { main { padding: 0; } .actions { display: none !important; } }
+  @media print { main { padding: 0; } }
 </style>
 </head>
 <body>
 <main>
-  <div class="actions"><button onclick="window.print()">Imprimir relatório</button></div>
   <header class="report-header">
     <h1>TRAILER DO PASTEL</h1>
     <h2>RELATÓRIO DE PEDIDOS REALIZADOS</h2>
@@ -98,8 +90,39 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
 </body>
 </html>`
 
-  reportWindow.document.open()
-  reportWindow.document.write(html)
-  reportWindow.document.close()
-  reportWindow.focus()
+  // Imprime em um iframe oculto: não abre a aba intermediária about:blank.
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('title', 'Impressão do relatório de comandas')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.position = 'fixed'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  iframe.style.opacity = '0'
+
+  let printed = false
+  let cleanupTimer: ReturnType<typeof setTimeout> | undefined
+  const cleanup = () => {
+    if (cleanupTimer) clearTimeout(cleanupTimer)
+    iframe.remove()
+  }
+
+  iframe.onload = () => {
+    if (printed) return
+    printed = true
+    const printWindow = iframe.contentWindow
+    if (!printWindow) {
+      cleanup()
+      window.alert('Não foi possível iniciar a impressão neste navegador.')
+      return
+    }
+    printWindow.addEventListener('afterprint', cleanup, { once: true })
+    // Mantém o documento até que o navegador abra e encerre a impressão.
+    cleanupTimer = setTimeout(cleanup, 120_000)
+    printWindow.focus()
+    printWindow.print()
+  }
+
+  document.body.appendChild(iframe)
+  iframe.srcdoc = html
 }
