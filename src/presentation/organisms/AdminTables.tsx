@@ -6,6 +6,8 @@ import type { Addition, Category, Product, RestaurantTable, TableOrders, TableSe
 import { useActionDialog } from '../molecules/ActionDialog'
 
 type Props = { token: string; products: Product[]; categories: Category[] }
+const TABLE_ORDER_NAME = 'Trailer do Pastel'
+const TABLE_ORDER_PHONE = '99984636486'
 const field = 'min-h-11 w-full rounded-xl border border-[#63899a] bg-[#edf8fc] px-3 py-2 text-[#102c40]'
 const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#09283b] disabled:opacity-50'
 
@@ -15,8 +17,6 @@ export default function AdminTables({ token, products, categories }: Props) {
   const [details, setDetails] = useState<TableOrders | null>(null)
   const [sessions, setSessions] = useState<TableSessions | null>(null)
   const [number, setNumber] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
   const [observation, setObservation] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
   const [additions, setAdditions] = useState<Addition[]>([])
@@ -105,7 +105,7 @@ export default function AdminTables({ token, products, categories }: Props) {
     event.preventDefault()
     if (!selected || !cart.length || busy) return
     let payload
-    try { payload = toOrderPayload(customerName, customerPhone, cart) }
+    try { payload = toOrderPayload(TABLE_ORDER_NAME, TABLE_ORDER_PHONE, cart) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Confira os dados do pedido.'); return }
     setBusy(true); setError('')
     try {
@@ -265,8 +265,7 @@ export default function AdminTables({ token, products, categories }: Props) {
               </div>)}
               {cart.length === 0 && <p className="text-sm text-slate-200">Selecione um produto acima para começar.</p>}
             </div>
-            <label className="text-sm font-bold">Nome do cliente<input required className={field + ' mt-1'} value={customerName} onChange={event => setCustomerName(event.target.value)}/></label>
-            <label className="text-sm font-bold">Telefone<input required type="tel" className={field + ' mt-1'} value={customerPhone} onChange={event => setCustomerPhone(event.target.value)}/></label>
+            <p className="rounded-lg border border-[#547b8e] bg-[#102c40] p-3 text-sm text-slate-200 sm:col-span-2 lg:col-span-1">Pedido interno vinculado à mesa, sem necessidade de informar nome ou telefone do cliente.</p>
             <label className="text-sm font-bold sm:col-span-2">Observações<textarea maxLength={500} rows={2} className={field + ' mt-1'} value={observation} onChange={event => setObservation(event.target.value)} /></label>
             <div className="flex items-center justify-between gap-3 rounded-lg border-t border-[#547b8e] pt-3 sm:col-span-2"><span className="font-black">Total do pedido</span><strong className="text-lg text-amber-200">{brl(cartTotal(cart))}</strong></div>
             <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido para mesa ' + details.number}</button>
