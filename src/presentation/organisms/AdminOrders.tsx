@@ -422,34 +422,30 @@ export default function AdminOrders({ token }: { token: string }) {
   const printOrder = (debouncedSearch ? filteredOrders : currentOrders).find(order => order.id === printId)
 
   return (
-    <section className="space-y-5" aria-label="Painel de pedidos">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-4" aria-label="Painel de pedidos">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-white">Pedidos</h2>
-          <p className="text-sm text-slate-300">
-            {tab === 'pending'
-              ? 'Pendentes atualizados automaticamente a cada 5 segundos.'
-              : 'Atualizados ao abrir esta aba ou clicar em Atualizar.'}
-          </p>
+          <h2 className="text-xl font-black text-white sm:text-2xl">Pedidos</h2>
+          <p className="text-xs text-slate-300">{tab === 'pending' ? 'Atualização automática' : 'Consulte os pedidos por situação'}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => { void toggleSound() }}
             aria-pressed={soundEnabled}
             className={
-              'min-h-11 rounded-xl border px-4 py-2 text-sm font-bold ' +
+              'min-h-10 rounded-lg border px-3 py-2 text-xs font-bold sm:text-sm ' +
               (soundEnabled
                 ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
                 : 'border-[#56879d] bg-[#194258] text-white')
             }
           >
-            {soundEnabled ? '🔔 Som ativado' : '🔕 Ativar som'}
+            {soundEnabled ? '🔔 Som' : '🔕 Som'}
           </button>
           {tab !== 'pending' && <button
             type="button"
             onClick={() => { void refresh() }}
-            className="min-h-11 rounded-xl border border-[#56879d] bg-[#194258] px-4 py-2 text-sm font-bold text-white hover:bg-[#24556c]"
+            className="min-h-10 rounded-lg border border-[#56879d] bg-[#194258] px-3 py-2 text-xs font-bold text-white hover:bg-[#24556c]"
           >
             Atualizar
           </button>}
@@ -472,80 +468,29 @@ export default function AdminOrders({ token }: { token: string }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3">
-        <div className="flex gap-2" role="group" aria-label="Período dos pedidos">
-          <button
-            type="button"
-            aria-pressed={dateMode === 'today'}
-            onClick={() => setDateMode('today')}
-            className={
-              'rounded-lg px-4 py-2 text-sm font-bold ' +
-              (dateMode === 'today'
-                ? 'bg-[#ffca28] text-[#082739]'
-                : 'border border-[#467991] bg-[#1b4258] text-white')
-            }
-          >
-            Hoje
-          </button>
-          <button
-            type="button"
-            aria-pressed={dateMode === 'custom'}
+      <div className="flex flex-col gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 items-center gap-2" role="group" aria-label="Período dos pedidos">
+          <button type="button" aria-pressed={dateMode === 'today'} onClick={() => setDateMode('today')}
+            className={'min-h-10 rounded-lg px-3 text-sm font-bold ' + (dateMode === 'today' ? 'bg-[#ffca28] text-[#082739]' : 'bg-[#1b4258] text-white')}>Hoje</button>
+          <button type="button" aria-pressed={dateMode === 'custom'}
             onClick={() => { setChosenDate(visibleDate); setDateMode('custom') }}
-            className={
-              'rounded-lg px-4 py-2 text-sm font-bold ' +
-              (dateMode === 'custom'
-                ? 'bg-[#ffca28] text-[#082739]'
-                : 'border border-[#467991] bg-[#1b4258] text-white')
-            }
-          >
-            Outra data
-          </button>
+            className={'min-h-10 rounded-lg px-3 text-sm font-bold ' + (dateMode === 'custom' ? 'bg-[#ffca28] text-[#082739]' : 'bg-[#1b4258] text-white')}>Outra data</button>
         </div>
-        {dateMode === 'custom' && (
-          <label className="flex flex-col gap-1 text-xs font-bold text-slate-200">
-            Selecionar data
-            <input
-              type="date"
-              lang="pt-BR"
-              max={todayKey}
-              value={chosenDate}
-              onChange={event => {
-                const date = event.target.value
-                if (date && date <= todayKey) setChosenDate(date)
-              }}
-              className="min-h-11 rounded-lg border border-[#79a5ba] bg-white px-3 py-2 text-base font-bold text-[#09283b]"
-              aria-label="Selecionar data dos pedidos no calendário"
-            />
-          </label>
-        )}
-        <span className="text-xs text-slate-300">
-          Mostrando pedidos de {visibleDate.split('-').reverse().join('/')}
-        </span>
-      </div>
-
-      <div className="rounded-xl border border-[#315970] bg-[#102b40] p-3">
-        <label htmlFor="admin-order-search" className="mb-2 block text-sm font-bold text-slate-100">
-          Buscar pedido
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            id="admin-order-search"
-            type="search"
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-            placeholder="Nome, telefone, pedido ou mesa"
-            autoComplete="off"
-            className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#79a5ba] bg-white px-3 py-2 text-base text-[#09283b] placeholder:text-slate-500"
-          />
+        {dateMode === 'custom' && <input type="date" lang="pt-BR" max={todayKey} value={chosenDate}
+          onChange={event => { const date = event.target.value; if (date && date <= todayKey) setChosenDate(date) }}
+          className="min-h-10 rounded-lg border border-[#79a5ba] bg-white px-2 text-sm font-bold text-[#09283b]"
+          aria-label="Selecionar data dos pedidos" />}
+        <div className="relative min-w-0 flex-1">
+          <label className="sr-only" htmlFor="admin-order-search">Buscar pedido</label>
+          <input id="admin-order-search" type="search" value={search} onChange={event => setSearch(event.target.value)}
+            placeholder="⌕ Buscar nome, telefone, ID ou mesa" autoComplete="off"
+            className="min-h-11 w-full rounded-lg border border-[#79a5ba] bg-white px-3 pr-12 text-sm text-[#09283b] placeholder:text-slate-500" />
           {search && <button type="button" onClick={() => { setSearch(''); setDebouncedSearch('') }}
-            className="min-h-11 rounded-xl border border-[#467991] px-3 text-sm font-bold text-white">
-            Limpar
-          </button>}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm font-bold text-[#09283b]" aria-label="Limpar busca">✕</button>}
         </div>
-        <p className="mt-2 text-xs text-slate-300">A busca considera a data selecionada e todos os status, inclusive pelo ID parcial.</p>
       </div>
 
-      {!debouncedSearch && (<div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
+      {!debouncedSearch && (<div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Situação dos pedidos">
         {tabs.map(option => (
           <button
             key={option.id}
@@ -554,14 +499,14 @@ export default function AdminOrders({ token }: { token: string }) {
             aria-selected={tab === option.id}
             onClick={() => setTab(option.id)}
             className={
-              'rounded-xl border px-3 py-3 text-left text-sm font-bold ' +
+              'min-h-12 rounded-lg border px-1.5 py-2 text-center text-[11px] font-bold leading-tight sm:px-3 sm:text-sm ' +
               (tab === option.id
                 ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
                 : 'border-[#34637c] bg-[#173b51] text-white hover:bg-[#24536c]')
             }
           >
-            <span className="block">{option.label}</span>
-            {tab === option.id && <strong className="mt-1 block text-lg">{filteredOrders.length}</strong>}
+            <span className="block">{option.id === 'preparing' ? 'Andamento' : option.label}</span>
+            {tab === option.id && <strong className="block text-sm sm:text-lg">{filteredOrders.length}</strong>}
           </button>
         ))}
       </div>)}
