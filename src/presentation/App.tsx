@@ -352,7 +352,6 @@ export default function App() {
               <button type="button" onClick={() => { saveAdminSession(''); sessionStorage.removeItem('trailer-admin-role'); setAdminToken(''); navigate('/admin') }} className="min-h-11 rounded-xl border border-[#81a4b6] px-4 font-bold text-white">Sair</button>
             </div>
           </div>
-          <AdminStore token={adminToken} />
           <AdminTables token={adminToken} products={products} categories={categories} />
         </main>
       ) : <Navigate to="/admin" replace />} />
