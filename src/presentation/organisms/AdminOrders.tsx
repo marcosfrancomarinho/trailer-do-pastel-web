@@ -528,7 +528,7 @@ export default function AdminOrders({ token }: { token: string }) {
         </div>
       )}
       {selectedOrder && <OrderDetails order={selectedOrder} token={token} onClose={() => setSelectedId(null)} />}
-      {printOrder && <OrderReceipt order={printOrder} onClose={() => setPrintId(null)} />}
+      {printOrder && <OrderReceipt order={printOrder} token={token} onClose={() => setPrintId(null)} />}
       {dialog}
     </section>
   )
