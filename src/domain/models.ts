@@ -4,7 +4,7 @@ export type Addition = { id: string; name: string; price: string; available: boo
 export type OrderPayload = { customerName: string; customerPhone: string; observation?: string | null; tableId?: string | null; items: { productId: string; quantity: number; additions: { additionId: string; quantity: number }[] }[] }
 export type CreatedOrder = { id: string; trackingToken: string; status: string; total: string; tableId?: string | null }
 export type TrackedOrder = { status: string; updatedAt: string }
-export type PendingOrder = { id: string; customerName: string; customerPhone: string; observation?: string | null; tableId?: string | null; status: string; total: string; createdAt: string; items: { productName: string; quantity: number; unitPrice: string; additions: { additionName: string; quantity: number; unitPrice: string }[] }[] }
+export type PendingOrder = { id: string; customerName: string; customerPhone: string; observation?: string | null; tableId?: string | null; tableNumber?: number | null; status: string; total: string; createdAt: string; items: { productName: string; quantity: number; unitPrice: string; additions: { additionName: string; quantity: number; unitPrice: string }[] }[] }
 
 export type OrderHistoryItem = Omit<PendingOrder, 'status'> & { status: 'COMPLETED' | 'CANCELED'; updatedAt: string; histories: { status: string; changedAt: string }[] }
 
