@@ -95,7 +95,7 @@ function OrderCard({
         </div>
 
         {action && (
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className={order.status === 'PENDING' ? 'grid grid-cols-2 gap-2 pt-1' : 'grid grid-cols-1 gap-2 pt-1 min-[420px]:grid-cols-2'}>
             <button
               type="button"
               disabled={busy}
@@ -117,7 +117,7 @@ function OrderCard({
               type="button"
               disabled={busy}
               onClick={() => void onStatusChange(order.id, 'CANCELED')}
-              className="col-span-2 min-h-11 rounded-xl border border-red-300 bg-[#512832] px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
+              className={(order.status === 'PENDING' ? 'col-span-2 ' : '') + 'min-h-11 min-w-0 rounded-xl border border-red-300 bg-[#512832] px-3 py-3 text-sm font-bold text-white disabled:opacity-60'}
             >
               Cancelar
             </button>
