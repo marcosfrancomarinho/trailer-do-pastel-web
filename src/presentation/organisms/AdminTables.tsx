@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { cartTotal, toOrderPayload, type CartItem } from '../../domain/cart'
+import ProductCard from '../components/ProductCard'
 import { brl } from '../../api'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
-import type { Product, RestaurantTable, TableOrders, TableSessions } from '../../domain/models'
+import type { Addition, Category, Product, RestaurantTable, TableOrders, TableSessions } from '../../domain/models'
 import { useActionDialog } from '../molecules/ActionDialog'
 
-type Props = { token: string; products: Product[] }
+type Props = { token: string; products: Product[]; categories: Category[] }
 const field = 'min-h-11 w-full rounded-xl border border-[#63899a] bg-[#edf8fc] px-3 py-2 text-[#102c40]'
 const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#09283b] disabled:opacity-50'
 
-export default function AdminTables({ token, products }: Props) {
+export default function AdminTables({ token, products, categories }: Props) {
   const [tables, setTables] = useState<RestaurantTable[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [details, setDetails] = useState<TableOrders | null>(null)
@@ -17,8 +19,19 @@ export default function AdminTables({ token, products }: Props) {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [observation, setObservation] = useState('')
-  const [productId, setProductId] = useState('')
+  const [product, setProduct] = useState<Product | null>(null)
+  const [additions, setAdditions] = useState<Addition[]>([])
+  const [additionsBusy, setAdditionsBusy] = useState(false)
+  const [amounts, setAmounts] = useState<Record<string, number>>({})
   const [quantity, setQuantity] = useState(1)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
+  const [addedMessage, setAddedMessage] = useState('')
+  const filteredProducts = useMemo(() => products.filter(item =>
+    (category === 'all' || item.categoryId === category) &&
+    (item.name + ' ' + item.description).toLowerCase().includes(search.toLowerCase())
+  ), [products, category, search])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { confirm, notify, dialog } = useActionDialog()
@@ -40,6 +53,8 @@ export default function AdminTables({ token, products }: Props) {
     setSelected(id)
     setSessions(null)
     setDetails(null)
+    setCart([])
+    setAddedMessage('')
     setError('')
     try { setDetails(await restaurantAdapter.tableOrders(token, id)) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Erro ao abrir mesa.') }
@@ -59,22 +74,51 @@ export default function AdminTables({ token, products }: Props) {
     finally { setBusy(false) }
   }
 
+  async function chooseProduct(item: Product) {
+    if (!item.available) return
+    setProduct(item)
+    setAmounts({})
+    setQuantity(1)
+    setAdditions([])
+    setAdditionsBusy(true)
+    try { setAdditions(await restaurantAdapter.additions(item.id)) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Falha ao buscar adicionais.'); setProduct(null) }
+    finally { setAdditionsBusy(false) }
+  }
+
+  function addProduct() {
+    if (!product || additionsBusy) return
+    const selectedAdditions = additions.filter(item => item.available && (amounts[item.id] ?? 0) > 0)
+      .map(addition => ({ addition, quantity: amounts[addition.id] }))
+    const key = product.id + ':' + selectedAdditions.map(item => item.addition.id + '-' + item.quantity).sort().join(',')
+    setCart(previous => {
+      const existing = previous.find(item => item.key === key)
+      return existing
+        ? previous.map(item => item.key === key ? { ...item, quantity: item.quantity + quantity } : item)
+        : [...previous, { key, product, quantity, additions: selectedAdditions }]
+    })
+    setAddedMessage(quantity + '× ' + product.name + ' adicionado ao pedido da mesa.')
+    setProduct(null)
+  }
+
   async function createOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selected || !productId) return
+    if (!selected || !cart.length || busy) return
+    let payload
+    try { payload = toOrderPayload(customerName, customerPhone, cart) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Confira os dados do pedido.'); return }
     setBusy(true); setError('')
     try {
       await restaurantAdapter.create({
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        ...payload,
         observation: observation.trim() || null,
         tableId: selected,
-        items: [{ productId, quantity, additions: [] }],
       }, token)
+      setCart([])
       setObservation('')
-      setQuantity(1)
+      setAddedMessage('')
       await refresh(selected)
-      notify({ title: 'Pedido lançado', message: 'O pedido foi vinculado à mesa.', tone: 'success' })
+      notify({ title: 'Pedido lançado', message: 'Os produtos foram vinculados à mesa.', tone: 'success' })
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Falha ao lançar pedido.') }
     finally { setBusy(false) }
   }
@@ -194,20 +238,66 @@ export default function AdminTables({ token, products }: Props) {
             {order.status !== 'CANCELED' && <button type="button" disabled={busy} onClick={() => void removeOrder(order.id)} className="mt-2 text-sm font-bold text-red-200 underline">Cancelar pedido</button>}
           </div>)}
         </div>
-        <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl bg-[#193e53] p-4 sm:grid-cols-2">
-          <h4 className="font-black sm:col-span-2">Lançar pedido na mesa</h4>
-          <label className="text-sm font-bold">Nome do cliente<input required className={field + ' mt-1'} value={customerName} onChange={event => setCustomerName(event.target.value)}/></label>
-          <label className="text-sm font-bold">Telefone<input required type="tel" className={field + ' mt-1'} value={customerPhone} onChange={event => setCustomerPhone(event.target.value)}/></label>
-          <label className="text-sm font-bold">Produto<select required className={field + ' mt-1'} value={productId} onChange={event => setProductId(event.target.value)}>
-            <option value="">Escolha o produto</option>{products.filter(product => product.available).map(product => <option value={product.id} key={product.id}>{product.name} — {brl(product.price)}</option>)}
-          </select></label>
-          <label className="text-sm font-bold">Quantidade<input required type="number" min="1" step="1" className={field + ' mt-1'} value={quantity} onChange={event => setQuantity(Number(event.target.value))}/></label>
-          <label className="text-sm font-bold sm:col-span-2">Observações<textarea maxLength={500} rows={2} className={field + ' mt-1'} value={observation} onChange={event => setObservation(event.target.value)} /></label>
-          <button disabled={busy} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Adicionar pedido à mesa'}</button>
-        </form>
+        <div className="space-y-4 border-t border-[#486f83] pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h4 className="text-xl font-black">Cardápio da mesa {details.number}</h4><p className="text-sm text-slate-200">Escolha produtos e adicionais como no cardápio do cliente.</p></div>
+            <span className="rounded-full bg-[#ffca28] px-4 py-2 font-black text-[#102b40]">{cart.reduce((sum, item) => sum + item.quantity, 0)} itens · {brl(cartTotal(cart))}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setCategory('all')} className={category === 'all' ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>Todos</button>
+            {categories.map(item => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>{item.name}</button>)}
+          </div>
+          <input className={field} aria-label="Buscar produto da mesa" placeholder="Buscar produto..." value={search} onChange={event => setSearch(event.target.value)} />
+          <div className="product-grid grid gap-4 sm:grid-cols-2">
+            {filteredProducts.map(item => <ProductCard key={item.id} product={item} category={categories.find(cat => cat.id === item.categoryId)?.name ?? 'Especial'} select={item => void chooseProduct(item)} />)}
+          </div>
+          {filteredProducts.length === 0 && <p className="text-sm text-white">Nenhum produto encontrado.</p>}
+          {addedMessage && <p role="status" className="rounded-xl border border-green-400 bg-[#164735] p-3 font-bold text-white">✓ {addedMessage}</p>}
+          <form onSubmit={event => void createOrder(event)} className="grid gap-3 rounded-xl bg-[#193e53] p-4 sm:grid-cols-2">
+            <h4 className="font-black sm:col-span-2">Conferir pedido da mesa</h4>
+            <div className="space-y-2 sm:col-span-2">
+              {cart.map(item => <div key={item.key} className="rounded-xl border border-[#63899a] bg-[#102c40] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <strong>{item.quantity}× {item.product.name}</strong><span>{brl(item.quantity * (Number(item.product.price) + item.additions.reduce((total, extra) => total + Number(extra.addition.price) * extra.quantity, 0)))}</span>
+                </div>
+                {item.additions.map(extra => <p key={extra.addition.id} className="text-sm text-slate-200">+ {extra.quantity}× {extra.addition.name}</p>)}
+                <div className="mt-2 flex items-center gap-3">
+                  <button type="button" aria-label="Diminuir quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity - 1 } : value).filter(value => value.quantity > 0))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">−</button>
+                  <button type="button" aria-label="Aumentar quantidade" onClick={() => setCart(items => items.map(value => value.key === item.key ? { ...value, quantity: value.quantity + 1 } : value))} className="rounded-lg bg-[#ffca28] px-3 py-1 font-bold text-[#102c40]">+</button>
+                  <button type="button" onClick={() => setCart(items => items.filter(value => value.key !== item.key))} className="ml-auto text-sm font-bold text-red-200 underline">Remover</button>
+                </div>
+              </div>)}
+              {cart.length === 0 && <p className="text-sm text-slate-200">Selecione um produto acima para começar.</p>}
+            </div>
+            <label className="text-sm font-bold">Nome do cliente<input required className={field + ' mt-1'} value={customerName} onChange={event => setCustomerName(event.target.value)}/></label>
+            <label className="text-sm font-bold">Telefone<input required type="tel" className={field + ' mt-1'} value={customerPhone} onChange={event => setCustomerPhone(event.target.value)}/></label>
+            <label className="text-sm font-bold sm:col-span-2">Observações<textarea maxLength={500} rows={2} className={field + ' mt-1'} value={observation} onChange={event => setObservation(event.target.value)} /></label>
+            <div className="flex items-center justify-between gap-3 rounded-lg border-t border-[#547b8e] pt-3 sm:col-span-2"><span className="font-black">Total do pedido</span><strong className="text-lg text-amber-200">{brl(cartTotal(cart))}</strong></div>
+            <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type="submit">{busy ? 'Salvando...' : 'Enviar pedido para mesa ' + details.number}</button>
+          </form>
+        </div>
         {sessions && <div className="space-y-2"><h4 className="font-black">Sessões anteriores e atuais</h4>{sessions.sessions.map(session => <div key={session.id} className="rounded-xl border border-[#446d82] p-3 text-sm"><p>{new Date(session.openedAt).toLocaleString('pt-BR')} — {session.closedAt ? new Date(session.closedAt).toLocaleString('pt-BR') : 'Em andamento'}</p><p>{session.orders.length} pedidos · {session.closedTotal ? brl(session.closedTotal) : 'Aberta'}</p></div>)}</div>}
       </>}
     </div>}
+    {product && (
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/80 sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget) setProduct(null) }}>
+        <section role="dialog" aria-modal="true" aria-label={'Personalizar ' + product.name} className="product-customizer-modal flex max-h-[93dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl border border-[#608ba0] bg-[#102c40] text-white shadow-2xl sm:rounded-3xl">
+          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[#41687c] p-5">
+            <div><p className="text-xs font-black tracking-wider text-[#8be9fb]">MONTE DO SEU JEITO · MESA {details?.number}</p><h3 className="mt-2 text-2xl font-black text-white">{product.name}</h3><p className="mt-2 text-sm text-[#d4e8f2]">{product.description}</p></div>
+            <button type="button" aria-label="Fechar" onClick={() => setProduct(null)} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#28546b] text-white">✕</button>
+          </header>
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
+            <h4 className="font-black text-white">Adicionais</h4>
+            {additionsBusy ? <p>Carregando adicionais...</p> : additions.filter(item => item.available).length === 0 ? <p className="rounded-xl bg-[#20475d] p-3 text-white">Sem adicionais para este produto.</p> : additions.filter(item => item.available).map(item => <div key={item.id} className="flex items-center justify-between gap-3 border-b border-[#48758b] py-3">
+              <div><strong className="text-white">{item.name}</strong><p className="text-sm text-[#c8e7f4]">+ {brl(item.price)}</p></div>
+              <div className="flex items-center gap-2"><button type="button" aria-label={'Remover ' + item.name} onClick={() => setAmounts(values => ({ ...values, [item.id]: Math.max(0, (values[item.id] || 0) - 1) }))} className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-lg font-bold text-[#102b40]">−</button><span className="w-6 text-center font-bold text-white">{amounts[item.id] || 0}</span><button type="button" aria-label={'Adicionar ' + item.name} onClick={() => setAmounts(values => ({ ...values, [item.id]: (values[item.id] || 0) + 1 }))} className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] text-lg font-bold text-[#102b40]">+</button></div>
+            </div>)}
+            <div className="flex items-center justify-between gap-3 pt-3"><strong className="text-white">Quantidade</strong><div className="flex items-center gap-3"><button type="button" onClick={() => setQuantity(value => Math.max(1, value - 1))} className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] font-bold text-[#102b40]">−</button><strong className="text-white">{quantity}</strong><button type="button" onClick={() => setQuantity(value => value + 1)} className="grid h-11 w-11 place-items-center rounded-xl bg-[#ffdc86] font-bold text-[#102b40]">+</button></div></div>
+          </div>
+          <footer className="shrink-0 border-t border-[#41687c] bg-[#102c40] p-5"><button type="button" disabled={additionsBusy} onClick={addProduct} className="min-h-12 w-full rounded-xl bg-[#ffca28] p-3 font-black text-[#102b40]">Adicionar · {brl(quantity * (Number(product.price) + additions.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0)))}</button></footer>
+        </section>
+      </div>
+    )}
     {dialog}
   </section>
 }
