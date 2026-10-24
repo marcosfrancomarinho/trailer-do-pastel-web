@@ -42,6 +42,27 @@ export class OrderAlert {
     }
   }
 
+  /** Três sinais graves descendentes para distinguir cancelamento de pedido novo. */
+  playCancellation(): void {
+    const context = this.context
+    if (!context || context.state !== 'running') return
+    const now = context.currentTime
+    for (const [index, frequency] of [660, 440, 330].entries()) {
+      const start = now + index * 0.3
+      const oscillator = context.createOscillator()
+      const volume = context.createGain()
+      oscillator.type = 'sawtooth'
+      oscillator.frequency.setValueAtTime(frequency, start)
+      volume.gain.setValueAtTime(0.0001, start)
+      volume.gain.exponentialRampToValueAtTime(0.22, start + 0.02)
+      volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.26)
+      oscillator.connect(volume)
+      volume.connect(context.destination)
+      oscillator.start(start)
+      oscillator.stop(start + 0.27)
+    }
+  }
+
   close(): void {
     const current = this.context
     this.context = null
