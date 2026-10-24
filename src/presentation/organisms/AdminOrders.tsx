@@ -8,23 +8,6 @@ import OrderReceipt from './OrderReceipt'
 import { useActionDialog } from '../molecules/ActionDialog'
 import { OrderAlert } from '../audio/order-alert'
 
-function toBrazilianDate(iso: string): string {
-  const [year, month, day] = iso.split('-')
-  return [day, month, year].join('/')
-}
-
-function fromBrazilianDate(text: string): string | null {
-  if (!/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(text)) return null
-  const [day, month, year] = text.split('/').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) return null
-  return String(year).padStart(4, '0') + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0')
-}
-
 type Tab = 'pending' | 'preparing' | 'completed' | 'canceled'
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
 
@@ -149,8 +132,6 @@ export default function AdminOrders({ token }: { token: string }) {
   const [todayKey, setTodayKey] = useState(todayRestaurantDate)
   const [dateMode, setDateMode] = useState<'today' | 'custom'>('today')
   const [chosenDate, setChosenDate] = useState(todayRestaurantDate)
-  const [dateText, setDateText] = useState(() => toBrazilianDate(todayRestaurantDate()))
-  const [dateError, setDateError] = useState('')
   const [soundEnabled, setSoundEnabled] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
   const [newOrderCount, setNewOrderCount] = useState(0)
   const [soundReady, setSoundReady] = useState(false)
@@ -463,7 +444,7 @@ export default function AdminOrders({ token }: { token: string }) {
           <button
             type="button"
             aria-pressed={dateMode === 'custom'}
-            onClick={() => { setChosenDate(visibleDate); setDateText(toBrazilianDate(visibleDate)); setDateError(''); setDateMode('custom') }}
+            onClick={() => { setChosenDate(visibleDate); setDateMode('custom') }}
             className={
               'rounded-lg px-4 py-2 text-sm font-bold ' +
               (dateMode === 'custom'
@@ -475,55 +456,21 @@ export default function AdminOrders({ token }: { token: string }) {
           </button>
         </div>
         {dateMode === 'custom' && (
-          <div className="flex min-w-0 flex-wrap items-end gap-2">
-            <label className="flex flex-col gap-1 text-xs font-bold text-slate-200">
-              Data do pedido (DD/MM/AAAA)
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder="DD/MM/AAAA"
-                maxLength={10}
-                value={dateText}
-                aria-invalid={Boolean(dateError)}
-                onChange={event => {
-                  const digits = event.target.value.replace(/[^0-9]/g, '').slice(0, 8)
-                  const formatted = digits.length > 4
-                    ? digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4)
-                    : digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits
-                  setDateText(formatted)
-                  setDateError('')
-                }}
-                onKeyDown={event => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    const iso = fromBrazilianDate(dateText)
-                    if (!iso || iso > todayKey) {
-                      setDateError('Informe uma data válida até hoje.')
-                    } else {
-                      setDateError('')
-                      setChosenDate(iso)
-                    }
-                  }
-                }}
-                className="min-h-11 w-36 rounded-lg border border-[#79a5ba] bg-white px-3 py-2 text-base font-bold text-[#09283b]"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                const iso = fromBrazilianDate(dateText)
-                if (!iso || iso > todayKey) {
-                  setDateError('Informe uma data válida até hoje.')
-                  return
-                }
-                setDateError('')
-                setChosenDate(iso)
+          <label className="flex flex-col gap-1 text-xs font-bold text-slate-200">
+            Selecionar data
+            <input
+              type="date"
+              lang="pt-BR"
+              max={todayKey}
+              value={chosenDate}
+              onChange={event => {
+                const date = event.target.value
+                if (date && date <= todayKey) setChosenDate(date)
               }}
-              className="min-h-11 rounded-lg bg-[#ffca28] px-4 py-2 text-sm font-extrabold text-[#09283b]"
-            >Buscar</button>
-            {dateError && <p role="alert" className="w-full text-xs font-bold text-[#ffd5d8]">{dateError}</p>}
-          </div>
+              className="min-h-11 rounded-lg border border-[#79a5ba] bg-white px-3 py-2 text-base font-bold text-[#09283b]"
+              aria-label="Selecionar data dos pedidos no calendário"
+            />
+          </label>
         )}
         <span className="text-xs text-slate-300">
           Mostrando pedidos de {visibleDate.split('-').reverse().join('/')}
