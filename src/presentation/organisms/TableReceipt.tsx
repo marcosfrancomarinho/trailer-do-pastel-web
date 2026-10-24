@@ -35,7 +35,7 @@ export default function TableReceipt({ table, onClose }: { table: TableOrders; o
             <header className="receipt-center">
               <h3>TRAILER DO PASTEL</h3>
               <strong>CONTA DA MESA {table.number}</strong>
-              <p className="break-all"><strong>ID DA COMANDA:</strong> {table.sessionId ?? 'SEM COMANDA ABERTA'}</p>
+              <p className="break-all"><strong>ID DA COMANDA:</strong> {table.sessionId?.slice(0, 8).toUpperCase() ?? 'SEM COMANDA ABERTA'}</p>
               <p>{new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}</p>
             </header>
             <div className="receipt-separator" />
