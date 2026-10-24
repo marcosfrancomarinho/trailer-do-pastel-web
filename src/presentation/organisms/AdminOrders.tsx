@@ -545,7 +545,7 @@ export default function AdminOrders({ token }: { token: string }) {
         <p className="mt-2 text-xs text-slate-300">Ao pesquisar, procura em todas as datas e situações, inclusive pelo ID parcial.</p>
       </div>
 
-      {!debouncedSearch && <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
+      {!debouncedSearch && (<div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
         {tabs.map(option => (
           <button
             key={option.id}
@@ -564,7 +564,7 @@ export default function AdminOrders({ token }: { token: string }) {
             {tab === option.id && <strong className="mt-1 block text-lg">{filteredOrders.length}</strong>}
           </button>
         ))}
-      </div>
+      </div>)}
 
       {debouncedSearch && <p className="text-sm font-bold text-cyan-100">Resultados da busca em todos os pedidos ({filteredOrders.length})</p>}
       {searchError && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{searchError}</p>}
