@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { brl } from '../../api'
-import type { RestaurantTable, TableSession } from '../../domain/models'
+import type { ClosedComanda } from '../../domain/models'
 import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
 
-type ClosedComanda = { table: RestaurantTable; session: TableSession }
 const dateKey = (value: string | Date) => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit',
 }).format(new Date(value))
@@ -25,22 +24,8 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     setError('')
     async function load() {
       try {
-        const tables = await restaurantAdapter.tables(token)
-        const results = await Promise.allSettled(tables.map(table =>
-          restaurantAdapter.tableSessions(token, table.id)
-        ))
-        if (!active) return
-        const success = results.flatMap((result, index) =>
-          result.status === 'fulfilled'
-            ? result.value.sessions.filter(session => session.closedAt !== null)
-              .map(session => ({ table: tables[index], session }))
-            : []
-        )
-        success.sort((a, b) => (b.session.closedAt ?? '').localeCompare(a.session.closedAt ?? ''))
-        setComandas(success)
-        if (results.some(result => result.status === 'rejected')) {
-          setError('Algumas mesas não puderam ser consultadas. O histórico pode estar incompleto.')
-        }
+        const result = await restaurantAdapter.closedComandas(token, allDates ? undefined : date)
+        if (active) setComandas(result.comandas)
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Falha ao carregar o histórico.')
       } finally {
@@ -49,12 +34,9 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     }
     void load()
     return () => { active = false }
-  }, [token])
+  }, [token, date, allDates])
 
-  const filtered = useMemo(() =>
-    comandas.filter(item => allDates || (item.session.closedAt && dateKey(item.session.closedAt) === date)),
-    [comandas, allDates, date]
-  )
+  const filtered = comandas
   const total = filtered.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
@@ -82,11 +64,11 @@ export default function AdminComandaHistory({ token }: { token: string }) {
       </div>
       {filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada nesta data.</p>}
       <div className="space-y-2">
-        {filtered.map(({ table, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
+        {filtered.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
           <button type="button" aria-expanded={expanded === session.id} onClick={() => setExpanded(value => value === session.id ? null : session.id)}
             className="flex min-h-16 w-full items-center justify-between gap-3 p-3 text-left">
             <div className="min-w-0">
-              <strong className="block">Mesa {table.number}</strong>
+              <strong className="block">Mesa {tableNumber}</strong>
               <span className="block text-xs text-slate-200">{session.closedAt ? dateTime(session.closedAt) : ''}</span>
               <span className="block break-all text-xs text-slate-300">Comanda: {session.id.slice(0, 8).toUpperCase()}</span>
             </div>
