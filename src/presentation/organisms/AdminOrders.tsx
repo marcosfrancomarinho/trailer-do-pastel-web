@@ -123,6 +123,9 @@ export default function AdminOrders({ token }: { token: string }) {
   const [tab, setTab] = useState<Tab>('pending')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<Order[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState('')
   const [pending, setPending] = useState<PendingOrder[]>([])
   const [preparing, setPreparing] = useState<PreparingOrder[]>([])
   const [history, setHistory] = useState<OrderHistoryItem[]>([])
@@ -372,13 +375,39 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }
 
+  // Busca global: consulta pedidos de todos os estados e datas, sem afetar o polling.
+  useEffect(() => {
+    if (!debouncedSearch) {
+      setSearchResults([])
+      setSearchLoading(false)
+      setSearchError('')
+      return
+    }
+    let active = true
+    setSearchLoading(true)
+    setSearchError('')
+    void Promise.all([
+      restaurant.pendingOrders(token),
+      restaurant.preparingOrders(token),
+      restaurant.orderHistory(token),
+    ]).then(([allPending, allPreparing, allHistory]) => {
+      if (!active) return
+      setSearchResults([...allPending, ...allPreparing, ...allHistory])
+    }).catch(cause => {
+      if (active) setSearchError(cause instanceof Error ? cause.message : 'Erro na busca de pedidos.')
+    }).finally(() => {
+      if (active) setSearchLoading(false)
+    })
+    return () => { active = false }
+  }, [token, debouncedSearch])
+
   const completed = history.filter(order => order.status === 'COMPLETED')
   const canceled = history.filter(order => order.status === 'CANCELED')
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled }
   const currentOrders = onlyRequestedDay(groups[tab], visibleDate)
   const normalizedSearch = debouncedSearch.toLocaleLowerCase('pt-BR')
   const searchDigits = debouncedSearch.replace(/\D/g, '')
-  const filteredOrders = currentOrders.filter(order => {
+  const filteredOrders = (debouncedSearch ? searchResults : currentOrders).filter(order => {
     if (!normalizedSearch) return true
     return order.customerName.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
       order.customerPhone.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
@@ -389,8 +418,8 @@ export default function AdminOrders({ token }: { token: string }) {
         ('mesa ' + order.tableNumber).includes(normalizedSearch)
       ))
   })
-  const selectedOrder = currentOrders.find(order => order.id === selectedId)
-  const printOrder = currentOrders.find(order => order.id === printId)
+  const selectedOrder = (debouncedSearch ? filteredOrders : currentOrders).find(order => order.id === selectedId)
+  const printOrder = (debouncedSearch ? filteredOrders : currentOrders).find(order => order.id === printId)
 
   return (
     <section className="space-y-5" aria-label="Painel de pedidos">
@@ -513,10 +542,10 @@ export default function AdminOrders({ token }: { token: string }) {
             Limpar
           </button>}
         </div>
-        <p className="mt-2 text-xs text-slate-300">Pesquisa nos pedidos da data e situação selecionadas.</p>
+        <p className="mt-2 text-xs text-slate-300">Ao pesquisar, procura em todas as datas e situações, inclusive pelo ID parcial.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
+      {!debouncedSearch && <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
         {tabs.map(option => (
           <button
             key={option.id}
@@ -537,8 +566,10 @@ export default function AdminOrders({ token }: { token: string }) {
         ))}
       </div>
 
-      {error && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{error}</p>}
-      {loading ? (
+      {debouncedSearch && <p className="text-sm font-bold text-cyan-100">Resultados da busca em todos os pedidos ({filteredOrders.length})</p>}
+      {searchError && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{searchError}</p>}
+      {error && !debouncedSearch && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{error}</p>}
+      {(debouncedSearch ? searchLoading : loading) ? (
         <p className="text-slate-200">Carregando pedidos...</p>
       ) : filteredOrders.length === 0 ? (
         <p className="rounded-xl border border-[#345971] bg-[#112e43] p-6 text-center text-slate-200">
