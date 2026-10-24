@@ -387,19 +387,19 @@ export default function AdminOrders({ token }: { token: string }) {
     setSearchLoading(true)
     setSearchError('')
     void Promise.all([
-      restaurant.pendingOrders(token),
-      restaurant.preparingOrders(token),
-      restaurant.orderHistory(token),
+      restaurant.pendingOrders(token, visibleDate),
+      restaurant.preparingOrders(token, visibleDate),
+      restaurant.orderHistory(token, visibleDate),
     ]).then(([allPending, allPreparing, allHistory]) => {
       if (!active) return
-      setSearchResults([...allPending, ...allPreparing, ...allHistory])
+      setSearchResults(onlyRequestedDay([...allPending, ...allPreparing, ...allHistory], visibleDate))
     }).catch(cause => {
       if (active) setSearchError(cause instanceof Error ? cause.message : 'Erro na busca de pedidos.')
     }).finally(() => {
       if (active) setSearchLoading(false)
     })
     return () => { active = false }
-  }, [token, debouncedSearch])
+  }, [token, debouncedSearch, visibleDate, onlyRequestedDay])
 
   const completed = history.filter(order => order.status === 'COMPLETED')
   const canceled = history.filter(order => order.status === 'CANCELED')
@@ -542,7 +542,7 @@ export default function AdminOrders({ token }: { token: string }) {
             Limpar
           </button>}
         </div>
-        <p className="mt-2 text-xs text-slate-300">Ao pesquisar, procura em todas as datas e situações, inclusive pelo ID parcial.</p>
+        <p className="mt-2 text-xs text-slate-300">A busca considera a data selecionada e todos os status, inclusive pelo ID parcial.</p>
       </div>
 
       {!debouncedSearch && (<div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="tablist" aria-label="Situação dos pedidos">
@@ -566,7 +566,7 @@ export default function AdminOrders({ token }: { token: string }) {
         ))}
       </div>)}
 
-      {debouncedSearch && <p className="text-sm font-bold text-cyan-100">Resultados da busca em todos os pedidos ({filteredOrders.length})</p>}
+      {debouncedSearch && <p className="text-sm font-bold text-cyan-100">Resultados da busca na data selecionada ({filteredOrders.length})</p>}
       {searchError && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{searchError}</p>}
       {error && !debouncedSearch && <p role="alert" className="rounded-xl bg-[#522934] p-3 text-sm text-white">{error}</p>}
       {(debouncedSearch ? searchLoading : loading) ? (
