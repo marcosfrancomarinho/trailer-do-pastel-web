@@ -383,7 +383,6 @@ export default function AdminTables({ token, products, categories }: Props) {
         {tableView === 'new' && <div role="tabpanel" className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div><h4 className="text-base font-black">Novo pedido</h4><p className="text-xs text-slate-300">Selecione os produtos para esta mesa</p></div>
-            <button type="button" onClick={() => cartPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="shrink-0 rounded-lg border border-[#63899a] px-2 py-2 text-xs font-bold text-white">Ver carrinho ({draftCount})</button>
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,330px)]">
             <aside id="table-cart-summary" ref={cartPanelRef} className="order-table-cart-panel min-w-0 scroll-mt-3 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
