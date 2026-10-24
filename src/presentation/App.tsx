@@ -215,7 +215,7 @@ export default function App() {
         if (daySnapshot === day && preparationSnapshot.current) {
           const canceled = new Set(history.filter(order => order.status === 'CANCELED').map(order => order.id))
           const matches = [...preparationSnapshot.current.values()].filter(order =>
-            order.tableNumber != null && !current.has(order.id) &&
+            order.tableNumber != null && order.status !== 'PENDING' && !current.has(order.id) &&
             canceled.has(order.id) && !acknowledgedCancellationIds.current.has(order.id))
           if (matches.length && window.localStorage.getItem('admin-order-sound') !== 'off') {
             setCancelAlerts(previous => {
