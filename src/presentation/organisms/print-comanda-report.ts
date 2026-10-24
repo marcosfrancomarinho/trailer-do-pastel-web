@@ -90,39 +90,50 @@ export function printComandaReport(comandas: ClosedComanda[], date: string): voi
 </body>
 </html>`
 
-  // Imprime em um iframe oculto: não abre a aba intermediária about:blank.
+  // O iframe precisa ter dimensões reais para o motor de impressão paginar o HTML.
+  // Definir srcdoc antes de inseri-lo evita imprimir o about:blank inicial.
   const iframe = document.createElement('iframe')
-  iframe.setAttribute('title', 'Impressão do relatório de comandas')
+  iframe.title = 'Relatório para impressão'
   iframe.setAttribute('aria-hidden', 'true')
-  iframe.style.position = 'fixed'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = '0'
-  iframe.style.opacity = '0'
+  Object.assign(iframe.style, {
+    position: 'fixed',
+    left: '-10000px',
+    top: '0',
+    width: '794px',
+    height: '1123px',
+    border: '0',
+    opacity: '0',
+    pointerEvents: 'none',
+  })
 
-  let printed = false
+  let started = false
   let cleanupTimer: ReturnType<typeof setTimeout> | undefined
   const cleanup = () => {
     if (cleanupTimer) clearTimeout(cleanupTimer)
     iframe.remove()
   }
 
-  iframe.onload = () => {
-    if (printed) return
-    printed = true
+  iframe.onload = async () => {
     const printWindow = iframe.contentWindow
-    if (!printWindow) {
+    const doc = iframe.contentDocument
+    // Ignora o carregamento inicial de about:blank e documentos sem o relatório.
+    if (started || !printWindow || !doc?.querySelector('.report-header')) return
+    started = true
+    try {
+      await doc.fonts?.ready
+      // Espera duas etapas de renderização para o layout estar pronto no Chrome.
+      await new Promise<void>(resolve => printWindow.requestAnimationFrame(() =>
+        printWindow.requestAnimationFrame(() => resolve())))
+      printWindow.addEventListener('afterprint', () => setTimeout(cleanup, 1000), { once: true })
+      cleanupTimer = setTimeout(cleanup, 120_000)
+      printWindow.focus()
+      printWindow.print()
+    } catch {
       cleanup()
-      window.alert('Não foi possível iniciar a impressão neste navegador.')
-      return
+      window.alert('Não foi possível imprimir o relatório. Tente novamente.')
     }
-    printWindow.addEventListener('afterprint', cleanup, { once: true })
-    // Mantém o documento até que o navegador abra e encerre a impressão.
-    cleanupTimer = setTimeout(cleanup, 120_000)
-    printWindow.focus()
-    printWindow.print()
   }
 
-  document.body.appendChild(iframe)
   iframe.srcdoc = html
+  document.body.appendChild(iframe)
 }
