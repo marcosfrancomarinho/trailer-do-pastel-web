@@ -6,6 +6,13 @@ import type { Addition, Category, Product, RestaurantTable, TableOrders, TableSe
 import { useActionDialog } from '../molecules/ActionDialog'
 
 type Props = { token: string; products: Product[]; categories: Category[] }
+const orderStatusLabels: Record<string, string> = {
+  PENDING: 'Pendente',
+  CONFIRMED: 'Confirmado',
+  PREPARING: 'Em preparo',
+  COMPLETED: 'Pronto',
+  CANCELED: 'Cancelado',
+}
 const TABLE_ORDER_NAME = 'Trailer do Pastel'
 const TABLE_ORDER_PHONE = '99984636486'
 const field = 'min-h-11 w-full rounded-xl border border-[#63899a] bg-[#edf8fc] px-3 py-2 text-[#102c40]'
@@ -13,6 +20,7 @@ const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#0928
 
 export default function AdminTables({ token, products, categories }: Props) {
   const [tables, setTables] = useState<RestaurantTable[]>([])
+  const [readyTables, setReadyTables] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<string | null>(null)
   const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
@@ -40,15 +48,44 @@ export default function AdminTables({ token, products, categories }: Props) {
   const refresh = useCallback(async (tableId?: string | null) => {
     const list = await restaurantAdapter.tables(token)
     setTables(list)
+    const occupied = list.filter(table => table.status === 'OCCUPIED')
+    const results = await Promise.allSettled(
+      occupied.map(table => restaurantAdapter.tableOrders(token, table.id))
+    )
+    setReadyTables(previous => {
+      const ready = new Set<string>()
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          const orders = result.value.orders
+          if (orders.length > 0 && orders.every(order => order.status === 'COMPLETED')) {
+            ready.add(occupied[index].id)
+          }
+        } else if (previous.has(occupied[index].id)) {
+          ready.add(occupied[index].id)
+        }
+      })
+      return ready
+    })
     if (tableId) setDetails(await restaurantAdapter.tableOrders(token, tableId))
   }, [token])
 
   useEffect(() => {
     let active = true
-    restaurantAdapter.tables(token).then(list => { if (active) setTables(list) })
-      .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Erro ao carregar mesas.') })
-    return () => { active = false }
-  }, [token])
+    const update = () => {
+      if (document.visibilityState !== 'visible') return
+      void refresh().catch(cause => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Erro ao carregar mesas.')
+      })
+    }
+    update()
+    const interval = window.setInterval(update, 15_000)
+    document.addEventListener('visibilitychange', update)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', update)
+    }
+  }, [refresh])
 
   async function openTable(id: string) {
     const request = ++selectionRequest.current
@@ -204,7 +241,7 @@ export default function AdminTables({ token, products, categories }: Props) {
 
   return <section className="space-y-5 text-white">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-2xl font-black">Mapa de mesas</h2><p className="text-sm text-slate-300">Verde: livre · Amarelo: ocupada · Mesas livres podem ser retiradas de uso</p></div>
+      <div><h2 className="text-2xl font-black">Mapa de mesas</h2><p className="text-sm text-slate-300">Verde: livre ou com pedidos prontos · Amarelo: ocupada com pedidos em andamento</p></div>
       <button className={button} type="button" onClick={() => void refresh(selected).catch(cause => setError(String(cause)))}>Atualizar</button>
     </div>
     <form onSubmit={event => void createTable(event)} className="flex flex-wrap items-end gap-2 rounded-xl bg-[#14374d] p-4">
@@ -219,10 +256,10 @@ export default function AdminTables({ token, products, categories }: Props) {
         aria-expanded={selected === table.id}
         aria-controls="table-expanded-details"
         className={'flex min-h-20 flex-col justify-center gap-1 rounded-xl border-2 px-3 py-2 text-left transition-all duration-200 ' +
-          (table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
+          (readyTables.has(table.id) ? 'border-[#65e5a0] bg-[#166a45] text-white' : table.status === 'FREE' ? 'border-[#60dcaa] bg-[#164734] text-white' : 'border-[#ffce56] bg-[#544221] text-white') +
           (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')}>
         <span className="flex w-full items-center justify-between gap-1"><strong className="text-base">Mesa {table.number}</strong><span className="text-xs" aria-hidden="true">{selected === table.id ? '▲' : '▼'}</span></span>
-        <span className="text-xs font-semibold">{table.status === 'FREE' ? '● Livre' : '● Ocupada'} · {brl(table.totalSpent)}</span>
+        <span className="text-xs font-semibold">{readyTables.has(table.id) ? '✓ Pedidos prontos' : table.status === 'FREE' ? '● Livre' : '● Ocupada'} · {brl(table.totalSpent)}</span>
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
@@ -249,12 +286,12 @@ export default function AdminTables({ token, products, categories }: Props) {
         <div className="space-y-2">
           <h4 className="text-base font-black">Pedidos da mesa <span className="text-cyan-200">({details.orders.length})</span></h4>
           {details.orders.length === 0 && <p className="rounded-lg bg-[#193e53] px-3 py-2 text-sm text-slate-300">Nenhum pedido nesta comanda.</p>}
-          {details.orders.map((order, index) => <details key={order.id} className="group rounded-xl border border-[#466b7f] bg-[#193e53]">
+          {details.orders.map((order, index) => <details key={order.id} className={'group rounded-xl border ' + (order.status === 'COMPLETED' ? 'border-[#52dd91] bg-[#164e37]' : 'border-[#466b7f] bg-[#193e53]')}>
             <summary className="flex cursor-pointer list-none items-center gap-2 p-3 marker:hidden">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#2a5267] text-xs font-black">{index + 1}</span>
               <span className="min-w-0 flex-1">
-                <strong className="block text-sm">Pedido #{order.id.slice(0, 8)}</strong>
-                <span className="block truncate text-xs text-slate-200">{order.items.reduce((sum, item) => sum + item.quantity, 0)} itens · {order.status}</span>
+                <strong className="block text-sm">{order.status === 'COMPLETED' ? '✓ Pronto · ' : ''}Pedido #{order.id.slice(0, 8)}</strong>
+                <span className="block truncate text-xs text-slate-200">{order.items.reduce((sum, item) => sum + item.quantity, 0)} itens · {orderStatusLabels[order.status] ?? order.status}</span>
               </span>
               <strong className="shrink-0 text-sm text-amber-200">{brl(order.total)}</strong>
               <span className="text-xs text-cyan-100 group-open:rotate-180" aria-hidden="true">▼</span>
