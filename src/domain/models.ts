@@ -27,7 +27,7 @@ export type SavedCustomerOrder = CreatedOrder & { details?: CustomerOrderDetails
 
 export type StoreState = { status: 'OPEN' | 'CLOSED'; updatedAt: string }
 export type RestaurantTable = { id: string; number: number; status: 'FREE' | 'OCCUPIED'; totalSpent: string }
-export type TableOrder = PendingOrder & { updatedAt: string }
+export type TableOrder = PendingOrder & { updatedAt: string; createdBy?: { name: string; role: 'ADMIN' | 'EMPLOYEE' } | null }
 export type TableOrders = { tableId: string; number: number; status: 'FREE' | 'OCCUPIED'; totalSpent: string; sessionId: string | null; orders: TableOrder[] }
 export type TableSession = { id: string; openedAt: string; closedAt: string | null; closedTotal: string | null; orders: TableOrder[] }
 export type TableSessions = { tableId: string; sessions: TableSession[] }
