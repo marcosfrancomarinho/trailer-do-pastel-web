@@ -90,6 +90,8 @@ function OrderCard({
           {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} · {new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}
         </p>
 
+        {order.observation && <p className="rounded-lg bg-[#3d3925] p-3 text-sm font-bold text-amber-100">📝 {order.observation}</p>}
+        {order.tableId && <p className="text-sm font-bold text-cyan-200">🪑 Pedido de mesa</p>}
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
