@@ -183,7 +183,7 @@ export default function AdminOrders({ token }: { token: string }) {
     } else {
       const added = filtered.filter(order => !seenPendingRef.current.has(order.id))
       if (added.length > 0 && date === todayRestaurantDate()) {
-        setNewOrderCount(previous => previous + added.length)
+        if (soundEnabledRef.current) setNewOrderCount(previous => previous + added.length)
         if (soundEnabledRef.current) orderAlert.play()
       }
       for (const id of ids) seenPendingRef.current.add(id)
@@ -226,6 +226,7 @@ export default function AdminOrders({ token }: { token: string }) {
       setSoundReady(false)
       window.localStorage.setItem('admin-order-sound', 'off')
       orderAlert.close()
+      window.dispatchEvent(new Event('admin-notification-preference'))
       return
     }
     try {
@@ -233,6 +234,7 @@ export default function AdminOrders({ token }: { token: string }) {
       setSoundEnabled(true)
       setSoundReady(true)
       window.localStorage.setItem('admin-order-sound', 'on')
+      window.dispatchEvent(new Event('admin-notification-preference'))
       orderAlert.play()
     } catch {
       notify({
@@ -374,7 +376,7 @@ export default function AdminOrders({ token }: { token: string }) {
           const cancellations = [...previous.values()].filter(order =>
             order.tableId != null && !current.has(order.id) &&
             canceledIds.has(order.id) && !acknowledgedRef.current.has(order.id))
-          if (cancellations.length > 0) {
+          if (cancellations.length > 0 && soundEnabledRef.current) {
             setCancelAlerts(existing => {
               const seen = new Set(existing.map(order => order.id))
               return [...existing, ...cancellations.filter(order => !seen.has(order.id))]
@@ -511,7 +513,7 @@ export default function AdminOrders({ token }: { token: string }) {
                 : 'border-[#56879d] bg-[#194258] text-white')
             }
           >
-            {soundEnabled ? '🔔 Som' : '🔕 Som'}
+            {soundEnabled ? '🔔 Som / notificações ligados' : '🔕 Som / notificações desligados'}
           </button>
           {tab !== 'pending' && <button
             type="button"
