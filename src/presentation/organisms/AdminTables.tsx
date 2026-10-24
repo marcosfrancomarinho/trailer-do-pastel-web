@@ -205,15 +205,44 @@ export default function AdminTables({ token, products, categories }: Props) {
   }
 
   async function release() {
-    if (!selected) return
-    if (!await confirm({ title: 'Liberar mesa?', message: 'A sessão será encerrada e o valor consumido ficará no histórico.', confirmLabel: 'Liberar mesa' })) return
-    setBusy(true); setError('')
+    if (!selected || busy) return
+    const tableId = selected
+    setBusy(true)
+    setError('')
     try {
-      const result = await restaurantAdapter.releaseTable(token, selected)
-      await refresh(selected)
+      // Consulta o estado atual, pois a comanda pode ter mudado desde a abertura do modal.
+      const current = await restaurantAdapter.tableOrders(token, tableId)
+      setDetails(current)
+      const unfinished = current.orders.filter(order =>
+        ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)
+      )
+      if (unfinished.length > 0) {
+        notify({
+          title: 'Não é possível liberar a mesa',
+          message: 'Esta mesa possui ' + unfinished.length +
+            (unfinished.length === 1 ? ' pedido pendente ou em preparo. ' : ' pedidos pendentes ou em preparo. ') +
+            'Conclua ou cancele esses pedidos antes de liberar a mesa.',
+          tone: 'error',
+        })
+        setTableView('orders')
+        return
+      }
+      const approved = await confirm({
+        title: 'Liberar mesa?',
+        message: 'A sessão será encerrada e o valor consumido ficará no histórico.',
+        confirmLabel: 'Liberar mesa',
+      })
+      if (!approved) return
+      const result = await restaurantAdapter.releaseTable(token, tableId)
+      await refresh(tableId)
       notify({ title: 'Mesa liberada', message: 'Total encerrado: ' + brl(result.closedTotal), tone: 'success' })
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível liberar a mesa.') }
-    finally { setBusy(false) }
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Não foi possível liberar a mesa.'
+      setError(message)
+      notify({ title: 'Não foi possível liberar a mesa', message, tone: 'error' })
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function archiveTable() {
