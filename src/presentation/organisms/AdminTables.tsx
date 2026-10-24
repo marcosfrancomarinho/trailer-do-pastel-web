@@ -296,8 +296,8 @@ export default function AdminTables({ token, products, categories }: Props) {
       </button>)}
     </div>
     {tables.length === 0 && <p className="text-sm text-slate-300">Nenhuma mesa cadastrada.</p>}
-    {selected && <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget && !product && !printTable) closeTable() }}>
-      <section role="dialog" aria-modal="true" aria-label={details ? 'Mesa ' + details.number : 'Detalhes da mesa'} className="flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-[#537d90] bg-[#112e43] shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
+    {selected && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-3 sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget && !product && !printTable) closeTable() }}>
+      <section role="dialog" aria-modal="true" aria-label={details ? 'Mesa ' + details.number : 'Detalhes da mesa'} className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#537d90] bg-[#112e43] shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#537d90] px-4 py-3 sm:px-5">
           <div className="min-w-0"><h3 className="text-xl font-black">{details ? 'Mesa ' + details.number : 'Abrindo mesa...'}</h3>{details && <p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · {brl(details.totalSpent)}</p>}</div>
           <button type="button" onClick={closeTable} aria-label="Fechar detalhes da mesa" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#63899a] text-xl font-bold">✕</button>
