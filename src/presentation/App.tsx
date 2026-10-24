@@ -355,7 +355,16 @@ export default function App() {
           <AdminTables token={adminToken} products={products} categories={categories} />
         </main>
       ) : <Navigate to="/admin" replace />} />
-      <Route path="/admin" element={<main className="inner-page mx-auto max-w-5xl px-4 py-6 sm:py-10"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold tracking-wider text-[#9fcbdc]">GESTÃO DA PASTELARIA</p><h1 className="mt-1 text-2xl font-black leading-tight text-white sm:text-3xl">Painel administrativo</h1></div>{adminToken && <button type="button" onClick={() => navigate('/mesas')} className="min-h-10 rounded-lg border border-[#688ba0] bg-[#153c53] px-3 text-sm font-bold text-white">🪑 Mesas</button>}</div>{!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
+      <Route path="/admin" element={<main className="inner-page mx-auto max-w-5xl px-4 py-5 sm:py-9">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-4 text-white">
+          <div className="min-w-0">
+            <p className="text-xs font-bold tracking-wide text-[#a2dbf3]">GESTÃO DA PASTELARIA</p>
+            <h1 className="mt-1 text-xl font-black leading-tight sm:text-2xl">Painel administrativo</h1>
+          </div>
+          {adminToken && <button type="button" onClick={() => navigate('/mesas')}
+            className="min-h-11 rounded-xl bg-[#ffca28] px-4 text-sm font-extrabold text-[#102b40] sm:text-base">🪑 Mesas e comandas</button>}
+        </div>
+        {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
       <div className="admin-layout mt-4 grid min-w-0 gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
