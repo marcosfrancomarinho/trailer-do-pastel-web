@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
+import type { PreparingOrder } from '../domain/models'
 import { orderAlert } from './audio/order-alert'
 import { cartTotal, toOrderPayload, type CartItem } from '../domain/cart'
 import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
@@ -137,6 +138,7 @@ export default function App() {
     if (!next) {
       orderAlert.close()
       setNewPendingCount(0)
+      setCancelAlerts([])
     } else {
       void orderAlert.enable().catch(() => {})
     }
@@ -146,7 +148,7 @@ export default function App() {
     const sync = () => {
       const enabled = window.localStorage.getItem('admin-order-sound') !== 'off'
       setNotificationsOn(enabled)
-      if (!enabled) setNewPendingCount(0)
+      if (!enabled) { setNewPendingCount(0); setCancelAlerts([]) }
     }
     window.addEventListener('admin-notification-preference', sync)
     window.addEventListener('storage', sync)
@@ -155,6 +157,9 @@ export default function App() {
       window.removeEventListener('storage', sync)
     }
   }, [])
+  const [cancelAlerts, setCancelAlerts] = useState<PreparingOrder[]>([])
+  const acknowledgedCancellationIds = useRef(new Set<string>())
+  const preparationSnapshot = useRef<Map<string, PreparingOrder> | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [newPendingCount, setNewPendingCount] = useState(0)
   const pendingSeenRef = useRef<Set<string> | null>(null)
@@ -191,6 +196,51 @@ export default function App() {
         setPendingCount(results.length)
       } catch {
         // Falhas transitórias não devem disparar alertas falsos.
+      } finally {
+        if (active) timeout = setTimeout(() => { void check() }, 5000)
+      }
+    }
+    void check()
+    return () => { active = false; if (timeout) clearTimeout(timeout) }
+  }, [adminToken, view])
+
+  // Acompanha cancelamentos mesmo fora da seção Pedidos.
+  // O primeiro resultado é apenas uma referência, não gera alarmes antigos.
+  useEffect(() => {
+    if (!adminToken || view !== 'admin') {
+      preparationSnapshot.current = null
+      setCancelAlerts([])
+      return
+    }
+    let active = true
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    let daySnapshot = ''
+    const check = async () => {
+      try {
+        const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+        const [ongoing, history] = await Promise.all([
+          restaurant.preparingOrders(adminToken, day),
+          restaurant.orderHistory(adminToken, day),
+        ])
+        if (!active) return
+        const current = new Map(ongoing.map(order => [order.id, order] as const))
+        if (daySnapshot === day && preparationSnapshot.current) {
+          const canceled = new Set(history.filter(order => order.status === 'CANCELED').map(order => order.id))
+          const matches = [...preparationSnapshot.current.values()].filter(order =>
+            order.tableNumber != null && !current.has(order.id) &&
+            canceled.has(order.id) && !acknowledgedCancellationIds.current.has(order.id))
+          if (matches.length && window.localStorage.getItem('admin-order-sound') !== 'off') {
+            setCancelAlerts(previous => {
+              const already = new Set(previous.map(order => order.id))
+              return [...previous, ...matches.filter(order => !already.has(order.id))]
+            })
+            orderAlert.playCancellation()
+          }
+        }
+        preparationSnapshot.current = current
+        daySnapshot = day
+      } catch {
+        // Falha de consulta não redefine a referência, evitando falsos alertas.
       } finally {
         if (active) timeout = setTimeout(() => { void check() }, 5000)
       }
@@ -481,6 +531,20 @@ export default function App() {
         </div>
         {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button type="submit" disabled={adminBusy} aria-busy={adminBusy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ffc629] px-4 py-3 font-bold text-[#113548] disabled:cursor-wait disabled:opacity-75">{adminBusy ? <><span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-[3px] border-[#113548]/25 border-t-[#113548]" /><span>Entrando...</span></> : 'Entrar'}</button></form> :
       <>
+      {notificationsOn && cancelAlerts.length > 0 && <section role="alert" aria-label="Pedidos de mesa cancelados" className="mt-4 space-y-3">
+        {cancelAlerts.map(order => <div key={order.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border-2 border-red-400 bg-[#50232d] p-4 text-white shadow-lg">
+          <div className="min-w-0 space-y-1">
+            <strong className="block text-lg">🚨 Pedido de mesa cancelado!</strong>
+            <p className="font-bold">Mesa {order.tableNumber} · #{order.id.slice(0, 8).toUpperCase()}</p>
+            <p className="text-sm text-red-100">Interrompa o preparo deste pedido.</p>
+            <p className="break-words text-sm text-red-100">{order.items.map(item => item.quantity + '× ' + item.productName).join(', ')}</p>
+          </div>
+          <button type="button" onClick={() => {
+            acknowledgedCancellationIds.current.add(order.id)
+            setCancelAlerts(previous => previous.filter(item => item.id !== order.id))
+          }} className="min-h-11 rounded-lg bg-white px-5 py-2 font-black text-[#50232d]">Ciente</button>
+        </div>)}
+      </section>}
       {notificationsOn && newPendingCount > 0 && adminSection !== 'orders' && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-[#fcd34d] bg-[#57431f] p-4 text-[#fef3c7] shadow-lg">
         <div><strong className="block text-lg">🔔 {newPendingCount} {newPendingCount === 1 ? 'novo pedido recebido!' : 'novos pedidos recebidos!'}</strong><span className="text-sm">Há pedidos aguardando confirmação.</span></div>
         <div className="flex flex-wrap gap-2">
