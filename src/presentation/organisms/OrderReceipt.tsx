@@ -52,8 +52,13 @@ export default function OrderReceipt({ order, token, onClose }: { order: Order; 
           <article className={'receipt-print receipt-width-' + paperWidth} aria-label="Comanda do pedido">
             <header className="receipt-center">
               <h3>TRAILER DO PASTEL</h3>
-              <strong>PEDIDO #{order.id.slice(0, 8)}</strong>
-              {order.tableId != null && <p><strong>COMANDA: {loadingComanda ? 'CARREGANDO...' : comandaId ? comandaId.slice(0, 8).toUpperCase() : 'NÃO DISPONÍVEL'}</strong></p>}
+              {order.tableId != null ? (
+                <>
+                  <strong>COMANDA DA MESA {order.tableNumber ?? ''}</strong>
+                  <p className="break-all"><strong>ID DA COMANDA:</strong> {loadingComanda ? 'CARREGANDO...' : comandaId ?? 'NÃO DISPONÍVEL'}</p>
+                  <p>ID DO PEDIDO: {order.id.slice(0, 8).toUpperCase()}</p>
+                </>
+              ) : <strong>PEDIDO #{order.id.slice(0, 8)}</strong>}
               <p>{new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}</p>
             </header>
             <div className="receipt-separator" />
