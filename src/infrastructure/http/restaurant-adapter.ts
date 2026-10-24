@@ -1,7 +1,7 @@
 import { api } from './api-client'
 import type { CatalogPort } from '../../application/ports/catalog-port'
 import type { OrderPort } from '../../application/ports/order-port'
-import type { Addition, Category, CreatedOrder, OrderPayload, PendingOrder, PreparingOrder, OrderHistoryItem, Product, TrackedOrder, StoreState, RestaurantTable, TableOrders, TableSessions, RestaurantUser } from '../../domain/models'
+import type { Addition, Category, CreatedOrder, OrderPayload, PendingOrder, PreparingOrder, OrderHistoryItem, Product, TrackedOrder, StoreState, RestaurantTable, TableOrders, TableSessions, ClosedComandaHistory, RestaurantUser } from '../../domain/models'
 const auth = (token: string) => ({ Authorization: 'Bearer ' + token })
 const queryDate = (date?: string) => date ? '?date=' + encodeURIComponent(date) : ''
 export class RestaurantHttpAdapter implements CatalogPort, OrderPort {
@@ -22,6 +22,7 @@ export class RestaurantHttpAdapter implements CatalogPort, OrderPort {
   createTable(token: string, number: number) { return api<RestaurantTable>('/tables', { method: 'POST', headers: auth(token), body: JSON.stringify({ number }) }) }
   archiveTable(token: string, tableId: string) { return api<void>('/tables/' + encodeURIComponent(tableId), { method: 'DELETE', headers: auth(token) }) }
   tableOrders(token: string, tableId: string) { return api<TableOrders>('/tables/' + encodeURIComponent(tableId) + '/orders', { headers: auth(token) }) }
+  closedComandas(token: string, date?: string) { return api<ClosedComandaHistory>('/tables/sessions/history' + queryDate(date), { headers: auth(token) }) }
   tableSessions(token: string, tableId: string) { return api<TableSessions>('/tables/' + encodeURIComponent(tableId) + '/sessions', { headers: auth(token) }) }
   releaseTable(token: string, tableId: string) { return api<{ id: string; status: 'FREE'; closedTotal: string }>('/tables/' + encodeURIComponent(tableId) + '/release', { method: 'PATCH', headers: auth(token) }) }
   removeTableOrder(token: string, tableId: string, orderId: string) { return api('/tables/' + encodeURIComponent(tableId) + '/orders/' + encodeURIComponent(orderId), { method: 'DELETE', headers: auth(token) }) }
