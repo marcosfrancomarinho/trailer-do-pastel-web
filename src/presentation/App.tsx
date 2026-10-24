@@ -501,12 +501,12 @@ export default function App() {
     </>} />
       <Route path="/mesas" element={adminToken ? (
         <main className="inner-page mx-auto max-w-6xl space-y-5 px-4 py-7 sm:py-10">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-4 text-white">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[#507f94] bg-[#112e43] p-3 text-white sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1">
               {adminDisplayName && <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#23495e] text-[11px] font-bold leading-none text-white" aria-hidden="true">{adminDisplayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}</span>}
-              <div className="min-w-0"><p className="text-xs font-bold text-[#a2dbf3]">MESAS E COMANDAS</p><h1 className="text-xl font-black sm:text-2xl">{adminDisplayName || 'Área do funcionário'}</h1><p className="text-xs text-slate-300">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</p></div>
+              <div className="min-w-0 flex-1"><p className="text-[11px] font-bold text-[#a2dbf3]">MESAS E COMANDAS</p><h1 title={adminDisplayName} className="block w-full truncate whitespace-nowrap text-sm font-bold sm:text-lg">{adminDisplayName || 'Área do funcionário'}</h1><p className="text-xs text-slate-300">{adminRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}</p></div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0">
               <button type="button" onClick={() => navigate('/admin')} className="min-h-11 rounded-xl bg-[#ffca28] px-4 font-extrabold text-[#102b40]">Painel administrativo</button>
               <button type="button" onClick={() => { saveAdminSession(''); sessionStorage.removeItem('trailer-admin-role'); sessionStorage.removeItem('trailer-admin-name'); setAdminDisplayName(''); setAdminToken(''); navigate('/admin') }} className="min-h-11 rounded-xl border border-[#81a4b6] px-4 font-bold text-white">Sair</button>
             </div>
