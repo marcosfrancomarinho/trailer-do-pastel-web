@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api, brl } from '../api'
 import { restaurant } from '../application/container'
+import { orderAlert } from './audio/order-alert'
 import { cartTotal, toOrderPayload, type CartItem } from '../domain/cart'
 import { readCart, saveCart } from '../infrastructure/storage/cart-storage'
 import { trackOrder } from '../application/order-service'
@@ -128,6 +129,64 @@ export default function App() {
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [adminBusy, setAdminBusy] = useState(false)
   const [adminError, setAdminError] = useState('')
+  const [pendingCount, setPendingCount] = useState(0)
+  const [newPendingCount, setNewPendingCount] = useState(0)
+  const pendingSeenRef = useRef<Set<string> | null>(null)
+  const sectionRef = useRef(adminSection)
+  sectionRef.current = adminSection
+
+  // Permanece ativo ao navegar entre todas as seções administrativas.
+  useEffect(() => {
+    if (!adminToken || view !== 'admin') {
+      pendingSeenRef.current = null
+      setPendingCount(0)
+      setNewPendingCount(0)
+      return
+    }
+    let active = true
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    const check = async () => {
+      try {
+        const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+        const results = await restaurant.pendingOrders(adminToken, today)
+        if (!active) return
+        const ids = new Set(results.map(order => order.id))
+        const seen = pendingSeenRef.current
+        if (seen) {
+          const arrivals = results.filter(order => !seen.has(order.id))
+          if (arrivals.length && sectionRef.current !== 'orders') {
+            setNewPendingCount(count => count + arrivals.length)
+            if (window.localStorage.getItem('admin-order-sound') !== 'off') orderAlert.play()
+          }
+          results.forEach(order => seen.add(order.id))
+        } else {
+          pendingSeenRef.current = ids
+        }
+        setPendingCount(results.length)
+      } catch {
+        // Falhas transitórias não devem disparar alertas falsos.
+      } finally {
+        if (active) timeout = setTimeout(() => { void check() }, 5000)
+      }
+    }
+    void check()
+    return () => { active = false; if (timeout) clearTimeout(timeout) }
+  }, [adminToken, view])
+
+  useEffect(() => {
+    if (!adminToken || view !== 'admin') return
+    const unlock = () => {
+      if (window.localStorage.getItem('admin-order-sound') === 'off') return
+      void orderAlert.enable().catch(() => {})
+    }
+    document.addEventListener('pointerdown', unlock)
+    document.addEventListener('keydown', unlock)
+    return () => {
+      document.removeEventListener('pointerdown', unlock)
+      document.removeEventListener('keydown', unlock)
+    }
+  }, [adminToken, view])
+
 
   async function loadCatalog() {
     setLoading(true); setError('')
@@ -395,6 +454,14 @@ export default function App() {
             className="min-h-11 rounded-xl bg-[#ffca28] px-4 text-sm font-extrabold text-[#102b40] sm:text-base">🪑 Mesas e comandas</button>}
         </div>
         {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button type="submit" disabled={adminBusy} aria-busy={adminBusy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ffc629] px-4 py-3 font-bold text-[#113548] disabled:cursor-wait disabled:opacity-75">{adminBusy ? <><span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-[3px] border-[#113548]/25 border-t-[#113548]" /><span>Entrando...</span></> : 'Entrar'}</button></form> :
+      <>
+      {newPendingCount > 0 && adminSection !== 'orders' && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-[#fcd34d] bg-[#57431f] p-4 text-[#fef3c7] shadow-lg">
+        <div><strong className="block text-lg">🔔 {newPendingCount} {newPendingCount === 1 ? 'novo pedido recebido!' : 'novos pedidos recebidos!'}</strong><span className="text-sm">Há pedidos aguardando confirmação.</span></div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => { setAdminSection('orders'); setAdminMenuOpen(false); setNewPendingCount(0) }} className="min-h-11 rounded-lg bg-[#ffca28] px-4 py-2 font-black text-[#102c40]">Ver pedidos</button>
+          <button type="button" onClick={() => setNewPendingCount(0)} className="min-h-11 rounded-lg border border-[#fcd34d] px-3 py-2 font-bold">Dispensar</button>
+        </div>
+      </div>}
       <div className="admin-layout mt-4 grid min-w-0 gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
@@ -410,7 +477,7 @@ export default function App() {
             {([['orders', '📋', 'Pedidos'], ['comanda-history', '🧾', 'Histórico de comandas'], ['store', '🏪', 'Abrir / fechar loja'], ['product', '🥟', 'Produtos'], ['addition', '🧀', 'Adicionais'], ...(adminRole === 'ADMIN' ? [['user', '👤', 'Cadastrar usuário'], ['users-list', '👥', 'Gerenciar usuários']] as const : []), ['category', '🗂️', 'Nova categoria'], ['manage-products', '✏️', 'Gerenciar produtos'], ['manage-additions', '⚙️', 'Gerenciar adicionais'], ['manage-categories', '🗃️', 'Gerenciar categorias']] as const).map(([key, icon, label]) =>
               <button key={key} type="button" aria-current={adminSection === key ? 'page' : undefined} onClick={() => { setAdminSection(key); setAdminError(''); setAdminMenuOpen(false) }}
                 className={'flex min-h-12 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-bold transition ' + (adminSection === key ? 'bg-[#ffc629] text-[#143b50] shadow-sm' : 'text-[#416476] hover:bg-cyan-50')}>
-                <span aria-hidden="true">{icon}</span><span>{label}</span>
+                <span aria-hidden="true">{icon}</span><span>{label}</span>{key === 'orders' && pendingCount > 0 && <span className="ml-auto rounded-full bg-[#b91c1c] px-2 py-0.5 text-xs font-black text-white" aria-label={pendingCount + ' pedidos pendentes'}>{pendingCount}</span>}
               </button>)}
           </nav>
           <button type="button" className="mt-3 min-h-11 w-full rounded-xl border border-[#315970] bg-[#153c53] px-3 py-3 text-sm font-extrabold text-white hover:bg-[#24556c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffca28]"
@@ -419,7 +486,7 @@ export default function App() {
         <section className="min-w-0">
           {adminSection === 'orders' ? <AdminOrders token={adminToken} /> : adminSection === 'comanda-history' ? <AdminComandaHistory token={adminToken} /> : adminSection === 'store' ? <AdminStore token={adminToken} /> : adminSection === 'users-list' && adminRole === 'ADMIN' ? <AdminUsers token={adminToken} /> : adminSection.startsWith('manage-') ? <AdminManage key={adminSection} kind={adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'} token={adminToken} refreshCatalog={loadCatalog} /> : <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} token={adminToken} onProductCreated={loadCatalog} />}
         </section>
-      </div>}
+      </div></>}
     </main>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
