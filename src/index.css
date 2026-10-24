@@ -591,3 +591,16 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 .admin-layout .admin-mobile-menu-trigger span{color:#143b50!important}
 .admin-layout .admin-mobile-menu-trigger > span:last-child{color:#456778!important}
 .admin-layout .admin-mobile-menu-trigger:hover{background:#e5f7fc!important}
+
+
+/* Mapa de mesas: detalhes abrem com transição suave e respeitam movimento reduzido. */
+@keyframes table-details-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.table-details-expanded {
+  animation: table-details-enter 220ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .table-details-expanded { animation: none; }
+}
