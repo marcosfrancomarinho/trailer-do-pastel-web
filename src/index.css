@@ -617,26 +617,27 @@ body,.restaurant-app{background:var(--night);color:var(--light)}
 }
 
 
-/* Pedidos do cliente em preparo: amarelo com contraste legível. */
+/* Pedidos do cliente em preparo: bege dourado igual ao cartão da mesa ocupada. */
 .customer-orders-page .customer-order-card.customer-order-preparing{
-  border:2px solid #e8ac00!important;
-  background:#ffca28!important;
-  color:#102c40!important;
-  box-shadow:0 6px 22px rgba(255,202,40,.24);
+  border:2px solid #f0bc3d!important;
+  background:#c9b28e!important;
+  color:#fff8e8!important;
+  box-shadow:0 6px 22px rgba(240,188,61,.18);
 }
 .customer-order-preparing .customer-card-open,
 .customer-order-preparing .customer-card-footer,
 .customer-order-preparing .customer-order-number,
 .customer-order-preparing .customer-card-bottom strong,
 .customer-order-preparing .customer-card-bottom span,
-.customer-order-preparing .customer-card-chevron{color:#102c40!important}
+.customer-order-preparing .customer-card-chevron{color:#fff8e8!important}
 .customer-order-preparing .customer-order-status.customer-status-preparing{
-  background:#102c40!important;
-  color:#ffdf76!important;
+  background:rgba(255,248,232,.18)!important;
+  color:#fff8e8!important;
+  border:1px solid rgba(255,248,232,.35);
 }
-.customer-dialog.customer-dialog-preparing{border:2px solid #eab308!important}
+.customer-dialog.customer-dialog-preparing{border:2px solid #f0bc3d!important}
 .customer-dialog .customer-detail-status.customer-detail-preparing{
-  background:#ffca28!important;
-  color:#102c40!important;
+  background:#c9b28e!important;
+  color:#fff8e8!important;
 }
-.customer-dialog .customer-detail-status.customer-detail-preparing strong{color:#102c40!important}
+.customer-dialog .customer-detail-status.customer-detail-preparing strong{color:#fff8e8!important}
