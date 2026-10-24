@@ -1,12 +1,28 @@
 import { useEffect, useState } from 'react'
 import type { PendingOrder, PreparingOrder, OrderHistoryItem } from '../../domain/models'
 import { brl } from '../../api'
+import { restaurantAdapter } from '../../infrastructure/http/restaurant-adapter'
 
 type Order = PendingOrder | PreparingOrder | OrderHistoryItem
 
 /** Comanda simples para impressão térmica pelo diálogo do navegador. */
-export default function OrderReceipt({ order, onClose }: { order: Order; onClose: () => void }) {
+export default function OrderReceipt({ order, token, onClose }: { order: Order; token: string; onClose: () => void }) {
+  const [comandaId, setComandaId] = useState<string | null>(null)
+  const [loadingComanda, setLoadingComanda] = useState(Boolean(order.tableId))
   const [paperWidth, setPaperWidth] = useState<'58' | '80'>('80')
+
+  useEffect(() => {
+    if (!order.tableId) return
+    let active = true
+    void restaurantAdapter.tableSessions(token, order.tableId).then(result => {
+      if (active) setComandaId(result.sessions.find(session => session.orders.some(item => item.id === order.id))?.id ?? null)
+    }).catch(() => {
+      if (active) setComandaId(null)
+    }).finally(() => {
+      if (active) setLoadingComanda(false)
+    })
+    return () => { active = false }
+  }, [order.id, order.tableId, token])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -36,7 +52,8 @@ export default function OrderReceipt({ order, onClose }: { order: Order; onClose
           <article className={'receipt-print receipt-width-' + paperWidth} aria-label="Comanda do pedido">
             <header className="receipt-center">
               <h3>TRAILER DO PASTEL</h3>
-              <strong>COMANDA #{order.id.slice(0, 8)}</strong>
+              <strong>PEDIDO #{order.id.slice(0, 8)}</strong>
+              {order.tableId != null && <p><strong>COMANDA: {loadingComanda ? 'CARREGANDO...' : comandaId ? comandaId.slice(0, 8).toUpperCase() : 'NÃO DISPONÍVEL'}</strong></p>}
               <p>{new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}</p>
             </header>
             <div className="receipt-separator" />
@@ -69,7 +86,7 @@ export default function OrderReceipt({ order, onClose }: { order: Order; onClose
         </div>
         <footer className="receipt-preview-actions">
           <button type="button" onClick={onClose}>Voltar</button>
-          <button type="button" onClick={() => window.print()}>Imprimir</button>
+          <button type="button" disabled={loadingComanda} onClick={() => window.print()}>{loadingComanda ? 'Carregando comanda...' : 'Imprimir'}</button>
         </footer>
       </section>
     </div>
