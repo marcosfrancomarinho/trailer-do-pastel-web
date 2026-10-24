@@ -91,6 +91,41 @@ export default function AdminTables({ token, products }: Props) {
     finally { setBusy(false) }
   }
 
+  async function archiveTable() {
+    if (!selected || !details || details.status !== 'FREE' || busy) return
+    const tableId = selected
+    const tableNumber = details.number
+    const approved = await confirm({
+      title: 'Retirar mesa de uso?',
+      message: 'A mesa ' + tableNumber + ' deixará de aparecer no mapa. Seus pedidos e históricos serão preservados no servidor, e o número poderá ser reutilizado.',
+      confirmLabel: 'Retirar mesa',
+      tone: 'warning',
+    })
+    if (!approved) return
+    setBusy(true)
+    setError('')
+    try {
+      await restaurantAdapter.archiveTable(token, tableId)
+      setSelected(null)
+      setDetails(null)
+      setSessions(null)
+      await refresh()
+      notify({
+        title: 'Mesa retirada de uso',
+        message: 'A mesa ' + tableNumber + ' foi arquivada com sucesso. O histórico foi preservado.',
+        tone: 'success',
+      })
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Não foi possível retirar a mesa.'
+      setError(message)
+      notify({ title: 'Não foi possível retirar a mesa', message, tone: 'error' })
+      // Se ela ficou ocupada após a consulta, refaz a situação exibida.
+      try { await refresh(tableId) } catch { /* Mesa indisponível ou excluída em outra sessão. */ }
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function removeOrder(orderId: string) {
     if (!selected) return
     if (!await confirm({ title: 'Cancelar pedido da mesa?', message: 'Esta ação cancela o pedido e retira seu valor do consumo da mesa.', confirmLabel: 'Cancelar pedido' })) return
@@ -108,7 +143,7 @@ export default function AdminTables({ token, products }: Props) {
 
   return <section className="space-y-5 text-white">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-2xl font-black">Mapa de mesas</h2><p className="text-sm text-slate-300">Verde: livre · Amarelo: ocupada</p></div>
+      <div><h2 className="text-2xl font-black">Mapa de mesas</h2><p className="text-sm text-slate-300">Verde: livre · Amarelo: ocupada · Mesas livres podem ser retiradas de uso</p></div>
       <button className={button} type="button" onClick={() => void refresh(selected).catch(cause => setError(String(cause)))}>Atualizar</button>
     </div>
     <form onSubmit={event => void createTable(event)} className="flex flex-wrap items-end gap-2 rounded-xl bg-[#14374d] p-4">
@@ -135,7 +170,18 @@ export default function AdminTables({ token, products }: Props) {
           <div><h3 className="text-xl font-black">Mesa {details.number}</h3><p className="text-sm text-slate-200">{details.status === 'FREE' ? 'Livre' : 'Ocupada'} · Total consumido: <strong>{brl(details.totalSpent)}</strong></p></div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={button} onClick={() => void showSessions()}>Histórico</button>
-            {details.status === 'OCCUPIED' && <button disabled={busy} type="button" className={button} onClick={() => void release()}>Liberar mesa</button>}
+            {details.status === 'OCCUPIED' ? (
+              <button disabled={busy} type="button" className={button} onClick={() => void release()}>Liberar mesa</button>
+            ) : (
+              <button
+                disabled={busy}
+                type="button"
+                className="min-h-11 rounded-xl border border-red-300 bg-[#572b36] px-4 py-2 font-bold text-white disabled:opacity-50"
+                onClick={() => void archiveTable()}
+              >
+                Retirar mesa de uso
+              </button>
+            )}
           </div>
         </div>
         <div className="space-y-2">
