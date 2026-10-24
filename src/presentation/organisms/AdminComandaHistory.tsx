@@ -43,6 +43,20 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     return () => { active = false }
   }, [token, requestedDate, refreshKey])
 
+  useEffect(() => {
+    const clearPrintMode = () => document.body.classList.remove('printing-comanda-history')
+    window.addEventListener('afterprint', clearPrintMode)
+    return () => {
+      window.removeEventListener('afterprint', clearPrintMode)
+      clearPrintMode()
+    }
+  }, [])
+
+  const printReport = () => {
+    document.body.classList.add('printing-comanda-history')
+    window.print()
+  }
+
   const total = comandas.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
   const completedOrders = comandas.flatMap(({ tableNumber, session }) =>
     session.orders.filter(order => order.status === 'COMPLETED')
@@ -72,7 +86,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
         <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
       </div>
       <button type="button" disabled={loading || !!error || completedOrders.length === 0 || date !== requestedDate}
-        onClick={() => window.print()}
+        onClick={printReport}
         className="min-h-11 w-full rounded-xl border border-[#ffca28] bg-[#ffca28] px-4 py-2 text-sm font-bold text-[#102c40] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto">
         🖨️ Imprimir relatório de realizados
       </button>
