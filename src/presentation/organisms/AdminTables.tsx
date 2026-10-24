@@ -25,6 +25,7 @@ export default function AdminTables({ token, products, categories }: Props) {
   const selectionRequest = useRef(0)
   const [details, setDetails] = useState<TableOrders | null>(null)
   const [number, setNumber] = useState('')
+  const [showCreateTable, setShowCreateTable] = useState(false)
   const [observation, setObservation] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
   const [additions, setAdditions] = useState<Addition[]>([])
@@ -117,6 +118,7 @@ export default function AdminTables({ token, products, categories }: Props) {
     try {
       await restaurantAdapter.createTable(token, value)
       setNumber('')
+      setShowCreateTable(false)
       await refresh(selected)
       notify({ title: 'Mesa cadastrada', message: 'A mesa ' + value + ' foi criada.', tone: 'success' })
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Falha ao cadastrar mesa.') }
@@ -233,18 +235,18 @@ export default function AdminTables({ token, products, categories }: Props) {
         <span className="rounded-full bg-[#254b5d] px-2 py-1 text-xs font-bold text-slate-100">{tables.length} cadastradas</span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <details className="group relative">
-          <summary className="flex min-h-10 cursor-pointer list-none items-center rounded-lg border border-[#63899a] px-3 text-sm font-bold text-white marker:hidden">+ Nova mesa</summary>
-          <form onSubmit={event => void createTable(event)} className="absolute right-0 z-20 mt-2 flex w-64 flex-col gap-2 rounded-xl border border-[#63899a] bg-[#14374d] p-3 shadow-xl">
-            <label className="text-sm font-bold">Número da mesa
-              <input type="number" min="1" step="1" required className={field + ' mt-1'} value={number} onChange={event => setNumber(event.target.value)} />
-            </label>
-            <button disabled={busy} type="submit" className={button}>Cadastrar</button>
-          </form>
-        </details>
+        <button type="button" aria-expanded={showCreateTable} aria-controls="new-table-form" onClick={() => setShowCreateTable(value => !value)} className="min-h-10 rounded-lg border border-[#63899a] px-3 text-sm font-bold text-white">{showCreateTable ? '✕ Fechar' : '+ Nova mesa'}</button>
         <button className="min-h-10 rounded-lg bg-[#ffca28] px-3 text-sm font-black text-[#09283b]" type="button" onClick={() => void refresh(selected).catch(cause => setError(String(cause)))}>↻ Atualizar</button>
       </div>
     </div>
+    {showCreateTable && (
+      <form id="new-table-form" onSubmit={event => void createTable(event)} className="flex w-full min-w-0 flex-col gap-3 rounded-xl border border-[#63899a] bg-[#14374d] p-3 sm:flex-row sm:items-end">
+        <label className="min-w-0 flex-1 text-sm font-bold">Número da nova mesa
+          <input type="number" min="1" step="1" required autoFocus className={field + ' mt-1'} value={number} onChange={event => setNumber(event.target.value)} />
+        </label>
+        <button disabled={busy} type="submit" className={button + ' w-full sm:w-auto'}>{busy ? 'Cadastrando...' : 'Cadastrar mesa'}</button>
+      </form>
+    )}
     {error && <p role="alert" className="rounded-xl border border-red-400 bg-[#562932] p-3 text-white">{error}</p>}
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {tables.map(table => <button key={table.id} type="button" onClick={() => void openTable(table.id)}
