@@ -149,6 +149,22 @@ export default function AdminOrders({ token }: { token: string }) {
   const [soundEnabled, setSoundEnabled] = useState(() => window.localStorage.getItem('admin-order-sound') !== 'off')
   const [newOrderCount, setNewOrderCount] = useState(0)
   const [soundReady, setSoundReady] = useState(() => orderAlert.isReady())
+  useEffect(() => {
+    const syncPreference = () => {
+      const enabled = window.localStorage.getItem('admin-order-sound') !== 'off'
+      setSoundEnabled(enabled)
+      if (!enabled) {
+        setNewOrderCount(0)
+        setSoundReady(false)
+      }
+    }
+    window.addEventListener('admin-notification-preference', syncPreference)
+    window.addEventListener('storage', syncPreference)
+    return () => {
+      window.removeEventListener('admin-notification-preference', syncPreference)
+      window.removeEventListener('storage', syncPreference)
+    }
+  }, [])
   const soundEnabledRef = useRef(soundEnabled)
   soundEnabledRef.current = soundEnabled
   const seenPendingRef = useRef<Set<string>>(new Set())
