@@ -153,6 +153,11 @@ export default function AdminOrders({ token }: { token: string }) {
   soundEnabledRef.current = soundEnabled
   const seenPendingRef = useRef<Set<string>>(new Set())
   const seenDateRef = useRef('')
+  const [cancelAlerts, setCancelAlerts] = useState<PreparingOrder[]>([])
+  const preparingSnapshotRef = useRef<Map<string, PreparingOrder> | null>(null)
+  const cancelWatchDayRef = useRef('')
+  const acknowledgedRef = useRef<Set<string>>(new Set())
+
   const { confirm, notify, dialog } = useActionDialog()
 
   useEffect(() => {
@@ -340,6 +345,63 @@ export default function AdminOrders({ token }: { token: string }) {
     }
   }, [tab, token, todayKey, receivePending])
 
+  // Consulta independentemente da aba atual: detecta pedidos da mesa que
+  // desapareceram do preparo porque foram cancelados por outro funcionário.
+  useEffect(() => {
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const day = todayKey
+    preparingSnapshotRef.current = null
+    cancelWatchDayRef.current = day
+    setCancelAlerts([])
+
+    const checkCancelations = async () => {
+      try {
+        const [preparingOrders, finalized] = await Promise.all([
+          restaurant.preparingOrders(token, day),
+          restaurant.orderHistory(token, day),
+        ])
+        if (!active || cancelWatchDayRef.current !== day) return
+        const current = new Map(
+          preparingOrders.filter(order => restaurantDateKey(order.createdAt) === day)
+            .map(order => [order.id, order] as const),
+        )
+        const previous = preparingSnapshotRef.current
+        if (previous) {
+          const canceledIds = new Set(finalized
+            .filter(order => order.status === 'CANCELED')
+            .map(order => order.id))
+          const cancellations = [...previous.values()].filter(order =>
+            order.tableId != null && !current.has(order.id) &&
+            canceledIds.has(order.id) && !acknowledgedRef.current.has(order.id))
+          if (cancellations.length > 0) {
+            setCancelAlerts(existing => {
+              const seen = new Set(existing.map(order => order.id))
+              return [...existing, ...cancellations.filter(order => !seen.has(order.id))]
+            })
+            if (soundEnabledRef.current) orderAlert.playCancellation()
+          }
+        }
+        preparingSnapshotRef.current = current
+        // Atualiza os cards de preparo sem interferir nos filtros por data.
+        if (currentFilterRef.current === token + '|preparing|' + day) {
+          setPreparing([...current.values()])
+        }
+      } catch {
+        // Falha temporária não apaga a referência nem confirma cancelamentos.
+      } finally {
+        if (active) timer = setTimeout(() => { void checkCancelations() }, 5000)
+      }
+    }
+    void checkCancelations()
+    return () => { active = false; if (timer) clearTimeout(timer) }
+  }, [token, todayKey])
+
+  const acknowledgeCancellation = (id: string) => {
+    acknowledgedRef.current.add(id)
+    setCancelAlerts(previous => previous.filter(order => order.id !== id))
+  }
+
   const refresh = async () => {
     setLoading(true)
     try {
@@ -460,6 +522,23 @@ export default function AdminOrders({ token }: { token: string }) {
           </button>}
         </div>
       </div>
+
+      {cancelAlerts.length > 0 && <section role="alert" aria-label="Avisos de pedidos cancelados" className="space-y-3">
+        {cancelAlerts.map(order => <div key={order.id} className="rounded-xl border-2 border-red-400 bg-[#50232d] p-4 text-white shadow-lg">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1">
+              <p className="text-lg font-black">🚨 Pedido de mesa cancelado!</p>
+              <p className="font-bold">Mesa {order.tableNumber ?? 'não identificada'} · #{order.id.slice(0, 8).toUpperCase()}</p>
+              <p className="text-sm text-red-100">O pedido foi cancelado enquanto estava em andamento. Interrompa o preparo.</p>
+              <p className="text-sm text-red-100">{order.items.map(item => item.quantity + '× ' + item.productName).join(', ')}</p>
+            </div>
+            <button type="button" onClick={() => acknowledgeCancellation(order.id)}
+              className="min-h-11 shrink-0 rounded-lg border border-white bg-white px-5 py-2 font-black text-[#50232d]">
+              Ciente
+            </button>
+          </div>
+        </div>)}
+      </section>}
 
       {soundEnabled && !soundReady && (
         <button type="button" onClick={() => { void unlockSound() }}
