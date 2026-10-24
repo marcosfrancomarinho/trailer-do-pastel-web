@@ -78,7 +78,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
             </div>
           </button>
           {expanded === session.id && <div className="space-y-3 border-t border-[#426b80] p-3 text-sm">
-            <p className="break-all text-slate-200">ID completo da comanda: {session.id}</p>
+            <p className="break-all text-slate-200">ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
             <p className="text-slate-300">Abertura: {dateTime(session.openedAt)}</p>
             {session.orders.length === 0 && <p>Nenhum pedido registrado.</p>}
             {session.orders.map(order => <div key={order.id} className="rounded-lg bg-[#102c40] p-3">
