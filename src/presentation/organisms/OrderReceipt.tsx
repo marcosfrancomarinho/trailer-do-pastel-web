@@ -55,7 +55,7 @@ export default function OrderReceipt({ order, token, onClose }: { order: Order; 
               {order.tableId != null ? (
                 <>
                   <strong>COMANDA DA MESA {order.tableNumber ?? ''}</strong>
-                  <p className="break-all"><strong>ID DA COMANDA:</strong> {loadingComanda ? 'CARREGANDO...' : comandaId ?? 'NÃO DISPONÍVEL'}</p>
+                  <p className="break-all"><strong>ID DA COMANDA:</strong> {loadingComanda ? 'CARREGANDO...' : comandaId?.slice(0, 8).toUpperCase() ?? 'NÃO DISPONÍVEL'}</p>
                   <p>ID DO PEDIDO: {order.id.slice(0, 8).toUpperCase()}</p>
                 </>
               ) : <strong>PEDIDO #{order.id.slice(0, 8)}</strong>}
