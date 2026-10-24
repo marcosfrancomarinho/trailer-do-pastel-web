@@ -141,9 +141,6 @@ export default function AdminManage({ kind, token, refreshCatalog }: Props) {
     <section className="rounded-2xl border border-[#365b70] bg-[#112e43] p-4 text-white sm:p-6">
       <div className="mb-5 flex items-center justify-between gap-3">
         <h2 className="text-xl font-black sm:text-2xl">{heading}</h2>
-        <button type="button" onClick={() => void reload()} className="min-h-11 rounded-xl border border-[#6a98ad] px-4 py-2 text-sm font-bold text-white">
-          Atualizar
-        </button>
       </div>
 
       {message && <p role="status" className="mb-4 rounded-xl bg-[#24583d] p-3 text-sm font-semibold text-white">{message}</p>}
