@@ -414,13 +414,19 @@ export default function AdminTables({ token, products, categories }: Props) {
           </form>
             </aside>
             <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
-          <div className="flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => setCategory('all')} className={category === 'all' ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>Todos</button>
-            {categories.map(item => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? button : 'min-h-11 rounded-xl border border-[#63899a] px-3 text-white'}>{item.name}</button>)}
+          <div className="space-y-2">
+            <label htmlFor="table-product-search" className="block text-xs font-bold text-slate-200">Adicionar produtos</label>
+            <input id="table-product-search" className={field + ' text-sm'} placeholder="Buscar pelo nome do produto..." value={search} onChange={event => setSearch(event.target.value)} />
+            <div className="flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-2" role="group" aria-label="Filtrar produtos por categoria">
+              <button type="button" aria-pressed={category === 'all'} onClick={() => setCategory('all')}
+                className={'min-h-10 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm font-bold ' + (category === 'all' ? 'bg-[#ffca28] text-[#09283b]' : 'border border-[#63899a] bg-[#1b4055] text-white')}>Todos</button>
+              {categories.map(item => <button key={item.id} type="button" aria-pressed={category === item.id} onClick={() => setCategory(item.id)}
+                className={'min-h-10 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm font-bold ' + (category === item.id ? 'bg-[#ffca28] text-[#09283b]' : 'border border-[#63899a] bg-[#1b4055] text-white')}>{item.name}</button>)}
+            </div>
+            <p className="text-xs text-slate-300">{filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}</p>
           </div>
-          <input className={field} aria-label="Buscar produto da mesa" placeholder="Buscar produto..." value={search} onChange={event => setSearch(event.target.value)} />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {filteredProducts.map(item => <article key={item.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#49758b] bg-[#193b50] p-2.5 shadow-sm">
+            {filteredProducts.map(item => <article key={item.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#49758b] bg-[#193b50] p-3">
               <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#26546a]">
                 {item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <span className="text-3xl" aria-hidden="true">🥟</span>}
               </div>
