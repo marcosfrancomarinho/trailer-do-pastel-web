@@ -42,6 +42,8 @@ export default function OrderReceipt({ order, onClose }: { order: Order; onClose
             <div className="receipt-separator" />
             <p><strong>CLIENTE:</strong> {order.customerName}</p>
             <p><strong>TELEFONE:</strong> {order.customerPhone}</p>
+            {order.tableId && <p><strong>PEDIDO DE MESA</strong></p>}
+            {order.observation && <p><strong>OBSERVAÇÃO:</strong> {order.observation}</p>}
             <div className="receipt-separator" />
             <h4>ITENS</h4>
             {order.items.map((item, index) => (
