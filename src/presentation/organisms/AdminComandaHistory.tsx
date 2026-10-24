@@ -18,6 +18,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [requestedDate, setRequestedDate] = useState(date)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'canceled'>('all')
 
   useEffect(() => {
     let active = true
@@ -43,7 +44,8 @@ export default function AdminComandaHistory({ token }: { token: string }) {
     return () => { active = false }
   }, [token, requestedDate, refreshKey])
 
-  const filtered = comandas
+  const matchesStatus = (status: string) => statusFilter === 'all' || (statusFilter === 'completed' ? status === 'COMPLETED' : status === 'CANCELED')
+  const filtered = comandas.filter(item => statusFilter === 'all' || item.session.orders.some(order => matchesStatus(order.status)))
   const total = filtered.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0)
 
   return <section className="min-w-0 space-y-4 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white sm:p-5">
@@ -61,13 +63,24 @@ export default function AdminComandaHistory({ token }: { token: string }) {
       <button type="button" disabled={loading || !date} onClick={() => { setExpanded(null); setRequestedDate(date); setRefreshKey(value => value + 1) }}
         className="min-h-11 rounded-lg bg-[#ffca28] px-4 text-sm font-bold text-[#102c40] disabled:opacity-55">Buscar por data</button>
     </div>
+    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Filtrar pedidos por situação">
+      {([['all', 'Todos'], ['completed', 'Realizados'], ['canceled', 'Cancelados']] as const).map(([value, label]) =>
+        <button key={value} type="button" aria-pressed={statusFilter === value}
+          onClick={() => { setStatusFilter(value); setExpanded(null) }}
+          className={'min-h-11 rounded-xl border px-2 py-2 text-xs font-bold sm:text-sm ' +
+            (statusFilter === value
+              ? value === 'canceled' ? 'border-red-300 bg-[#853543] text-white' : 'border-[#ffca28] bg-[#ffca28] text-[#102c40]'
+              : 'border-[#63899a] bg-[#193e53] text-white hover:bg-[#2a5266]')}>
+          {label}
+        </button>)}
+    </div>
     {error && <p role="alert" className="rounded-lg bg-[#563039] p-3 text-sm text-white">{error}</p>}
     {loading ? <p role="status" className="p-3 text-slate-200">Carregando histórico...</p> : <>
       <div className="flex flex-wrap justify-between gap-3 rounded-xl border border-[#426b80] p-3">
         <span className="text-sm font-bold">{filtered.length} {filtered.length === 1 ? 'comanda encerrada' : 'comandas encerradas'}</span>
-        <strong className="text-amber-200">Total: {brl(total)}</strong>
+        <strong className="text-amber-200">Total das comandas: {brl(total)}</strong>
       </div>
-      {!error && filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda encerrada nesta data.</p>}
+      {!error && filtered.length === 0 && <p className="rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200">Nenhuma comanda com pedidos deste filtro na data selecionada.</p>}
       <div className="space-y-2">
         {filtered.map(({ tableNumber, session }) => <article key={session.id} className="overflow-hidden rounded-xl border border-[#426b80] bg-[#193e53]">
           <button type="button" aria-expanded={expanded === session.id} onClick={() => setExpanded(value => value === session.id ? null : session.id)}
@@ -86,7 +99,7 @@ export default function AdminComandaHistory({ token }: { token: string }) {
             <p className="break-all text-slate-200">ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
             <p className="text-slate-300">Abertura: {dateTime(session.openedAt)}</p>
             {session.orders.length === 0 && <p>Nenhum pedido registrado.</p>}
-            {session.orders.map(order => <div key={order.id} className={'rounded-lg border p-3 ' + (order.status === 'CANCELED' ? 'border-red-400 bg-[#562733] text-white' : 'border-transparent bg-[#102c40]')}>
+            {session.orders.filter(order => matchesStatus(order.status)).map(order => <div key={order.id} className={'rounded-lg border p-3 ' + (order.status === 'CANCELED' ? 'border-red-400 bg-[#562733] text-white' : 'border-transparent bg-[#102c40]')}>
               <div className="flex justify-between gap-2"><strong>Pedido #{order.id.slice(0, 8)}</strong><strong>{brl(order.total)}</strong></div>
               <p className={'mt-1 text-xs font-bold ' + (order.status === 'CANCELED' ? 'text-red-200' : 'text-slate-300')}>{order.status === 'COMPLETED' ? 'Concluído' : order.status === 'CANCELED' ? 'Cancelado' : order.status}</p>
               <div className="mt-2 space-y-1">
