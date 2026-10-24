@@ -243,7 +243,6 @@ export default function AdminTables({ token, products, categories }: Props) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" aria-expanded={showCreateTable} aria-controls="new-table-form" onClick={() => setShowCreateTable(value => !value)} className="min-h-10 rounded-lg border border-[#63899a] px-3 text-sm font-bold text-white">{showCreateTable ? '✕ Fechar' : '+ Nova mesa'}</button>
-        <button className="min-h-10 rounded-lg bg-[#ffca28] px-3 text-sm font-black text-[#09283b]" type="button" onClick={() => void refresh(selected).catch(cause => setError(String(cause)))}>↻ Atualizar</button>
       </div>
     </div>
     {showCreateTable && (
