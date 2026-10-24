@@ -270,7 +270,9 @@ export default function App() {
   }, [view, orders])
 
   async function login(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setAdminBusy(true); setAdminError('')
+    event.preventDefault()
+    if (adminBusy) return
+    setAdminBusy(true); setAdminError('')
     try {
       const logged = await api<{ name: string; role: 'ADMIN' | 'EMPLOYEE'; accessToken: string }>('/login', {
         method: 'POST', body: JSON.stringify({ name: adminName, password: adminPassword })
@@ -364,7 +366,7 @@ export default function App() {
           {adminToken && <button type="button" onClick={() => navigate('/mesas')}
             className="min-h-11 rounded-xl bg-[#ffca28] px-4 text-sm font-extrabold text-[#102b40] sm:text-base">🪑 Mesas e comandas</button>}
         </div>
-        {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button disabled={adminBusy} className="w-full rounded-full bg-[#ffc629] py-3 font-bold text-[#113548]">Entrar</button></form> :
+        {!adminToken ? <form onSubmit={e => void login(e)} className="mx-auto mt-8 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm"><h2 className="text-xl font-black">Entrar</h2><input required autoComplete="username" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Usuário" className="w-full rounded-xl border border-cyan-100 p-3"/><input required type="password" autoComplete="current-password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha" className="w-full rounded-xl border border-cyan-100 p-3"/>{adminError && <p role="alert" className="text-sm text-red-600">{adminError}</p>}<button type="submit" disabled={adminBusy} aria-busy={adminBusy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ffc629] px-4 py-3 font-bold text-[#113548] disabled:cursor-wait disabled:opacity-75">{adminBusy ? <><span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-[3px] border-[#113548]/25 border-t-[#113548]" /><span>Entrando...</span></> : 'Entrar'}</button></form> :
       <div className="admin-layout mt-4 grid min-w-0 gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="md:hidden">
           <button type="button" aria-label={adminMenuOpen ? 'Fechar menu administrativo' : 'Abrir menu administrativo'}
