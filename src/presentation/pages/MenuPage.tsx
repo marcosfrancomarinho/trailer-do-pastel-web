@@ -79,7 +79,7 @@ export default function MenuPage() {
           </div>
         </div>
       </section>
-      <main id='menu' className='menu-section mx-auto max-w-6xl px-4 py-10 md:py-16'>
+      <main id='menu' className='menu-section mx-auto max-w-7xl px-4 py-10 md:py-16'>
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div>
             <p className='text-xs font-black tracking-widest text-[#008b9e]'>NOSSO CARDÁPIO</p>
@@ -145,7 +145,7 @@ export default function MenuPage() {
         ) : visible.length === 0 ? (
           <div className='py-20 text-center'>Nenhum produto encontrado.</div>
         ) : (
-          <div className='product-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className='product-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-4'>
             {visible.map((p) => (
               <ProductCard
                 key={p.id}
