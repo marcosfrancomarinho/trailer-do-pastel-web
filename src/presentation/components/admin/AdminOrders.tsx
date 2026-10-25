@@ -202,9 +202,14 @@ export default function AdminOrders() {
               onClick={() => {
                 void refresh();
               }}
-              className='min-h-10 shrink-0 rounded-lg border border-[#56879d] bg-[#194258] px-3 py-2 text-xs font-bold text-white hover:bg-[#24556c]'
+              aria-label='Atualizar pedidos'
+              title='Atualizar pedidos'
+              className='grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-[#56879d] bg-[#194258] text-white hover:bg-[#24556c]'
             >
-              Atualizar
+              <svg aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='h-5 w-5'>
+                <path d='M20 11a8 8 0 1 0-2.35 5.65' />
+                <path d='M20 4v7h-7' />
+              </svg>
             </button>
           )}
         </div>
