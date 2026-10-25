@@ -456,24 +456,27 @@ export default function AdminOrders({ token }: { token: string }) {
           <h2 className="text-xl font-black text-white sm:text-2xl">Pedidos</h2>
           <p className="text-xs text-slate-300">{tab === 'pending' ? 'Atualização automática' : 'Consulte os pedidos por situação'}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
             type="button"
             onClick={() => { void toggleSound() }}
             aria-pressed={soundEnabled}
+            aria-label={soundEnabled ? 'Desativar som e notificações' : 'Ativar som e notificações'}
             className={
-              'min-h-10 rounded-lg border px-3 py-2 text-xs font-bold sm:text-sm ' +
+              'flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-2 text-xs font-bold sm:flex-none sm:text-sm ' +
               (soundEnabled
                 ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
                 : 'border-[#56879d] bg-[#194258] text-white')
             }
           >
-            {soundEnabled ? '🔔 Som / notificações ligados' : '🔕 Som / notificações desligados'}
+            <span aria-hidden="true">{soundEnabled ? '🔔' : '🔕'}</span>
+            <span className="sm:hidden">Notificações {soundEnabled ? 'ligadas' : 'desligadas'}</span>
+            <span className="hidden sm:inline">Som / notificações {soundEnabled ? 'ligados' : 'desligados'}</span>
           </button>
           {tab !== 'pending' && <button
             type="button"
             onClick={() => { void refresh() }}
-            className="min-h-10 rounded-lg border border-[#56879d] bg-[#194258] px-3 py-2 text-xs font-bold text-white hover:bg-[#24556c]"
+            className="min-h-10 shrink-0 rounded-lg border border-[#56879d] bg-[#194258] px-3 py-2 text-xs font-bold text-white hover:bg-[#24556c]"
           >
             Atualizar
           </button>}
