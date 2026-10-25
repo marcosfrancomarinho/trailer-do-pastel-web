@@ -1,0 +1,176 @@
+import { ValidationError } from '../../errors/validation-error.ts'
+import type { CreateOrderInput } from '../../dtos/orders';
+
+export class CreateOrder {
+  public static validate(input: CreateOrderInput): CreateOrderInput {
+    if (!input) {
+      throw new ValidationError('input', 'Dados de pedido não informados.');
+    }
+    if (typeof input.customerName !== 'string') {
+      throw new ValidationError('customerName', 'Nome do cliente deve ser um texto.');
+    }
+    if (!input.customerName.trim()) {
+      throw new ValidationError('customerName', 'Nome do cliente é obrigatório.');
+    }
+    if (typeof input.customerPhone !== 'string') {
+      throw new ValidationError('customerPhone', 'Telefone deve ser um texto.');
+    }
+    const phone = input.customerPhone.replace(/[\s()-]/g, '');
+    if (!/^\d{10,11}$/.test(phone)) {
+      throw new ValidationError('customerPhone', 'Informe um telefone com DDD válido.');
+    }
+    if (!Array.isArray(input.cart)) {
+      throw new ValidationError('cart', 'Carrinho deve ser uma lista.');
+    }
+    if (input.cart.length === 0) {
+      throw new ValidationError('cart', 'Adicione pelo menos um produto.');
+    }
+    if (typeof input.observation !== 'string') {
+      throw new ValidationError('observation', 'Observação deve ser um texto.');
+    }
+    for (const [index, item] of input.cart.entries()) {
+      if (!item) {
+        throw new ValidationError(`cart[${index}]`, `Item ${index + 1}: dados não informados.`);
+      }
+      if (typeof item.key !== 'string') {
+        throw new ValidationError(`cart[${index}].key`, `Item ${index + 1}: chave deve ser um texto.`);
+      }
+      if (!item.key.trim()) {
+        throw new ValidationError(`cart[${index}].key`, `Item ${index + 1}: chave é obrigatória.`);
+      }
+      if (!item.product) {
+        throw new ValidationError(`cart[${index}].product`, `Item ${index + 1}: produto não informado.`);
+      }
+      if (typeof item.product.id !== 'string') {
+        throw new ValidationError(`cart[${index}].product.id`, `Item ${index + 1}: ID do produto deve ser um texto.`);
+      }
+      if (!item.product.id.trim()) {
+        throw new ValidationError(`cart[${index}].product.id`, `Item ${index + 1}: ID do produto é obrigatório.`);
+      }
+      if (typeof item.product.name !== 'string') {
+        throw new ValidationError(`cart[${index}].product.name`, `Item ${index + 1}: nome do produto deve ser um texto.`);
+      }
+      if (!item.product.name.trim()) {
+        throw new ValidationError(`cart[${index}].product.name`, `Item ${index + 1}: nome do produto é obrigatório.`);
+      }
+      if (typeof item.product.price !== 'string') {
+        throw new ValidationError(`cart[${index}].product.price`, `Item ${index + 1}: preço do produto deve ser um texto.`);
+      }
+      if (!item.product.price.trim()) {
+        throw new ValidationError(`cart[${index}].product.price`, `Item ${index + 1}: preço do produto é obrigatório.`);
+      }
+      const productPrice = Number(item.product.price);
+      if (!Number.isFinite(productPrice)) {
+        throw new ValidationError(`cart[${index}].product.price`, `Item ${index + 1}: preço do produto deve ser numérico.`);
+      }
+      if (productPrice < 0) {
+        throw new ValidationError(`cart[${index}].product.price`, `Item ${index + 1}: preço do produto não pode ser negativo.`);
+      }
+      if (!Number.isSafeInteger(item.quantity)) {
+        throw new ValidationError(`cart[${index}].quantity`, `Item ${index + 1}: quantidade deve ser inteira.`);
+      }
+      if (item.quantity < 1) {
+        throw new ValidationError(`cart[${index}].quantity`, `Item ${index + 1}: quantidade deve ser maior que zero.`);
+      }
+      if (!Array.isArray(item.additions)) {
+        throw new ValidationError(`cart[${index}].additions`, `Item ${index + 1}: lista de adicionais inválida.`);
+      }
+      for (const [additionIndex, extra] of item.additions.entries()) {
+        if (!extra) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}]`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: dados não informados.`,
+          );
+        }
+        if (!extra.addition) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: adicional não informado.`,
+          );
+        }
+        if (typeof extra.addition.id !== 'string') {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.id`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: ID deve ser um texto.`,
+          );
+        }
+        if (!extra.addition.id.trim()) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.id`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: ID é obrigatório.`,
+          );
+        }
+        if (typeof extra.addition.name !== 'string') {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.name`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: nome deve ser um texto.`,
+          );
+        }
+        if (!extra.addition.name.trim()) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.name`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: nome é obrigatório.`,
+          );
+        }
+        if (typeof extra.addition.price !== 'string') {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.price`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: preço deve ser um texto.`,
+          );
+        }
+        if (!extra.addition.price.trim()) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.price`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: preço é obrigatório.`,
+          );
+        }
+        const additionPrice = Number(extra.addition.price);
+        if (!Number.isFinite(additionPrice)) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.price`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: preço deve ser numérico.`,
+          );
+        }
+        if (additionPrice < 0) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].addition.price`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: preço não pode ser negativo.`,
+          );
+        }
+        if (!Number.isSafeInteger(extra.quantity)) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].quantity`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: quantidade deve ser inteira.`,
+          );
+        }
+        if (extra.quantity < 1) {
+          throw new ValidationError(
+            `cart[${index}].additions[${additionIndex}].quantity`,
+            `Item ${index + 1}, adicional ${additionIndex + 1}: quantidade deve ser maior que zero.`,
+          );
+        }
+      }
+    }
+    const validatedCart = input.cart.map((item) => ({
+      ...item,
+      key: item.key.trim(),
+      product: { ...item.product, id: item.product.id.trim(), name: item.product.name.trim(), price: item.product.price.trim() },
+      additions: item.additions.map((extra) => ({
+        ...extra,
+        addition: {
+          ...extra.addition,
+          id: extra.addition.id.trim(),
+          name: extra.addition.name.trim(),
+          price: extra.addition.price.trim(),
+        },
+      })),
+    }));
+    return {
+      ...input,
+      customerName: input.customerName.trim(),
+      customerPhone: phone,
+      observation: input.observation.trim(),
+      cart: validatedCart,
+    };
+  }
+}

@@ -10,17 +10,17 @@ cp .env.example .env
 yarn dev
 ```
 
-Em `.env`, configure `VITE_API_URL` com a URL do backend, sem barra final. Para testar no notebook com o backend na porta 3000, use `http://localhost:3000`.
+Em `.env`, configure `VITE_API_URL` com a URL do backend, sem barra final. Se não for definida, o frontend usa `https://trailer-do-pastel.onrender.com`.
 
 ## Funcionalidades
 
 - Cardápio com categorias, busca e disponibilidade: `GET /categories` e `GET /products`.
 - Personalização por produto: `GET /products/:productId/additions`.
-- Carrinho e envio real dos pedidos: `POST /orders`.
-- Confirmação do pedido e token salvo no navegador (a consulta de status ainda depende de rota futura).
-- Login e visualização de pedidos pendentes: `POST /login` e `GET /orders/pending`.
+- Carrinho persistido no navegador e envio de pedidos: `POST /orders`.
+- Histórico local de pedidos e acompanhamento de status: `GET /orders/tracking/:token`.
+- Login, gestão de pedidos, mesas, comandas, loja, catálogo e usuários.
 
-O frontend não simula confirmação de pagamento nem atualização de status. Não contém cadastro público de administradores.
+O frontend não simula confirmação de pagamento. As operações administrativas dependem da autorização do backend.
 
 ## Comandos
 
@@ -28,20 +28,25 @@ O frontend não simula confirmação de pagamento nem atualização de status. N
 yarn dev
 yarn build
 yarn lint
+yarn test
 ```
 
-O backend precisa permitir CORS para o endereço do frontend. O endereço `trycloudflare.com` é temporário; configure uma URL estável para produção.
-
-## Pendências do backend
-
-- `GET /orders/tracking/:token` para acompanhamento atualizado.
-- `PATCH /orders/:id/status` para controlar o preparo.
-- Restringir autenticação e autorização nas rotas administrativas.
-- Validar se adicionais enviados no pedido estão associados ao produto.
+O backend precisa permitir CORS para o endereço do frontend.
 
 ## Organização
 
-Mantida a estrutura padrão do Vite: `src/App.tsx`, `src/main.tsx`, `src/index.css`, `vite.config.ts`. Acesso HTTP e tipos em `src/api.ts`.
+`src/main.tsx` inicia a aplicação em `src/presentation/App.tsx`, que apenas declara as rotas. A interface segue **layout → páginas → componentes**:
+
+- `src/presentation/layouts/PublicLayout.tsx`: navegação pública e carrinho compartilhado entre cardápio (`/`), carrinho (`/carrinho`) e pedidos do cliente (`/pedidos`).
+- `src/presentation/layouts/PrivateLayout.tsx`: sessão e alertas compartilhados entre painel (`/admin`), mesas (`/mesas`) e histórico de comandas (`/comandas`). Sem sessão, `/admin` mostra o login e as outras rotas redirecionam para ele.
+- `src/presentation/pages`: conteúdo das rotas do cardápio, carrinho, pedidos, mesas e painel.
+- `src/presentation/hooks/public` e `src/presentation/hooks/admin`: estado, efeitos e ações das páginas de cada área.
+- `src/presentation/hooks/global`: hooks de acesso aos contextos compartilhados e aos serviços globais.
+- `src/presentation/components/public`, `admin` e `shared`: componentes de cada área e componentes compartilhados.
+
+As páginas chamam seus hooks e montam a interface com componentes. Filtros, checkout, login e acompanhamento de pedidos ficam nos hooks correspondentes.
+
+Os tipos de entrada e saída ficam em `src/application/dtos`; a montagem do pedido, em `src/application/mappers`; e o filtro de data e cálculo do total do carrinho, em `src/application/utils`. O acesso à API, ao armazenamento local, ao áudio e à impressão fica em `src/infrastructure`.
 
 ## Tema
 

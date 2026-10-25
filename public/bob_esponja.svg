@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Bob Esponja</title>
+  <desc id="desc">Ilustração vetorial estilizada do Bob Esponja sorrindo.</desc>
+  <g stroke="#493328" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- legs and shoes -->
+    <path d="M205 385v63m102-63v63" fill="none" stroke="#f6d12f" stroke-width="15"/>
+    <path d="M205 432v21m102-21v21" stroke="#fff" stroke-width="17"/>
+    <path d="M196 444h18m84 0h18" stroke="#3c79ba" stroke-width="5"/>
+    <path d="M206 450q-36-8-58 15-7 13 7 17h64q12-6 2-21zm100 0q36-8 58 15 7 13-7 17h-64q-12-6-2-21z" fill="#242528"/>
+    <!-- arms -->
+    <path d="M101 271Q63 294 47 330" fill="none" stroke="#f6d12f" stroke-width="16"/>
+    <path d="M408 271q38 23 54 59" fill="none" stroke="#f6d12f" stroke-width="16"/>
+    <path d="M49 328q-17-11-19 4-5 16 11 21 18 6 28-12zM462 328q17-11 19 4 5 16-11 21-18 6-28-12z" fill="#f6d12f"/>
+    <!-- body silhouette -->
+    <path d="M108 57q16-13 34 0t37 0q18-13 36 0t39 0q20-13 40 0t39 0q18-12 35 1t36 1q10 0 11 17l-4 40 5 37-5 41 5 41-5 38 5 32-8 30H111l-9-29 5-39-6-41 6-39-6-37 7-42-4-31q0-16 4-20z" fill="#ffe14a"/>
+    <!-- sponge pores -->
+    <g fill="#ddba31" stroke="none" opacity=".78">
+      <ellipse cx="142" cy="109" rx="16" ry="11" transform="rotate(-20 142 109)"/>
+      <ellipse cx="367" cy="113" rx="13" ry="19" transform="rotate(25 367 113)"/>
+      <ellipse cx="120" cy="218" rx="10" ry="16"/>
+      <ellipse cx="388" cy="221" rx="14" ry="10"/>
+      <ellipse cx="150" cy="279" rx="14" ry="10"/>
+      <ellipse cx="365" cy="290" rx="11" ry="15"/>
+    </g>
+    <!-- shirt -->
+    <path d="M108 314h303l-7 48H113z" fill="#fff"/>
+    <!-- pants -->
+    <path d="M113 362h291l-7 44H120z" fill="#a36939"/>
+    <path d="M113 366h291" fill="none"/>
+    <path d="M172 375h30m103 0h30" stroke="#252122" stroke-width="10"/>
+    <!-- shirt collar and tie -->
+    <path d="M225 316l30 21-29 12-25-30m86-3-30 21 29 12 25-30" fill="#fff"/>
+    <path d="M254 337l-13 17 13 11 13-11zm0 28-16 28 16 9 16-9z" fill="#ed3934"/>
+    <!-- eyes -->
+    <ellipse cx="205" cy="172" rx="57" ry="66" fill="#fff"/>
+    <ellipse cx="307" cy="172" rx="57" ry="66" fill="#fff"/>
+    <circle cx="222" cy="177" r="23" fill="#70c6ed"/>
+    <circle cx="290" cy="177" r="23" fill="#70c6ed"/>
+    <circle cx="228" cy="181" r="12" fill="#171a1b" stroke="none"/>
+    <circle cx="284" cy="181" r="12" fill="#171a1b" stroke="none"/>
+    <circle cx="232" cy="173" r="5" fill="#fff" stroke="none"/>
+    <circle cx="288" cy="173" r="5" fill="#fff" stroke="none"/>
+    <!-- eyelashes -->
+    <path d="M175 113l-10-19m31 10-3-21m29 23 7-20m57 20-8-20m29 18 3-21m20 30 11-19" fill="none"/>
+    <!-- cheeks -->
+    <ellipse cx="155" cy="249" rx="28" ry="17" fill="#f9a285" stroke="none" opacity=".78"/>
+    <ellipse cx="355" cy="249" rx="28" ry="17" fill="#f9a285" stroke="none" opacity=".78"/>
+    <g fill="#d56652" stroke="none"><circle cx="145" cy="245" r="3"/><circle cx="159" cy="252" r="3"/><circle cx="365" cy="245" r="3"/><circle cx="351" cy="252" r="3"/></g>
+    <!-- nose -->
+    <path d="M254 198q-22 7-23 31 0 17 23 17 24 0 23-17-1-24-23-31z" fill="#ffe14a"/>
+    <!-- smile -->
+    <path d="M157 257q98 99 199 0" fill="none" stroke-width="8"/>
+    <path d="M202 284q52 45 104 0" fill="#8d332e" stroke-width="3"/>
+    <!-- two teeth -->
+    <path d="M232 290v31q10 5 22 0v-29m4 0v29q12 5 22 0v-31" fill="#fff" stroke-width="4"/>
+    <path d="M149 252q-8 0-13 8m229-8q8 0 13 8" fill="none" stroke-width="4"/>
+  </g>
+</svg>

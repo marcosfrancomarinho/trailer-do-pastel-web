@@ -1,0 +1,377 @@
+import { useAdminOrders, type Order, type Tab } from '../../hooks/admin/useAdminOrders';
+import { brl } from '../../../shared/formatters/currency';
+import OrderDetails from './OrderDetails';
+import OrderReceipt from './OrderReceipt';
+
+const tabs: { id: Tab; label: string }[] = [
+  { id: 'pending', label: 'Pendentes' },
+  { id: 'preparing', label: 'Em andamento' },
+  { id: 'completed', label: 'Concluídos' },
+  { id: 'canceled', label: 'Cancelados' },
+];
+
+const statusLabels: Record<string, string> = {
+  PENDING: 'Aguardando aceite',
+  CONFIRMED: 'Aceito',
+  PREPARING: 'Em preparo',
+  COMPLETED: 'Concluído',
+  CANCELED: 'Cancelado',
+};
+
+function nextAction(status: string): { label: string; next: string } | null {
+  if (status === 'PENDING') return { label: 'Aceitar pedido', next: 'PREPARING' };
+  if (status === 'CONFIRMED') return { label: 'Iniciar preparo', next: 'PREPARING' };
+  if (status === 'PREPARING') return { label: 'Concluir pedido', next: 'COMPLETED' };
+  return null;
+}
+
+function OrderCard({
+  order,
+  busy,
+  onStatusChange,
+  onOpen,
+  onPrint,
+}: {
+  order: Order;
+  busy: boolean;
+  onStatusChange: (id: string, status: string) => Promise<void>;
+  onOpen: (order: Order) => void;
+  onPrint: (order: Order) => void;
+}) {
+  const action = nextAction(order.status);
+  const itemsCount = order.items.reduce((total, item) => total + item.quantity, 0);
+  const hasObservation = Boolean(order.observation?.trim());
+
+  return (
+    <article className='flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#37637b] bg-[#112e43] shadow-sm'>
+      <div className='flex flex-wrap items-center justify-between gap-2 border-b border-[#31566e] px-3 py-2'>
+        <span className='text-xs font-extrabold tracking-wider text-cyan-200'>#{order.id.slice(0, 8)}</span>
+        <span className='rounded-full bg-[#264c61] px-3 py-1 text-xs font-bold text-white'>{statusLabels[order.status]}</span>
+      </div>
+
+      <div className='flex flex-1 flex-col gap-2 p-3'>
+        <div className='flex flex-wrap items-start justify-between gap-2'>
+          <div className='min-w-0'>
+            <h3 className='break-words text-base font-black text-white'>{order.customerName}</h3>
+            <p className='text-sm text-slate-300'>{order.customerPhone}</p>
+          </div>
+          <strong className='shrink-0 text-base font-black text-amber-300'>{brl(order.total)}</strong>
+        </div>
+
+        <p className='text-sm text-slate-300'>
+          {itemsCount} {itemsCount === 1 ? 'item' : 'itens'} ·{' '}
+          {new Date(order.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}
+        </p>
+
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='inline-flex rounded-lg border border-amber-300 bg-[#57431f] px-2 py-1 text-xs font-black text-amber-100'>
+            {order.tableNumber != null ? `🪑 Mesa ${order.tableNumber}` : '🛍️ Pedido online'}
+          </span>
+          {hasObservation && (
+            <span className='inline-flex items-center gap-1 rounded-lg border border-red-400 bg-[#512832] px-2 py-1 text-xs font-black text-red-100'>
+              <span aria-hidden='true' className='grid h-4 w-4 place-items-center rounded-full bg-red-300 text-[11px] leading-none text-[#512832]'>!</span>
+              Tem observação
+            </span>
+          )}
+        </div>
+        <div className='mt-auto grid grid-cols-2 gap-2'>
+          <button
+            type='button'
+            onClick={() => onOpen(order)}
+            className='min-h-11 min-w-0 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-3 py-2 text-sm font-bold text-white hover:bg-[#27576f]'
+            aria-label={'Ver detalhes do pedido ' + order.id.slice(0, 8)}
+          >
+            Detalhes
+          </button>
+          <button
+            type='button'
+            onClick={() => onPrint(order)}
+            className='min-h-11 flex-1 rounded-xl border border-[#467991] bg-[#1a3d53] px-3 py-2 text-sm font-bold text-white hover:bg-[#27576f]'
+            aria-label={'Imprimir pedido ' + order.id.slice(0, 8)}
+          >
+            🖨 Imprimir
+          </button>
+        </div>
+
+        {action && (
+          <div
+            className={
+              order.status === 'PENDING' ? 'grid grid-cols-2 gap-2 pt-1' : 'grid grid-cols-1 gap-2 pt-1 min-[420px]:grid-cols-2'
+            }
+          >
+            <button
+              type='button'
+              disabled={busy}
+              onClick={() => void onStatusChange(order.id, action.next)}
+              className='min-h-11 min-w-0 rounded-xl bg-[#ffca28] px-2 py-2 text-sm font-extrabold text-[#082739] disabled:opacity-60'
+            >
+              {busy ? 'Salvando...' : action.label}
+            </button>
+            {order.status === 'PENDING' && (
+              <button
+                type='button'
+                disabled={busy}
+                onClick={() => void onStatusChange(order.id, 'COMPLETED')}
+                className='min-h-11 min-w-0 rounded-xl border border-emerald-300 bg-[#146044] px-2 py-2 text-sm font-bold text-white hover:bg-[#187652] disabled:opacity-60'
+                title='Concluir o pedido sem passar pelo preparo'
+              >
+                ✓ Concluir direto
+              </button>
+            )}
+            <button
+              type='button'
+              disabled={busy}
+              onClick={() => void onStatusChange(order.id, 'CANCELED')}
+              className={
+                (order.status === 'PENDING' ? 'col-span-2 ' : '') +
+                'min-h-11 min-w-0 rounded-xl border border-red-300 bg-[#512832] px-3 py-2 text-sm font-bold text-white disabled:opacity-60'
+              }
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+export default function AdminOrders() {
+  const {
+    tab,
+    setTab,
+    search,
+    setSearch,
+    debouncedSearch,
+    setDebouncedSearch,
+    searchLoading,
+    searchError,
+    busyId,
+    loading,
+    error,
+    setSelectedId,
+    setPrintId,
+    todayKey,
+    dateMode,
+    setDateMode,
+    chosenDate,
+    setChosenDate,
+    soundEnabled,
+    newOrderCount,
+    setNewOrderCount,
+    soundReady,
+    dialog,
+    toggleSound,
+    refresh,
+    unlockSound,
+    visibleDate,
+    filteredOrders,
+    changeStatus,
+    selectedOrder,
+    printOrder,
+  } = useAdminOrders();
+
+  return (
+    <section className='space-y-4' aria-label='Painel de pedidos'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <h2 className='text-xl font-black text-white sm:text-2xl'>Pedidos</h2>
+          <p className='text-xs text-slate-300'>
+            {tab === 'pending' ? 'Atualização automática' : 'Consulte os pedidos por situação'}
+          </p>
+        </div>
+        <div className='ml-auto flex items-center gap-2'>
+          <button
+            type='button'
+            onClick={() => {
+              void toggleSound();
+            }}
+            aria-pressed={soundEnabled}
+            aria-label={soundEnabled ? 'Desativar som e notificações' : 'Ativar som e notificações'}
+            title={soundEnabled ? 'Desativar som e notificações' : 'Ativar som e notificações'}
+            className={
+              'grid h-11 w-11 shrink-0 place-items-center rounded-lg border text-xl ' +
+              (soundEnabled ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]' : 'border-[#56879d] bg-[#194258] text-white')
+            }
+          >
+            <span aria-hidden='true'>🔔</span>
+          </button>
+          {tab !== 'pending' && (
+            <button
+              type='button'
+              onClick={() => {
+                void refresh();
+              }}
+              className='min-h-10 shrink-0 rounded-lg border border-[#56879d] bg-[#194258] px-3 py-2 text-xs font-bold text-white hover:bg-[#24556c]'
+            >
+              Atualizar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {soundEnabled && !soundReady && (
+        <button
+          type='button'
+          onClick={() => {
+            void unlockSound();
+          }}
+          className='w-full rounded-xl border border-amber-300 bg-[#4b3d1b] px-4 py-3 text-left text-sm font-bold text-white'
+        >
+          🔇 Som ainda não liberado pelo navegador. Toque aqui para liberar o áudio.
+        </button>
+      )}
+
+      {newOrderCount > 0 && (
+        <div
+          role='status'
+          className='flex items-center justify-between gap-3 rounded-xl border border-[#ffca28] bg-[#4b3d1b] px-4 py-3 text-sm font-bold text-white'
+        >
+          <span>
+            🔔 {newOrderCount} {newOrderCount === 1 ? 'novo pedido recebido' : 'novos pedidos recebidos'}
+          </span>
+          <button
+            type='button'
+            onClick={() => setNewOrderCount(0)}
+            className='rounded-lg border border-[#ffe3a6] px-3 py-2 text-xs text-white'
+          >
+            Dispensar
+          </button>
+        </div>
+      )}
+
+      <div className='flex flex-col gap-3 rounded-xl border border-[#315970] bg-[#102b40] p-3 sm:flex-row sm:items-center'>
+        <div className='flex flex-wrap items-center gap-2' role='group' aria-label='Período dos pedidos'>
+          <button
+            type='button'
+            aria-pressed={dateMode === 'today'}
+            onClick={() => setDateMode('today')}
+            className={
+              'min-h-10 rounded-lg px-3 text-sm font-bold ' +
+              (dateMode === 'today' ? 'bg-[#ffca28] text-[#082739]' : 'bg-[#1b4258] text-white')
+            }
+          >
+            Hoje
+          </button>
+          <button
+            type='button'
+            aria-pressed={dateMode === 'custom'}
+            onClick={() => {
+              setChosenDate(visibleDate);
+              setDateMode('custom');
+            }}
+            className={
+              'min-h-10 rounded-lg px-3 text-sm font-bold ' +
+              (dateMode === 'custom' ? 'bg-[#ffca28] text-[#082739]' : 'bg-[#1b4258] text-white')
+            }
+          >
+            Outra data
+          </button>
+        </div>
+        {dateMode === 'custom' && (
+          <input
+            type='date'
+            lang='pt-BR'
+            max={todayKey}
+            value={chosenDate}
+            onChange={(event) => {
+              const date = event.target.value;
+              if (date && date <= todayKey) setChosenDate(date);
+            }}
+            className='min-h-10 w-full min-w-0 rounded-lg border border-[#79a5ba] bg-white px-2 sm:w-auto text-sm font-bold text-[#09283b]'
+            aria-label='Selecionar data dos pedidos'
+          />
+        )}
+        <div className='relative min-w-0 flex-1'>
+          <label className='sr-only' htmlFor='admin-order-search'>
+            Buscar pedido
+          </label>
+          <input
+            id='admin-order-search'
+            type='search'
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder='⌕ Buscar nome, telefone, ID ou mesa'
+            autoComplete='off'
+            className='min-h-11 w-full rounded-lg border border-[#79a5ba] bg-white px-3 pr-12 text-sm text-[#09283b] placeholder:text-slate-500'
+          />
+          {search && (
+            <button
+              type='button'
+              onClick={() => {
+                setSearch('');
+                setDebouncedSearch('');
+              }}
+              className='absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm font-bold text-[#09283b]'
+              aria-label='Limpar busca'
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!debouncedSearch && (
+        <div className='grid grid-cols-2 gap-2 sm:grid-cols-4' role='tablist' aria-label='Situação dos pedidos'>
+          {tabs.map((option) => (
+            <button
+              key={option.id}
+              type='button'
+              role='tab'
+              aria-selected={tab === option.id}
+              onClick={() => setTab(option.id)}
+              className={
+                'min-h-12 min-w-0 rounded-lg border px-2 py-2 text-center text-xs font-bold leading-tight sm:px-3 sm:text-sm ' +
+                (tab === option.id
+                  ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
+                  : 'border-[#34637c] bg-[#173b51] text-white hover:bg-[#24536c]')
+              }
+            >
+              <span className='block'>{option.id === 'preparing' ? 'Andamento' : option.label}</span>
+              {tab === option.id && <strong className='block text-sm sm:text-lg'>{filteredOrders.length}</strong>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {debouncedSearch && (
+        <p className='text-sm font-bold text-cyan-100'>Resultados da busca na data selecionada ({filteredOrders.length})</p>
+      )}
+      {searchError && (
+        <p role='alert' className='rounded-xl bg-[#522934] p-3 text-sm text-white'>
+          {searchError}
+        </p>
+      )}
+      {error && !debouncedSearch && (
+        <p role='alert' className='rounded-xl bg-[#522934] p-3 text-sm text-white'>
+          {error}
+        </p>
+      )}
+      {(debouncedSearch ? searchLoading : loading) ? (
+        <p className='text-slate-200'>Carregando pedidos...</p>
+      ) : filteredOrders.length === 0 ? (
+        <p className='rounded-xl border border-[#345971] bg-[#112e43] p-6 text-center text-slate-200'>
+          {debouncedSearch
+            ? 'Nenhum pedido encontrado para esta pesquisa.'
+            : `Nenhum pedido em ${tabs.find((option) => option.id === tab)?.label.toLowerCase()}.`}
+        </p>
+      ) : (
+        <div className='grid min-w-0 gap-3 md:grid-cols-2'>
+          {filteredOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              busy={busyId === order.id}
+              onStatusChange={changeStatus}
+              onOpen={(order) => setSelectedId(order.id)}
+              onPrint={(order) => setPrintId(order.id)}
+            />
+          ))}
+        </div>
+      )}
+      {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedId(null)} />}
+      {printOrder && <OrderReceipt order={printOrder} onClose={() => setPrintId(null)} />}
+      {dialog}
+    </section>
+  );
+}
