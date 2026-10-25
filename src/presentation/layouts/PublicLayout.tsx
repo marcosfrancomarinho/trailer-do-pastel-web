@@ -18,7 +18,7 @@ export default function PublicLayout() {
 
   return (
     <PublicContextProvider.Provider value={{ cart, setCart, storeState }}>
-      <div className='restaurant-app min-h-screen overflow-x-hidden'>
+      <div className='restaurant-app min-h-screen overflow-x-clip'>
         <SiteHeader />
         <Outlet />
         <SiteFooter />
