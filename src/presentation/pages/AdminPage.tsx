@@ -23,7 +23,6 @@ export default function AdminPage() {
     adminError,
     navigationItems,
     profileInitials,
-    currentSectionLabel,
     selectSection,
     toggleMenu,
     closeMenu,
@@ -108,7 +107,6 @@ export default function AdminPage() {
             >
               <span aria-hidden='true' className='text-lg'>{adminMenuOpen ? '✕' : '☰'}</span>
               Menu
-              <span className='max-w-28 truncate border-l pl-2 text-xs sm:max-w-40'>{currentSectionLabel}</span>
             </button>
             <aside
               id='admin-navigation'
