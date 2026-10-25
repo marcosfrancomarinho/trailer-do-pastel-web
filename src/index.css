@@ -3008,3 +3008,11 @@ body,
 .customer-dialog .customer-detail-status.customer-detail-preparing strong {
   color: #fef3c7 !important;
 }
+
+/* Cards do cardápio ligeiramente menores apenas no desktop. */
+@media (min-width: 1024px) {
+  .restaurant-app .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 310px));
+    justify-content: center;
+  }
+}
