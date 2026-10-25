@@ -24,7 +24,7 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className='restaurant-header site-header sticky top-0 z-30'>
+      <header className='restaurant-header site-header relative z-30 sm:sticky sm:top-0'>
         <div className='mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2.5 md:py-3'>
           <BrandMark />
           <nav className='hidden gap-2 text-sm font-bold sm:flex' aria-label='Navegação principal'>
