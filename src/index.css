@@ -3012,7 +3012,7 @@ body,
 /* Cards do cardápio ligeiramente menores apenas no desktop. */
 @media (min-width: 1024px) {
   .restaurant-app .product-grid {
-    grid-template-columns: repeat(3, minmax(0, 280px));
+    grid-template-columns: repeat(4, minmax(0, 265px));
     justify-content: center;
   }
 }
