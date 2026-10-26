@@ -2,6 +2,7 @@ import { useAdminOrders, type Order, type Tab } from '../../hooks/admin/useAdmin
 import { brl } from '../../../shared/formatters/currency';
 import OrderDetails from './OrderDetails';
 import OrderReceipt from './OrderReceipt';
+import CopyId from '../shared/CopyId';
 import BrazilianDateInput from '../shared/BrazilianDateInput';
 
 const tabs: { id: Tab; label: string }[] = [
@@ -81,7 +82,7 @@ function OrderCard({
   return (
     <article className='flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#37637b] bg-[#112e43] shadow-sm'>
       <div className='flex flex-wrap items-center justify-between gap-2 border-b border-[#31566e] px-2.5 py-1.5'>
-        <span className='text-sm font-extrabold tracking-wider text-cyan-200'>#{order.id.slice(0, 8)}</span>
+        <CopyId id={order.id} label={'#' + order.id.slice(0, 8)} className='text-sm font-extrabold tracking-wider text-cyan-200' />
         <div className='flex items-center gap-1.5'>
           <span className='rounded-full bg-[#264c61] px-3 py-1 text-sm font-bold text-white'>{statusLabels[order.status]}</span>
           {hasObservation && (
