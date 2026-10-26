@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { OrderHistoryItem, PendingOrder, PreparingOrder } from '../../../application/dtos/orders';
 import { brl } from '../../../shared/formatters/currency';
 import { useOrderSessionId } from '../../hooks/admin/useOrderSessionId';
+import CopyId from '../shared/CopyId';
 
 export type AdminOrder = PendingOrder | PreparingOrder | OrderHistoryItem;
 
@@ -63,7 +64,7 @@ export default function OrderDetails({ order, onClose }: { order: AdminOrder; on
             <p className='text-xs font-black uppercase tracking-wider text-cyan-200'>Detalhes do pedido</p>
             <div className='mt-2 flex flex-wrap items-center gap-2'>
               <h2 id='order-details-title' className='text-xl font-black sm:text-2xl'>
-                #{order.id.slice(0, 8)}
+                <CopyId id={order.id} label={'#' + order.id.slice(0, 8)} />
               </h2>
               <span className={'rounded-full border px-2.5 py-1 text-xs font-extrabold ' + (statusStyles[order.status] ?? 'border-slate-400 text-slate-100')}>
                 {statusLabels[order.status] ?? order.status}
