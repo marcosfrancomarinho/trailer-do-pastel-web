@@ -233,7 +233,6 @@ function OrderCard({
             >
               <span aria-hidden='true'>✕</span>
             </button>
-          )}
         </div>
       </div>
     </article>
@@ -294,21 +293,25 @@ export default function AdminOrders() {
             aria-label={soundEnabled ? 'Desativar som e notificações' : 'Ativar som e notificações'}
             title={soundEnabled ? 'Desativar som e notificações' : 'Ativar som e notificações'}
             className={
-              'grid h-11 w-11 shrink-0 place-items-center rounded-lg border text-xl ' +
-              (soundEnabled ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]' : 'border-[#56879d] bg-[#194258] text-white')
+              'grid h-10 w-10 shrink-0 place-items-center rounded-lg border transition-colors sm:h-11 sm:w-11 ' +
+              (soundEnabled ? 'border-[#ffca28]/60 bg-[#194258] text-[#ffca28]' : 'border-[#56879d] bg-[#194258] text-slate-300')
             }
           >
-            <span aria-hidden='true'>🔔</span>
+            <svg aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor'
+              strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round' className='h-5 w-5'>
+              <path d='M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4' />
+              {!soundEnabled && <path d='M3 3 21 21' />}
+            </svg>
           </button>
-          {tab !== 'pending' && (
-            <button
+          <button
               type='button'
               onClick={() => {
                 void refresh();
               }}
+              disabled={loading}
               aria-label='Atualizar pedidos'
               title='Atualizar pedidos'
-              className='grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-[#56879d] bg-[#194258] text-white hover:bg-[#24556c]'
+              className='grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#56879d] bg-[#194258] text-white hover:bg-[#24556c] disabled:opacity-60 sm:h-11 sm:w-11'
             >
               <svg
                 aria-hidden='true'
@@ -318,7 +321,7 @@ export default function AdminOrders() {
                 strokeWidth='2'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                className='h-5 w-5'
+                className={'h-5 w-5 ' + (loading ? 'animate-spin' : '')}
               >
                 <path d='M20 11a8 8 0 1 0-2.35 5.65' />
                 <path d='M20 4v7h-7' />
