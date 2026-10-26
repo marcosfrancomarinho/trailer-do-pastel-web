@@ -2,6 +2,7 @@ import { CartTotal } from '../../../application/utils/cart-total.ts';
 import { brl } from '../../../shared/formatters/currency';
 import { useAdminTables } from '../../hooks/admin/useAdminTables';
 import TableReceipt from './TableReceipt';
+import CopyId from '../shared/CopyId';
 
 const orderStatusLabels: Record<string, string> = {
   PENDING: 'Pendente',
@@ -200,9 +201,16 @@ export default function AdminTables() {
               <div className='min-w-0'>
                 <h3 className='text-lg font-black'>{details ? 'Mesa ' + details.number : 'Abrindo mesa...'}</h3>
                 {details && (
-                  <p className='text-sm text-slate-200'>
-                    {details.status === 'FREE' ? 'Livre' : 'Ocupada'} · {brl(details.totalSpent)}
-                  </p>
+                  <>
+                    <p className='text-sm text-slate-200'>
+                      {details.status === 'FREE' ? 'Livre' : 'Ocupada'} · {brl(details.totalSpent)}
+                    </p>
+                    {details.sessionId && (
+                      <p className='mt-1 text-xs text-slate-300'>
+                        Comanda: <CopyId id={details.sessionId} className='font-bold text-cyan-200 hover:text-white' />
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
               <button
