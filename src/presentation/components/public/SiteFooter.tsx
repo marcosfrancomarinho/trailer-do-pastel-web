@@ -68,7 +68,7 @@ export default function SiteFooter() {
           <nav className='flex flex-wrap items-center gap-x-5 gap-y-2' aria-label='Links do rodapé'>
             <button type='button' onClick={() => go('/')} className='min-h-10 font-bold hover:underline'>Cardápio</button>
             <button type='button' onClick={() => go('/pedidos')} className='min-h-10 font-bold hover:underline'>Meus pedidos</button>
-            <button type='button' onClick={() => go('/admin')} className='min-h-10 font-bold hover:underline'>Área administrativa</button>
+            <button type='button' onClick={() => go('/painel')} className='min-h-10 font-bold hover:underline'>Área administrativa</button>
           </nav>
         </div>
       </div>

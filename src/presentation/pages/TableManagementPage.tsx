@@ -11,7 +11,7 @@ export default function TableManagementPage() {
 
   function onSeeOrders() {
     dismissNew();
-    navigate('/admin');
+    navigate('/painel');
   }
 
   return (

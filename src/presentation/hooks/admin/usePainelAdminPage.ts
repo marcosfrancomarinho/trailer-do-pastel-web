@@ -32,7 +32,7 @@ const adminNavigation = [
 
 const ordersNavigation = { key: 'orders', icon: '📋', label: 'Pedidos' } as const;
 
-export function useDashboardPage() {
+export function usePainelAdminPage() {
   const useCases = useApplicationServices();
   const navigate = useNavigate();
   const { session, setSession, alerts } = usePrivateContext();

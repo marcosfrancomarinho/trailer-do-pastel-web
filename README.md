@@ -38,7 +38,7 @@ O backend precisa permitir CORS para o endereço do frontend.
 `src/main.tsx` inicia a aplicação em `src/presentation/App.tsx`, que apenas declara as rotas. A interface segue **layout → páginas → componentes**:
 
 - `src/presentation/layouts/PublicLayout.tsx`: navegação pública e carrinho compartilhado entre cardápio (`/`), carrinho (`/carrinho`) e pedidos do cliente (`/pedidos`).
-- `src/presentation/layouts/PrivateLayout.tsx`: sessão e alertas compartilhados entre painel (`/admin`) e mesas (`/mesas`). O histórico de comandas é uma seção do painel. Sem sessão, `/admin` mostra o login e `/mesas` redireciona para ele.
+- `src/presentation/layouts/PrivateLayout.tsx`: sessão e alertas compartilhados entre painel (`/painel`) e mesas (`/mesas`). O histórico de comandas é uma seção do painel. Sem sessão, `/painel` mostra o login e `/mesas` redireciona para ele.
 - `src/presentation/pages`: conteúdo das rotas do cardápio, carrinho, pedidos, mesas e painel.
 - `src/presentation/hooks/public` e `src/presentation/hooks/admin`: estado, efeitos e ações das páginas de cada área.
 - `src/presentation/hooks/global`: hooks de acesso aos contextos compartilhados e aos serviços globais.

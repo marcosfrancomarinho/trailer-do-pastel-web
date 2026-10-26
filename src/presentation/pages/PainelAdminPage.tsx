@@ -5,9 +5,9 @@ import UserList from '../components/admin/UserList';
 import CatalogEditor from '../components/admin/CatalogEditor';
 import RegistrationForm from '../components/admin/RegistrationForm';
 import ClosedComandaHistory from '../components/admin/ClosedComandaHistory';
-import { useDashboardPage } from '../hooks/admin/useDashboardPage';
+import { usePainelAdminPage } from '../hooks/admin/usePainelAdminPage';
 
-export default function DashboardPage() {
+export default function PainelAdminPage() {
   const {
     adminToken,
     adminRole,
@@ -31,7 +31,7 @@ export default function DashboardPage() {
     pendingCount,
     login,
     onSeeOrders,
-  } = useDashboardPage();
+  } = usePainelAdminPage();
 
   return (
     <main className='inner-page mx-auto max-w-5xl px-4 py-5 sm:py-7'>

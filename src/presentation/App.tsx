@@ -4,7 +4,7 @@ import PrivateLayout from './layouts/PrivateLayout';
 import MenuPage from './pages/MenuPage';
 import CartPage from './pages/CartPage';
 import CustomerOrdersPage from './pages/CustomerOrdersPage';
-import DashboardPage from './pages/DashboardPage';
+import PainelAdminPage from './pages/PainelAdminPage';
 import TableManagementPage from './pages/TableManagementPage';
 
 export default function App() {
@@ -16,7 +16,7 @@ export default function App() {
         <Route path='/pedidos' element={<CustomerOrdersPage />} />
       </Route>
       <Route element={<PrivateLayout />}>
-        <Route path='/admin' element={<DashboardPage />} />
+        <Route path='/painel' element={<PainelAdminPage />} />
         <Route path='/mesas' element={<TableManagementPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />

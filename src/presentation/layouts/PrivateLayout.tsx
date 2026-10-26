@@ -14,8 +14,8 @@ export default function PrivateLayout() {
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
   const path = location.pathname.replace(/\/+$/, '') || '/';
-  const view = path === '/mesas' ? 'tables' : 'admin';
-  const activeNavigationPath = view === 'tables' ? '/mesas' : '/admin';
+  const view = path === '/mesas' ? 'tables' : 'panel';
+  const activeNavigationPath = view === 'tables' ? '/mesas' : '/painel';
   const headerClassName =
     'site-header private-header fixed inset-x-0 top-0 z-30 border-b border-[#365f74] bg-[#112e43] text-white' +
     (session ? ' private-header-authenticated' : '');
@@ -36,7 +36,7 @@ export default function PrivateLayout() {
     navigate(pathname);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  if (!session && view !== 'admin') return <Navigate to='/admin' replace />;
+  if (!session && view !== 'panel') return <Navigate to='/painel' replace />;
 
   return (
     <PrivateContextProvider.Provider value={{ session, setSession, alerts }}>
@@ -51,7 +51,7 @@ export default function PrivateLayout() {
               >
                 {[
                   { path: '/mesas', label: 'Mesas' },
-                  { path: '/admin', label: 'Painel' },
+                  { path: '/painel', label: 'Painel' },
                 ].map((link) => (
                   <button
                     key={link.path}

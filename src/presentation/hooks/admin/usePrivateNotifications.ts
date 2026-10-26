@@ -4,7 +4,7 @@ import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import type { PendingOrder, PreparingOrder } from '../../../application/dtos/orders';
 import { orderAlert } from '../../../infrastructure/audio/order-alert';
 
-type PrivateView = 'admin' | 'tables';
+type PrivateView = 'panel' | 'tables';
 type AlertOrder = PendingOrder | PreparingOrder;
 
 export interface PrivateNotificationsState {
@@ -79,7 +79,7 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
           const arrivals = pendingOrders.filter((order) => !seenIds.has(order.id));
           if (
             arrivals.length &&
-            (view !== 'admin' || !ordersVisibleRef.current) &&
+            (view !== 'panel' || !ordersVisibleRef.current) &&
             useCases.notifications.getSoundPreference.execute()
           ) {
             setNewPendingCount((count) => count + arrivals.length);
