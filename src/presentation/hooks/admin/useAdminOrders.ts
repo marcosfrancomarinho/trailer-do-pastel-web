@@ -287,6 +287,16 @@ export function useAdminOrders() {
     setLoading(true);
     try {
       await fetchTab(tab, visibleDate);
+      // A busca usa uma lista própria; atualizá-la após alterar o status
+      // impede que o card continue exibindo dados anteriores.
+      if (debouncedSearch) {
+        const [allPending, allPreparing, allHistory] = await Promise.all([
+          useCases.orders.listPending.execute({ date: visibleDate }),
+          useCases.orders.listPreparing.execute({ date: visibleDate }),
+          useCases.orders.listHistory.execute({ date: visibleDate }),
+        ]);
+        setSearchResults(ordersFromDate([...allPending, ...allPreparing, ...allHistory], visibleDate));
+      }
       setError('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar os pedidos.');
