@@ -5,7 +5,6 @@ import { useApplicationServices } from '../hooks/global/useApplicationServices';
 import { usePrivateNotifications } from '../hooks/admin/usePrivateNotifications';
 import { PrivateContextProvider } from '../hooks/global/usePrivateContext';
 import BrandMark from '../components/shared/BrandMark';
-import { orderAlert } from '../../infrastructure/audio/order-alert';
 
 export default function PrivateLayout() {
   const useCases = useApplicationServices();
@@ -14,7 +13,6 @@ export default function PrivateLayout() {
   const [session, setSession] = useState<AdminSession | null>(() => useCases.auth.getSession.execute());
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const view = path === '/mesas' ? 'tables' : path === '/comandas' ? 'comandas' : 'admin';
   const activeNavigationPath = view === 'tables' ? '/mesas' : '/admin';
@@ -33,20 +31,6 @@ export default function PrivateLayout() {
     observer.observe(header);
     return () => observer.disconnect();
   }, [view, session]);
-
-  function toggleNotifications() {
-    if (alerts.notificationsOn) {
-      useCases.notifications.setSoundPreference.execute(false);
-      orderAlert.close();
-      return;
-    }
-    useCases.notifications.setSoundPreference.execute(true);
-  }
-
-  function reloadCurrentView() {
-    setRefreshing(true);
-    window.location.reload();
-  }
 
   function go(pathname: string) {
     navigate(pathname);
@@ -89,50 +73,6 @@ export default function PrivateLayout() {
                 </button>
               ))}
             </nav>
-          )}
-          {session && (
-            <div className='flex shrink-0 items-center gap-1.5'>
-              <button
-                type='button'
-                onClick={toggleNotifications}
-                aria-pressed={alerts.notificationsOn}
-                aria-label={alerts.notificationsOn ? 'Desativar som e notificações' : 'Ativar som e notificações'}
-                title={alerts.notificationsOn ? 'Desativar notificações' : 'Ativar notificações'}
-                className={'relative grid h-10 w-10 shrink-0 place-items-center rounded-lg border sm:h-11 sm:w-11 ' +
-                  (alerts.notificationsOn ? 'border-[#ffca28] bg-[#ffca28] text-[#102b40]' : 'border-[#56879d] bg-[#194258] text-white')}
-              >
-                <svg aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.9'
-                  strokeLinecap='round' strokeLinejoin='round' className='h-5 w-5'>
-                  {alerts.notificationsOn ? (
-                    <path d='M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4' />
-                  ) : (
-                    <>
-                      <path d='M9.17 4.17A6 6 0 0 1 18 9c0 1.42.12 2.49.35 3.33M6.26 6.26A6 6 0 0 0 6 8c0 7-3 7-3 9h14M10 21h4' />
-                      <path d='M3 3 21 21' />
-                    </>
-                  )}
-                </svg>
-                {alerts.pendingCount > 0 && (
-                  <span className='absolute -right-1 -top-1 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-4 text-white'>
-                    {alerts.pendingCount > 99 ? '99+' : alerts.pendingCount}
-                  </span>
-                )}
-              </button>
-              <button
-                type='button'
-                onClick={reloadCurrentView}
-                disabled={refreshing}
-                aria-label='Atualizar página'
-                title='Atualizar página'
-                className='grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#56879d] bg-[#194258] text-white hover:bg-[#24556c] disabled:opacity-60 sm:h-11 sm:w-11'
-              >
-                <svg aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'
-                  strokeLinecap='round' strokeLinejoin='round' className={'h-5 w-5 ' + (refreshing ? 'animate-spin' : '')}>
-                  <path d='M20 11a8 8 0 1 0-2.35 5.65' />
-                  <path d='M20 4v7h-7' />
-                </svg>
-              </button>
-            </div>
           )}
           {!session && (
             <button
