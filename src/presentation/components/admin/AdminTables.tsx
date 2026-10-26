@@ -239,7 +239,7 @@ export default function AdminTables() {
                       <button
                         disabled={busy}
                         type='button'
-                        className='min-h-10 whitespace-nowrap rounded-lg bg-[#ffca28] px-2 text-[11px] font-bold text-[#09283b] disabled:opacity-50 sm:text-xs'
+                        className='min-h-10 whitespace-nowrap rounded-lg bg-[#16834a] px-2 text-[11px] font-bold text-white hover:bg-[#126b3c] disabled:opacity-50 sm:text-xs'
                         onClick={() => void release()}
                       >
                         <span className='sm:hidden'>Liberar</span>
