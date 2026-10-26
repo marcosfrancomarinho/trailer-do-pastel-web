@@ -1,10 +1,8 @@
 import { CartTotal } from '../../../application/utils/cart-total.ts';
 import { brl } from '../../../shared/formatters/currency';
-import type { Category, Product } from '../../../application/dtos/catalog';
 import { useAdminTables } from '../../hooks/admin/useAdminTables';
 import TableReceipt from './TableReceipt';
 
-type Props = { products: Product[]; categories: Category[] };
 const orderStatusLabels: Record<string, string> = {
   PENDING: 'Pendente',
   CONFIRMED: 'Confirmado',
@@ -15,8 +13,21 @@ const orderStatusLabels: Record<string, string> = {
 const field = 'min-h-11 w-full rounded-xl border border-[#63899a] bg-[#edf8fc] px-3 py-2 text-[#102c40]';
 const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#09283b] disabled:opacity-50';
 
-export default function AdminTables({ products, categories }: Props) {
+function tableAppearance(status: string, hasReadyOrders: boolean) {
+  if (status === 'FREE') {
+    return { color: 'border-[#60dcaa] bg-[#164734]', label: 'Livre' };
+  }
+  if (hasReadyOrders) {
+    return { color: 'border-[#61c7fa] bg-[#174b73]', label: 'Pedidos prontos' };
+  }
+  return { color: 'border-[#ffce56] bg-[#544221]', label: 'Em andamento' };
+}
+
+export default function AdminTables() {
   const {
+    categories,
+    catalogError,
+    loadCatalog,
     tables,
     readyTables,
     selected,
@@ -65,34 +76,20 @@ export default function AdminTables({ products, categories }: Props) {
     changeItemQuantity,
     removeItem,
     changeAdditionAmount,
-  } = useAdminTables(products);
+  } = useAdminTables();
 
-  const tableGroups = [
-    {
-      key: 'ready',
-      title: 'Pedidos prontos',
-      description: 'Mesas com pedidos prontos para servir',
-      tables: tables.filter((table) => table.status !== 'FREE' && readyTables.has(table.id)),
-    },
-    {
-      key: 'occupied',
-      title: 'Em andamento',
-      description: 'Mesas ocupadas aguardando pedidos',
-      tables: tables.filter((table) => table.status !== 'FREE' && !readyTables.has(table.id)),
-    },
-    {
-      key: 'free',
-      title: 'Mesas livres',
-      description: 'Disponíveis para novos pedidos',
-      tables: tables.filter((table) => table.status === 'FREE'),
-    },
-  ];
+  const sortedTables = [...tables].sort((first, second) => first.number - second.number);
 
   return (
-    <section aria-labelledby='tables-heading' className='min-w-0 space-y-5 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white shadow-sm sm:p-5'>
+    <section
+      aria-labelledby='tables-heading'
+      className='min-w-0 space-y-5 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white shadow-sm sm:p-5'
+    >
       <div className='flex flex-col gap-4 border-b border-[#426b80] pb-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h2 id='tables-heading' className='text-xl font-black'>Mapa de mesas</h2>
+          <h2 id='tables-heading' className='text-xl font-black'>
+            Mapa de mesas
+          </h2>
           <p className='mt-1 text-sm text-slate-300'>Selecione uma mesa para ver a comanda e gerenciar pedidos.</p>
         </div>
         <div className='shrink-0'>
@@ -107,6 +104,14 @@ export default function AdminTables({ products, categories }: Props) {
           </button>
         </div>
       </div>
+      {catalogError && (
+        <p role='alert' className='rounded-xl border border-red-400 bg-[#562932] p-3 text-white'>
+          {catalogError}{' '}
+          <button type='button' onClick={() => void loadCatalog()} className='underline'>
+            Tentar novamente
+          </button>
+        </p>
+      )}
       {showCreateTable && (
         <form
           id='new-table-form'
@@ -136,46 +141,43 @@ export default function AdminTables({ products, categories }: Props) {
           {error}
         </p>
       )}
-      <div className='space-y-4'>
-        {tableGroups.filter((group) => group.tables.length > 0).map((group) => (
-          <section key={group.key} aria-labelledby={'table-group-' + group.key} className='rounded-xl border border-[#426b80] bg-[#17384b] p-3 sm:p-4'>
-            <div className='mb-3'>
-              <h3 id={'table-group-' + group.key} className='text-base font-black'>{group.title}</h3>
-              <p className='mt-1 text-xs text-slate-300'>{group.description}</p>
-            </div>
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-              {group.tables.map((table) => (
-                <button
-                  key={table.id}
-                  type='button'
-                  onClick={() => void openTable(table.id)}
-                  aria-expanded={selected === table.id}
-                  aria-haspopup='dialog'
-                  className={
-                    'flex min-h-20 flex-col justify-center gap-1 rounded-xl border px-4 py-3 text-left transition-all duration-200 ' +
-                    (table.status === 'FREE'
-                      ? 'border-[#60dcaa] bg-[#164734] text-white'
-                      : readyTables.has(table.id)
-                        ? 'border-[#61c7fa] bg-[#174b73] text-white'
-                        : 'border-[#ffce56] bg-[#544221] text-white') +
-                    (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')
-                  }
-                >
-                  <span className='flex w-full items-center justify-between gap-1'>
-                    <strong className='text-base'>Mesa {table.number}</strong>
-                    <span className='text-xs' aria-hidden='true'>↗</span>
+      {sortedTables.length > 0 && (
+        <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+          {sortedTables.map((table) => {
+            const appearance = tableAppearance(table.status, readyTables.has(table.id));
+
+            return (
+              <button
+                key={table.id}
+                type='button'
+                onClick={() => void openTable(table.id)}
+                aria-expanded={selected === table.id}
+                aria-haspopup='dialog'
+                className={
+                  'flex min-h-20 flex-col justify-center gap-1 rounded-xl border px-4 py-3 text-left text-white transition-all duration-200 ' +
+                  appearance.color +
+                  (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')
+                }
+              >
+                <span className='flex w-full items-center justify-between gap-1'>
+                  <strong className='text-base'>Mesa {table.number}</strong>
+                  <span className='text-xs' aria-hidden='true'>
+                    ↗
                   </span>
-                  <span className='text-xs font-semibold'>
-                    {table.status === 'FREE' ? 'Livre' : readyTables.has(table.id) ? 'Pedidos prontos' : 'Em andamento'} ·{' '}
-                    {brl(table.totalSpent)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-      {tables.length === 0 && <p className='rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200'>Nenhuma mesa cadastrada. Use “Nova mesa” para começar.</p>}
+                </span>
+                <span className='text-xs font-semibold'>
+                  {appearance.label} · {brl(table.totalSpent)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {tables.length === 0 && (
+        <p className='rounded-xl bg-[#193e53] p-5 text-center text-sm text-slate-200'>
+          Nenhuma mesa cadastrada. Use “Nova mesa” para começar.
+        </p>
+      )}
       {selected && (
         <div
           className='fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-3 sm:p-4'
@@ -212,7 +214,12 @@ export default function AdminTables({ products, categories }: Props) {
                 ✕
               </button>
             </header>
-            <div className={'min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-5 ' + (tableView === 'new' ? 'lg:flex lg:flex-col lg:gap-3 lg:space-y-0 lg:overflow-hidden' : '')}>
+            <div
+              className={
+                'min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-5 ' +
+                (tableView === 'new' ? 'lg:flex lg:flex-col lg:gap-3 lg:space-y-0 lg:overflow-hidden' : '')
+              }
+            >
               {!details ? (
                 <p>Carregando detalhes...</p>
               ) : (
@@ -538,7 +545,9 @@ export default function AdminTables({ products, categories }: Props) {
                                 </article>
                               ))}
                             </div>
-                            {filteredProducts.length === 0 && <p className='p-2 text-sm text-white'>Nenhum produto encontrado.</p>}
+                            {filteredProducts.length === 0 && (
+                              <p className='p-2 text-sm text-white'>Nenhum produto encontrado.</p>
+                            )}
                             {hasMoreProducts && (
                               <button
                                 type='button'

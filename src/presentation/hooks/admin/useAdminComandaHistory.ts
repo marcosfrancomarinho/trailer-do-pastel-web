@@ -4,6 +4,14 @@ import type { ClosedComanda } from '../../../application/dtos/tables';
 import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import { usePrivateContext } from '../global/usePrivateContext';
 
+function historyErrorMessage(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : 'Falha ao carregar o histórico.';
+  const routeUnavailable = /404|not found|não encontrada/i.test(message);
+  return routeUnavailable
+    ? 'A rota de histórico de comandas não está disponível no servidor. É necessário publicar a atualização do backend.'
+    : message;
+}
+
 export function useAdminComandaHistory() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
@@ -21,31 +29,29 @@ export function useAdminComandaHistory() {
     let active = true;
     setLoading(true);
     setError('');
-    async function load() {
+    async function loadHistory() {
       try {
-        const result = await useCases.tables.listClosedComandas.execute({ date: requestedDate });
-        if (active) setComandas(result.comandas);
+        const history = await useCases.tables.listClosedComandas.execute({ date: requestedDate });
+        if (active) setComandas(history.comandas);
       } catch (cause) {
         if (active) {
           setComandas([]);
-          const message = cause instanceof Error ? cause.message : 'Falha ao carregar o histórico.';
-          setError(
-            /404|not found|não encontrada/i.test(message)
-              ? 'A rota de histórico de comandas não está disponível no servidor. É necessário publicar a atualização do backend.'
-              : message,
-          );
+          setError(historyErrorMessage(cause));
         }
       } finally {
         if (active) setLoading(false);
       }
     }
-    void load();
+    void loadHistory();
     return () => {
       active = false;
     };
   }, [token, requestedDate, refreshKey]);
 
-  const visibleComandas = comandas.filter((item) => originFilter === 'ALL' || (item.origin ?? 'TABLE') === originFilter);
+  const visibleComandas = comandas.filter((item) => {
+    const origin = item.origin ?? 'TABLE';
+    return originFilter === 'ALL' || origin === originFilter;
+  });
   const total = visibleComandas.reduce((sum, item) => sum + Number(item.session.closedTotal ?? 0), 0);
   const completedOrders = visibleComandas.flatMap(({ tableNumber, session }) =>
     session.orders.filter((order) => order.status === 'COMPLETED').map((order) => ({ tableNumber, session, order })),

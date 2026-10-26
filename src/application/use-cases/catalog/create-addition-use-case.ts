@@ -13,7 +13,7 @@ export class CreateAdditionUseCase {
     this.session = session;
   }
 
-  public execute(input: CreateCatalogItemInput<AdditionData>) {
+  public execute(input: CreateCatalogItemInput<AdditionData>): Promise<void> {
     const validatedInput = CreateAddition.validate(input);
 
     const currentSession = this.session.get();
@@ -23,6 +23,7 @@ export class CreateAdditionUseCase {
     }
     const token = currentSession.token;
     const data = validatedInput.data;
-    return this.catalog.createAddition(token, data);
+    const createAdditionRequest = this.catalog.createAddition(token, data);
+    return createAdditionRequest;
   }
 }

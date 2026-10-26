@@ -13,7 +13,7 @@ export class UpdateCategoryUseCase {
     this.session = session;
   }
 
-  public execute(input: UpdateCatalogItemInput<CategoryData>) {
+  public execute(input: UpdateCatalogItemInput<CategoryData>): Promise<void> {
     const validatedInput = UpdateCategory.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -22,6 +22,7 @@ export class UpdateCategoryUseCase {
     const token = currentSession.token;
     const id = validatedInput.id;
     const data = validatedInput.data;
-    return this.catalog.updateCategory(id, token, data);
+    const updateCategoryRequest = this.catalog.updateCategory(id, token, data);
+    return updateCategoryRequest;
   }
 }

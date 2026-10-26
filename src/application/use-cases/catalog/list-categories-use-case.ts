@@ -1,4 +1,5 @@
 import type { CatalogGateway } from '../../gateways/catalog-gateway';
+import type { ListCategoriesOutput } from '../../dtos/catalog';
 
 export class ListCategoriesUseCase {
   private catalog: CatalogGateway;
@@ -7,7 +8,8 @@ export class ListCategoriesUseCase {
     this.catalog = catalog;
   }
 
-  public execute() {
-    return this.catalog.categories();
+  public execute(): Promise<ListCategoriesOutput> {
+    const categoriesRequest = this.catalog.categories();
+    return categoriesRequest;
   }
 }

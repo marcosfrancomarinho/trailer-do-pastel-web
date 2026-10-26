@@ -13,7 +13,7 @@ export class CreateUserUseCase {
     this.session = session;
   }
 
-  public execute(input: CreateUserInput) {
+  public execute(input: CreateUserInput): Promise<void> {
     const validatedInput = CreateUser.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -21,6 +21,7 @@ export class CreateUserUseCase {
     }
     const token = currentSession.token;
     const user = { name: validatedInput.name, password: validatedInput.password };
-    return this.users.createUser(token, user);
+    const createUserRequest = this.users.createUser(token, user);
+    return createUserRequest;
   }
 }

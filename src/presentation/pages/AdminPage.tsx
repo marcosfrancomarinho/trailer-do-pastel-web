@@ -37,7 +37,10 @@ export default function AdminPage() {
     <main className='inner-page mx-auto max-w-5xl px-4 py-5 sm:py-7'>
       <h1 className='sr-only'>Painel administrativo</h1>
       {!adminToken ? (
-        <form onSubmit={(e) => void login(e)} className='mx-auto mt-4 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm sm:mt-8'>
+        <form
+          onSubmit={(e) => void login(e)}
+          className='mx-auto mt-4 max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-sm sm:mt-8'
+        >
           <h2 className='text-xl font-black'>Entrar</h2>
           <input
             required
@@ -82,10 +85,7 @@ export default function AdminPage() {
         </form>
       ) : (
         <>
-          <PrivateAlerts
-            showNewPending={adminSection !== 'orders'}
-            onSeeOrders={onSeeOrders}
-          />
+          <PrivateAlerts showNewPending={adminSection !== 'orders'} onSeeOrders={onSeeOrders} />
           <div className='admin-layout mt-4 min-w-0'>
             {adminMenuOpen && (
               <button
@@ -105,7 +105,9 @@ export default function AdminPage() {
               onClick={toggleMenu}
               className='admin-mobile-menu-trigger fixed bottom-4 left-4 z-[60] flex min-h-12 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold shadow-xl sm:bottom-6 sm:left-6'
             >
-              <span aria-hidden='true' className='text-lg'>{adminMenuOpen ? '✕' : '☰'}</span>
+              <span aria-hidden='true' className='text-lg'>
+                {adminMenuOpen ? '✕' : '☰'}
+              </span>
               Menu
             </button>
             <aside

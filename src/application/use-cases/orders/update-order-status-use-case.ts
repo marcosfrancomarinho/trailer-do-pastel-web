@@ -13,13 +13,14 @@ export class UpdateOrderStatusUseCase {
     this.session = session
   }
 
-  public execute(input: UpdateOrderStatusInput) {
+  public execute(input: UpdateOrderStatusInput): Promise<void> {
     const validatedInput = UpdateOrderStatus.validate(input)
     const currentSession = this.session.get()
     if (!currentSession) {
       throw new AdminSessionNotFoundError()
     }
     const token = currentSession.token
-    return this.orders.changeStatus(token, validatedInput.orderId, validatedInput.status)
+    const updateStatusRequest = this.orders.changeStatus(token, validatedInput.orderId, validatedInput.status)
+    return updateStatusRequest
   }
 }

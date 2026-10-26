@@ -13,13 +13,14 @@ export class RemoveTableOrderUseCase {
     this.session = session;
   }
 
-  public execute(input: RemoveTableOrderInput) {
+  public execute(input: RemoveTableOrderInput): Promise<void> {
     const validatedInput = RemoveTableOrder.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.removeTableOrder(token, validatedInput.tableId, validatedInput.orderId);
+    const removeOrderRequest = this.tables.removeTableOrder(token, validatedInput.tableId, validatedInput.orderId);
+    return removeOrderRequest;
   }
 }

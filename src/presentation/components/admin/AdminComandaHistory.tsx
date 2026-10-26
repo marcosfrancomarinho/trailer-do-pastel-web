@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { brl } from '../../../shared/formatters/currency';
 import { RestaurantDate } from '../../../application/utils/order-date.ts';
-import { printComandaReport } from '../../../infrastructure/print/print-comanda-report';
+import { PrintComandaReport } from '../../../infrastructure/print/print-comanda-report';
 import { useAdminComandaHistory } from '../../hooks/admin/useAdminComandaHistory';
+import BrazilianDateInput from '../shared/BrazilianDateInput';
 
 const dateTime = (value: string) =>
   new Date(value).toLocaleString('pt-BR', {
@@ -27,11 +29,17 @@ export default function AdminComandaHistory() {
     total,
     completedOrders,
   } = useAdminComandaHistory();
+  const [dateValid, setDateValid] = useState(true);
 
   return (
-    <section aria-labelledby='comandas-history-heading' className='min-w-0 space-y-5 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white shadow-sm sm:p-5'>
+    <section
+      aria-labelledby='comandas-history-heading'
+      className='min-w-0 space-y-5 rounded-2xl border border-[#426b80] bg-[#112e43] p-3 text-white shadow-sm sm:p-5'
+    >
       <div className='border-b border-[#426b80] pb-4'>
-        <h2 id='comandas-history-heading' className='text-xl font-black'>Histórico de comandas</h2>
+        <h2 id='comandas-history-heading' className='text-xl font-black'>
+          Histórico de comandas
+        </h2>
         <p className='mt-1 text-sm text-slate-300'>
           Consulte comandas de mesa e pedidos online concluídos ou cancelados pela data de finalização.
         </p>
@@ -39,20 +47,22 @@ export default function AdminComandaHistory() {
       <div className='space-y-4 rounded-xl border border-[#426b80] bg-[#193e53] p-3 sm:p-4'>
         <h3 className='text-sm font-black uppercase tracking-wide text-slate-200'>Filtros</h3>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end'>
-          <label className='min-w-0 text-sm font-bold'>
-            Data de finalização
-            <input
-              type='date'
-              lang='pt-BR'
+          <div className='min-w-0'>
+            <label htmlFor='comanda-history-date' className='text-sm font-bold'>
+              Data de finalização
+            </label>
+            <BrazilianDateInput
+              id='comanda-history-date'
               value={date}
-              max={RestaurantDate.today()}
-              onChange={(event) => setDate(event.target.value)}
-              className='mt-1 min-h-11 w-full rounded-lg border border-[#84a8b9] bg-white px-3 text-[#123449]'
+              maxDate={RestaurantDate.today()}
+              onChange={setDate}
+              onValidityChange={setDateValid}
+              className='mt-1'
             />
-          </label>
+          </div>
           <button
             type='button'
-            disabled={loading || !date}
+            disabled={loading || !dateValid}
             onClick={() => {
               setExpanded(null);
               setRequestedDate(date);
@@ -83,7 +93,9 @@ export default function AdminComandaHistory() {
                 }}
                 className={
                   'min-h-11 rounded-lg border px-2 py-2 text-sm font-bold sm:px-4 ' +
-                  (originFilter === option.value ? 'border-amber-300 bg-[#ffca28] text-[#102c40]' : 'border-[#648da0] text-slate-100')
+                  (originFilter === option.value
+                    ? 'border-amber-300 bg-[#ffca28] text-[#102c40]'
+                    : 'border-[#648da0] text-slate-100')
                 }
               >
                 {option.label}
@@ -114,8 +126,8 @@ export default function AdminComandaHistory() {
               <strong className='text-amber-200'>Total realizado: {brl(total)}</strong>
               <button
                 type='button'
-                disabled={loading || !!error || completedOrders.length === 0 || date !== requestedDate}
-                onClick={() => printComandaReport(visibleComandas, requestedDate)}
+                disabled={loading || !!error || completedOrders.length === 0 || !dateValid || date !== requestedDate}
+                onClick={() => PrintComandaReport.execute(visibleComandas, requestedDate)}
                 className='min-h-11 w-full rounded-xl border border-[#ffca28] bg-[#ffca28] px-4 py-2 text-sm font-bold text-[#102c40] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto'
               >
                 🖨️ Imprimir relatório de realizados

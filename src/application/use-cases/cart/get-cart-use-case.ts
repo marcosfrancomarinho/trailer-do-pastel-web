@@ -1,4 +1,5 @@
 import type { CartGateway } from '../../gateways/cart-gateway'
+import type { GetCartOutput } from '../../dtos/cart'
 
 export class GetCartUseCase {
   private cart: CartGateway
@@ -7,7 +8,8 @@ export class GetCartUseCase {
     this.cart = cart
   }
 
-  public execute() {
-    return this.cart.get()
+  public execute(): GetCartOutput {
+    const cart = this.cart.get()
+    return cart
   }
 }

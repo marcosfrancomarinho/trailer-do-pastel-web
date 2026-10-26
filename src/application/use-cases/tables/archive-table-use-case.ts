@@ -13,13 +13,14 @@ export class ArchiveTableUseCase {
     this.session = session;
   }
 
-  public execute(input: TableIdInput) {
+  public execute(input: TableIdInput): Promise<void> {
     const validatedInput = ArchiveTable.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.archiveTable(token, validatedInput.tableId);
+    const archiveTableRequest = this.tables.archiveTable(token, validatedInput.tableId);
+    return archiveTableRequest;
   }
 }

@@ -1,4 +1,5 @@
 import type { CustomerInfoGateway } from '../../gateways/customer-info-gateway'
+import type { GetCustomerInfoOutput } from '../../dtos/customer'
 
 export class GetCustomerInfoUseCase {
   private customerInfo: CustomerInfoGateway
@@ -7,7 +8,8 @@ export class GetCustomerInfoUseCase {
     this.customerInfo = customerInfo
   }
 
-  public execute() {
-    return this.customerInfo.get()
+  public execute(): GetCustomerInfoOutput {
+    const customerInfo = this.customerInfo.get()
+    return customerInfo
   }
 }

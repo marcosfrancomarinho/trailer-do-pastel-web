@@ -4,10 +4,10 @@ import { usePublicContext } from '../../hooks/global/usePublicContext';
 
 type Page = 'menu' | 'cart' | 'tracking';
 
-const mobileLinks: { page: Page; label: string; icon: string }[] = [
-  { page: 'menu', label: 'Cardápio', icon: '☰' },
-  { page: 'tracking', label: 'Meus pedidos', icon: '◷' },
-  { page: 'cart', label: 'Carrinho', icon: '🛒' },
+const navigationItems: { page: Page; label: string }[] = [
+  { page: 'menu', label: 'Cardápio' },
+  { page: 'cart', label: 'Carrinho' },
+  { page: 'tracking', label: 'Meus pedidos' },
 ];
 
 export default function SiteHeader() {
@@ -23,46 +23,40 @@ export default function SiteHeader() {
   }
 
   return (
-    <>
-      <header className='restaurant-header site-header relative z-30 sm:sticky sm:top-0'>
-        <div className='mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2.5 md:py-3'>
-          <BrandMark />
-          <nav className='hidden gap-2 text-sm font-bold sm:flex' aria-label='Navegação principal'>
-            <button type='button' onClick={() => go('menu')} className={view === 'menu' ? 'nav-active' : ''}>
-              Cardápio
+    <header className='restaurant-header site-header public-header sticky top-0 z-30'>
+      <div className='mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3'>
+        <BrandMark />
+        <nav
+          className='inline-flex shrink-0 gap-1 rounded-xl border border-[#41687c] bg-[#0b2537] p-1'
+          aria-label='Navegação principal'
+        >
+          {navigationItems.map((item) => (
+            <button
+              key={item.page}
+              type='button'
+              onClick={() => go(item.page)}
+              aria-current={view === item.page ? 'page' : undefined}
+              aria-label={item.page === 'cart' ? `Carrinho com ${count} itens` : undefined}
+              className={
+                'relative min-h-10 rounded-lg px-2 py-2 text-center text-xs font-bold leading-tight whitespace-nowrap transition-colors sm:min-h-11 sm:px-4 sm:text-sm ' +
+                (view === item.page
+                  ? 'bg-[#ffca28] text-[#102b40] shadow-sm'
+                  : 'text-slate-100 hover:bg-[#244b61]')
+              }
+            >
+              {item.label}
+              {item.page === 'cart' && count > 0 && (
+                <span
+                  aria-hidden='true'
+                  className='absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-0.5 text-[10px] font-black leading-none text-white'
+                >
+                  {count}
+                </span>
+              )}
             </button>
-            <button type='button' onClick={() => go('tracking')} className={view === 'tracking' ? 'nav-active' : ''}>
-              Meus pedidos
-            </button>
-          </nav>
-          <button
-            type='button'
-            onClick={() => go('cart')}
-            className='cart-header-button hidden sm:flex'
-            aria-label={'Abrir carrinho com ' + count + ' itens'}
-          >
-            🛒 <span className='hidden sm:inline'>Carrinho</span>
-            {count > 0 && <b>{count}</b>}
-          </button>
-        </div>
-      </header>
-      <nav className='mobile-shop-nav sm:hidden' aria-label='Navegação do cliente'>
-        {mobileLinks.map((link) => (
-          <button
-            key={link.page}
-            type='button'
-            onClick={() => go(link.page)}
-            className={view === link.page ? 'mobile-shop-active' : ''}
-            aria-current={view === link.page ? 'page' : undefined}
-          >
-            <span aria-hidden='true' className='mobile-shop-icon'>
-              {link.icon}
-            </span>
-            <span>{link.label}</span>
-            {link.page === 'cart' && count > 0 && <strong className='mobile-cart-count'>{count}</strong>}
-          </button>
-        ))}
-      </nav>
-    </>
+          ))}
+        </nav>
+      </div>
+    </header>
   );
 }

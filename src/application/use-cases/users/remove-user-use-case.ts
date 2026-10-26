@@ -13,13 +13,14 @@ export class RemoveUserUseCase {
     this.session = session;
   }
 
-  public execute(input: RemoveUserInput) {
+  public execute(input: RemoveUserInput): Promise<void> {
     const validatedInput = RemoveUser.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.users.removeUser(token, validatedInput.userId);
+    const removeUserRequest = this.users.removeUser(token, validatedInput.userId);
+    return removeUserRequest;
   }
 }

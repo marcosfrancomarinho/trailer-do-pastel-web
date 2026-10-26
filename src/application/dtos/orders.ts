@@ -1,15 +1,15 @@
 import type { CartItem } from './cart';
 
-export type OrderPayload = {
+export interface OrderPayload {
   customerName: string;
   customerPhone: string;
   observation?: string | null;
   tableId?: string | null;
   items: { productId: string; quantity: number; additions: { additionId: string; quantity: number }[] }[];
-};
-export type CreatedOrder = { id: string; trackingToken: string; status: string; total: string; tableId?: string | null };
-export type TrackedOrder = { status: string; updatedAt: string };
-export type PendingOrder = {
+}
+export interface CreatedOrder { id: string; trackingToken: string; status: string; total: string; tableId?: string | null }
+export interface TrackedOrder { status: string; updatedAt: string }
+export interface PendingOrder {
   id: string;
   customerName: string;
   customerPhone: string;
@@ -25,7 +25,7 @@ export type PendingOrder = {
     unitPrice: string;
     additions: { additionName: string; quantity: number; unitPrice: string }[];
   }[];
-};
+}
 
 export type OrderHistoryItem = Omit<PendingOrder, 'status'> & {
   status: 'COMPLETED' | 'CANCELED';
@@ -36,15 +36,15 @@ export type OrderHistoryItem = Omit<PendingOrder, 'status'> & {
 export type PreparingOrder = Omit<PendingOrder, 'status'> & { status: 'CONFIRMED' | 'PREPARING'; updatedAt: string };
 
 export type ActiveOrder = PendingOrder | PreparingOrder;
-export type FindCanceledTableOrdersInput = {
+export interface FindCanceledTableOrdersInput {
   previous: ReadonlyMap<string, ActiveOrder>;
   current: ReadonlyMap<string, ActiveOrder>;
   history: OrderHistoryItem[];
   acknowledgedIds: ReadonlySet<string>;
-};
+}
 
 /** Resumo persistido no dispositivo para o cliente consultar sem autenticação. */
-export type CustomerOrderDetails = {
+export interface CustomerOrderDetails {
   customerName: string;
   customerPhone: string;
   observation?: string | null;
@@ -55,17 +55,27 @@ export type CustomerOrderDetails = {
     unitPrice: string;
     additions: { additionName: string; quantity: number; unitPrice: string }[];
   }[];
-};
+}
 export type SavedCustomerOrder = CreatedOrder & { details?: CustomerOrderDetails };
 
-export type CreateOrderInput = {
+export interface CreateOrderInput {
   customerName: string;
   customerPhone: string;
   cart: CartItem[];
   observation: string;
-};
+}
 
 export type CreateTableOrderInput = CreateOrderInput & { tableId: string };
-export type ListOrdersInput = { date?: string };
-export type TrackOrderInput = { trackingToken: string; signal?: AbortSignal };
-export type UpdateOrderStatusInput = { orderId: string; status: string };
+export interface ListOrdersInput { date?: string }
+export interface TrackOrderInput { trackingToken: string; signal?: AbortSignal }
+export interface UpdateOrderStatusInput { orderId: string; status: string }
+
+export type CreateOrderOutput = CreatedOrder;
+export type CreateTableOrderOutput = CreatedOrder;
+export type FindCanceledTableOrdersOutput = ActiveOrder[];
+export type ListOrderHistoryOutput = OrderHistoryItem[];
+export type ListPendingOrdersOutput = PendingOrder[];
+export type ListPreparingOrdersOutput = PreparingOrder[];
+export type ListSavedOrdersOutput = SavedCustomerOrder[];
+export type RemoveSavedOrderOutput = SavedCustomerOrder[];
+export type TrackOrderOutput = TrackedOrder;

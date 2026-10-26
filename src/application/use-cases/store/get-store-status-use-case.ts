@@ -1,4 +1,5 @@
 import type { StoreGateway } from '../../gateways/store-gateway';
+import type { GetStoreStatusOutput } from '../../dtos/store';
 
 export class GetStoreStatusUseCase {
   private store: StoreGateway;
@@ -7,7 +8,8 @@ export class GetStoreStatusUseCase {
     this.store = store;
   }
 
-  public execute() {
-    return this.store.storeStatus();
+  public execute(): Promise<GetStoreStatusOutput> {
+    const statusRequest = this.store.storeStatus();
+    return statusRequest;
   }
 }

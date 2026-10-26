@@ -1,4 +1,5 @@
-export type RestaurantUser = { id: string; name: string; role: 'ADMIN' | 'EMPLOYEE'; createdAt: string };
+export interface RestaurantUser { id: string; name: string; role: 'ADMIN' | 'EMPLOYEE'; createdAt: string }
 
-export type CreateUserInput = { name: string; password: string };
-export type RemoveUserInput = { userId: string };
+export interface CreateUserInput { name: string; password: string }
+export interface RemoveUserInput { userId: string }
+export type ListUsersOutput = RestaurantUser[];

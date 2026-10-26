@@ -6,6 +6,11 @@ import { useActionDialog } from '../../components/shared/ActionDialog';
 
 export type ManageKind = 'product' | 'addition' | 'category';
 type Item = Product | Addition | Category;
+const headings: Record<ManageKind, string> = {
+  product: 'Produtos',
+  addition: 'Adicionais',
+  category: 'Categorias',
+};
 
 export function useAdminManage(kind: ManageKind) {
   const useCases = useApplicationServices();
@@ -25,20 +30,22 @@ export function useAdminManage(kind: ManageKind) {
   const [message, setMessage] = useState('');
   const { confirm, notify, dialog } = useActionDialog();
 
+  function listManagedItems() {
+    if (kind === 'product') return useCases.catalog.listProducts.execute();
+    if (kind === 'addition') return useCases.catalog.listAdditions.execute();
+    return useCases.catalog.listCategories.execute();
+  }
+
   async function reload() {
     try {
-      const [records, cats, adds] = await Promise.all([
-        kind === 'product'
-          ? useCases.catalog.listProducts.execute()
-          : kind === 'addition'
-            ? useCases.catalog.listAdditions.execute()
-            : useCases.catalog.listCategories.execute(),
+      const [records, loadedCategories, loadedAdditions] = await Promise.all([
+        listManagedItems(),
         useCases.catalog.listCategories.execute(),
         useCases.catalog.listAdditions.execute(),
       ]);
       setItems(records);
-      setCategories(cats);
-      setAdditions(adds);
+      setCategories(loadedCategories);
+      setAdditions(loadedAdditions);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível carregar cadastros.');
     }
@@ -135,7 +142,7 @@ export function useAdminManage(kind: ManageKind) {
     }
   }
 
-  const heading = kind === 'product' ? 'Produtos' : kind === 'addition' ? 'Adicionais' : 'Categorias';
+  const heading = headings[kind];
 
   return {
     items,

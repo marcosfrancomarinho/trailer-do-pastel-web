@@ -1,6 +1,7 @@
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { UserGateway } from '../../gateways/user-gateway';
 import type { SessionGateway } from '../../gateways/session-gateway';
+import type { ListUsersOutput } from '../../dtos/users';
 
 export class ListUsersUseCase {
   private users: UserGateway;
@@ -11,12 +12,13 @@ export class ListUsersUseCase {
     this.session = session;
   }
 
-  public execute() {
+  public execute(): Promise<ListUsersOutput> {
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.users.users(token);
+    const usersRequest = this.users.users(token);
+    return usersRequest;
   }
 }

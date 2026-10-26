@@ -1,7 +1,8 @@
 import { SignIn } from '../../validation/auth/sign-in.ts';
 import type { AuthGateway } from '../../gateways/auth-gateway';
 import type { SessionGateway } from '../../gateways/session-gateway';
-import type { SignInInput } from '../../dtos/auth';
+import type { SignInInput, SignInOutput } from '../../dtos/auth';
+
 export class SignInUseCase {
   private auth: AuthGateway;
   private session: SessionGateway;
@@ -11,7 +12,7 @@ export class SignInUseCase {
     this.session = session;
   }
 
-  public async execute(input: SignInInput) {
+  public async execute(input: SignInInput): Promise<SignInOutput> {
     const validatedInput = SignIn.validate(input);
     const authenticated = await this.auth.signIn(validatedInput.name, validatedInput.password);
     this.session.save(authenticated);

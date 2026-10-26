@@ -1,4 +1,5 @@
 import type { OrderHistoryGateway } from '../../gateways/order-history-gateway'
+import type { ListSavedOrdersOutput } from '../../dtos/orders'
 
 export class ListSavedOrdersUseCase {
   private history: OrderHistoryGateway
@@ -7,7 +8,8 @@ export class ListSavedOrdersUseCase {
     this.history = history
   }
 
-  public execute() {
-    return this.history.list()
+  public execute(): ListSavedOrdersOutput {
+    const savedOrders = this.history.list()
+    return savedOrders
   }
 }

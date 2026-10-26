@@ -18,7 +18,8 @@ export function useCartPage() {
   const total = CartTotal.calculate(cart);
 
   function go(next: 'menu' | 'tracking') {
-    navigate(next === 'menu' ? '/' : '/pedidos');
+    const path = next === 'menu' ? '/' : '/pedidos';
+    navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -29,7 +30,8 @@ export function useCartPage() {
     setSending(true);
     setError('');
     try {
-      await useCases.orders.create.execute({ customerName, customerPhone, cart, observation });
+      const orderInput = { customerName, customerPhone, cart, observation };
+      await useCases.orders.create.execute(orderInput);
       setCart([]);
       setObservation('');
       go('tracking');

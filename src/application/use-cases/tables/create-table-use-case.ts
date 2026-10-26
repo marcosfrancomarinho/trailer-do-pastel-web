@@ -1,7 +1,7 @@
 import { CreateTable } from '../../validation/tables/create-table.ts';
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { TableGateway } from '../../gateways/table-gateway';
-import type { CreateTableInput } from '../../dtos/tables';
+import type { CreateTableInput, CreateTableOutput } from '../../dtos/tables';
 import type { SessionGateway } from '../../gateways/session-gateway';
 
 export class CreateTableUseCase {
@@ -13,13 +13,14 @@ export class CreateTableUseCase {
     this.session = session;
   }
 
-  public execute(input: CreateTableInput) {
+  public execute(input: CreateTableInput): Promise<CreateTableOutput> {
     const validatedInput = CreateTable.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.createTable(token, validatedInput.number);
+    const createTableRequest = this.tables.createTable(token, validatedInput.number);
+    return createTableRequest;
   }
 }

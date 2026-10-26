@@ -9,6 +9,21 @@ import { usePrivateContext } from '../global/usePrivateContext';
 export type Tab = 'pending' | 'preparing' | 'completed' | 'canceled';
 export type Order = PendingOrder | PreparingOrder | OrderHistoryItem;
 
+function ordersFromDate<T extends Order>(orders: T[], date: string): T[] {
+  return orders.filter((order) => RestaurantDate.key(order.createdAt) === date);
+}
+
+function matchesOrderSearch(order: Order, search: string, phoneDigits: string): boolean {
+  const matchesName = order.customerName.toLocaleLowerCase('pt-BR').includes(search);
+  const matchesPhone = order.customerPhone.toLocaleLowerCase('pt-BR').includes(search);
+  const matchesPhoneDigits = phoneDigits.length >= 3 && order.customerPhone.replace(/\D/g, '').includes(phoneDigits);
+  const matchesId = order.id.toLocaleLowerCase('pt-BR').includes(search);
+  const tableLabel = order.tableNumber == null ? '' : `mesa ${order.tableNumber}`;
+  const matchesTable = tableLabel.includes(search);
+
+  return matchesName || matchesPhone || matchesPhoneDigits || matchesId || matchesTable;
+}
+
 export function useAdminOrders() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
@@ -33,6 +48,13 @@ export function useAdminOrders() {
   const [soundEnabled, setSoundEnabled] = useState(() => useCases.notifications.getSoundPreference.execute());
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [soundReady, setSoundReady] = useState(() => orderAlert.isReady());
+
+  useEffect(() => {
+    if (newOrderCount === 0) return;
+    const dismissTimer = window.setTimeout(() => setNewOrderCount(0), 4000);
+    return () => window.clearTimeout(dismissTimer);
+  }, [newOrderCount]);
+
   useEffect(() => {
     const syncPreference = () => {
       const enabled = useCases.notifications.getSoundPreference.execute();
@@ -48,7 +70,7 @@ export function useAdminOrders() {
       window.removeEventListener('admin-notification-preference', syncPreference);
       window.removeEventListener('storage', syncPreference);
     };
-  }, []);
+  }, [useCases]);
   const soundEnabledRef = useRef(soundEnabled);
   soundEnabledRef.current = soundEnabled;
   const seenPendingRef = useRef<Set<string>>(new Set());
@@ -66,30 +88,25 @@ export function useAdminOrders() {
   const currentFilter = token + '|' + tab + '|' + visibleDate;
   currentFilterRef.current = currentFilter;
 
-  const onlyRequestedDay = useCallback(
-    <T extends Order>(orders: T[], date: string): T[] => orders.filter((order) => RestaurantDate.key(order.createdAt) === date),
-    [],
-  );
-
   // O primeiro carregamento serve como referência: não toca para pedidos já existentes.
   const receivePending = useCallback(
     (orders: PendingOrder[], date: string) => {
-      const filtered = onlyRequestedDay(orders, date);
+      const filtered = ordersFromDate(orders, date);
       const ids = new Set(filtered.map((order) => order.id));
       if (seenDateRef.current !== date) {
         seenDateRef.current = date;
         seenPendingRef.current = ids;
       } else {
         const added = filtered.filter((order) => !seenPendingRef.current.has(order.id));
-        if (added.length > 0 && date === RestaurantDate.today()) {
-          if (soundEnabledRef.current) setNewOrderCount((previous) => previous + added.length);
-          if (soundEnabledRef.current) orderAlert.play();
+        if (added.length > 0 && date === RestaurantDate.today() && soundEnabledRef.current) {
+          setNewOrderCount((previous) => previous + added.length);
+          orderAlert.play();
         }
         for (const id of ids) seenPendingRef.current.add(id);
       }
       setPending(filtered);
     },
-    [onlyRequestedDay],
+    [],
   );
 
   // Mantém o áudio entre as telas. Se o navegador suspender a saída,
@@ -177,17 +194,17 @@ export function useAdminOrders() {
       const filterKey = token + '|' + currentTab + '|' + date;
 
       if (currentTab === 'pending') {
-        const result = await useCases.orders.listPending.execute({ date: date });
+        const result = await useCases.orders.listPending.execute({ date });
         if (currentFilterRef.current === filterKey) receivePending(result, date);
       } else if (currentTab === 'preparing') {
-        const result = await useCases.orders.listPreparing.execute({ date: date });
-        if (currentFilterRef.current === filterKey) setPreparing(onlyRequestedDay(result, date));
+        const result = await useCases.orders.listPreparing.execute({ date });
+        if (currentFilterRef.current === filterKey) setPreparing(ordersFromDate(result, date));
       } else {
-        const result = await useCases.orders.listHistory.execute({ date: date });
-        if (currentFilterRef.current === filterKey) setHistory(onlyRequestedDay(result, date));
+        const result = await useCases.orders.listHistory.execute({ date });
+        if (currentFilterRef.current === filterKey) setHistory(ordersFromDate(result, date));
       }
     },
-    [token, onlyRequestedDay, receivePending],
+    [token, receivePending, useCases],
   );
 
   // Apenas Pendentes usa polling. As demais abas consultam quando abertas.
@@ -203,11 +220,11 @@ export function useAdminOrders() {
         } else if (tab === 'preparing') {
           const result = await useCases.orders.listPreparing.execute({ date: visibleDate });
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate)
-            setPreparing(onlyRequestedDay(result, visibleDate));
+            setPreparing(ordersFromDate(result, visibleDate));
         } else {
           const result = await useCases.orders.listHistory.execute({ date: visibleDate });
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate)
-            setHistory(onlyRequestedDay(result, visibleDate));
+            setHistory(ordersFromDate(result, visibleDate));
         }
         if (active) setError('');
       } catch (cause) {
@@ -217,10 +234,11 @@ export function useAdminOrders() {
       } finally {
         if (active) {
           setLoading(false);
-          if (tab === 'pending')
+          if (tab === 'pending') {
             timer = setTimeout(() => {
               void load();
             }, 5000);
+          }
         }
       }
     };
@@ -237,7 +255,7 @@ export function useAdminOrders() {
       active = false;
       if (timer !== undefined) clearTimeout(timer);
     };
-  }, [token, tab, visibleDate, onlyRequestedDay, receivePending]);
+  }, [token, tab, visibleDate, receivePending, useCases]);
 
   // Continua monitorando novos pedidos mesmo nas demais abas do painel.
   useEffect(() => {
@@ -251,10 +269,11 @@ export function useAdminOrders() {
       } catch {
         // A tela atual mantém seu próprio tratamento de erro.
       } finally {
-        if (active)
+        if (active) {
           timer = setTimeout(() => {
             void check();
           }, 5000);
+        }
       }
     };
     void check();
@@ -262,7 +281,7 @@ export function useAdminOrders() {
       active = false;
       if (timer !== undefined) clearTimeout(timer);
     };
-  }, [tab, token, todayKey, receivePending]);
+  }, [tab, token, todayKey, receivePending, useCases]);
 
   const refresh = async () => {
     setLoading(true);
@@ -290,7 +309,7 @@ export function useAdminOrders() {
       title: status === 'CANCELED' ? 'Cancelar pedido?' : status === 'COMPLETED' ? 'Concluir pedido?' : 'Confirmar alteração?',
       message:
         status === 'COMPLETED'
-          ? 'Confirmar que o pedido #' + id.slice(0, 8) + ' já foi atendido? Ele será concluído sem passar por Em andamento.'
+          ? 'Confirmar que o pedido #' + id.slice(0, 8) + ' já foi atendido? Ele será concluído sem passar pelo preparo.'
           : 'Deseja ' + verb + ' o pedido #' + id.slice(0, 8) + '?',
       confirmLabel: status === 'CANCELED' ? 'Sim, cancelar' : 'Confirmar',
       tone: status === 'CANCELED' ? 'warning' : 'info',
@@ -328,7 +347,7 @@ export function useAdminOrders() {
     ])
       .then(([allPending, allPreparing, allHistory]) => {
         if (!active) return;
-        setSearchResults(onlyRequestedDay([...allPending, ...allPreparing, ...allHistory], visibleDate));
+        setSearchResults(ordersFromDate([...allPending, ...allPreparing, ...allHistory], visibleDate));
       })
       .catch((cause) => {
         if (active) setSearchError(cause instanceof Error ? cause.message : 'Erro na busca de pedidos.');
@@ -339,25 +358,18 @@ export function useAdminOrders() {
     return () => {
       active = false;
     };
-  }, [token, debouncedSearch, visibleDate, onlyRequestedDay]);
+  }, [token, debouncedSearch, visibleDate, useCases]);
 
   const completed = history.filter((order) => order.status === 'COMPLETED');
   const canceled = history.filter((order) => order.status === 'CANCELED');
   const groups: Record<Tab, Order[]> = { pending, preparing, completed, canceled };
-  const currentOrders = onlyRequestedDay(groups[tab], visibleDate);
+  const currentOrders = ordersFromDate(groups[tab], visibleDate);
   const normalizedSearch = debouncedSearch.toLocaleLowerCase('pt-BR');
   const searchDigits = debouncedSearch.replace(/\D/g, '');
-  const filteredOrders = (debouncedSearch ? searchResults : currentOrders).filter((order) => {
-    if (!normalizedSearch) return true;
-    return (
-      order.customerName.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
-      order.customerPhone.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
-      (searchDigits.length >= 3 && order.customerPhone.replace(/\D/g, '').includes(searchDigits)) ||
-      order.id.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
-      (order.tableNumber != null &&
-        (String(order.tableNumber) === normalizedSearch || ('mesa ' + order.tableNumber).includes(normalizedSearch)))
-    );
-  });
+  const displayedOrders = debouncedSearch ? searchResults : currentOrders;
+  const filteredOrders = displayedOrders.filter(
+    (order) => !normalizedSearch || matchesOrderSearch(order, normalizedSearch, searchDigits),
+  );
   const selectedOrder = (debouncedSearch ? filteredOrders : currentOrders).find((order) => order.id === selectedId);
   const printOrder = (debouncedSearch ? filteredOrders : currentOrders).find((order) => order.id === printId);
 

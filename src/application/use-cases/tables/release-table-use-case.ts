@@ -1,6 +1,6 @@
 import { ReleaseTable } from '../../validation/tables/release-table.ts';
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
-import type { TableIdInput } from '../../dtos/tables';
+import type { TableIdInput, ReleaseTableOutput } from '../../dtos/tables';
 import type { TableGateway } from '../../gateways/table-gateway';
 import type { GetTableReleaseStatusUseCase } from './get-table-release-status-use-case';
 import { TableHasUnfinishedOrdersError } from '../../errors/table-has-unfinished-orders-error.ts';
@@ -17,7 +17,7 @@ export class ReleaseTableUseCase {
     this.session = session;
   }
 
-  public async execute(input: TableIdInput) {
+  public async execute(input: TableIdInput): Promise<ReleaseTableOutput> {
     const validatedInput = ReleaseTable.validate(input);
     const releaseStatusInput = { tableId: validatedInput.tableId };
     const releaseStatus = await this.getReleaseStatus.execute(releaseStatusInput);
@@ -28,6 +28,7 @@ export class ReleaseTableUseCase {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.releaseTable(token, validatedInput.tableId);
+    const releasedTable = await this.tables.releaseTable(token, validatedInput.tableId);
+    return releasedTable;
   }
 }

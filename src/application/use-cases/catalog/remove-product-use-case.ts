@@ -13,7 +13,7 @@ export class RemoveProductUseCase {
     this.session = session;
   }
 
-  public execute(input: RemoveCatalogItemInput) {
+  public execute(input: RemoveCatalogItemInput): Promise<void> {
     const validatedInput = RemoveProduct.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -21,6 +21,7 @@ export class RemoveProductUseCase {
     }
     const token = currentSession.token;
     const id = validatedInput.id;
-    return this.catalog.removeProduct(id, token);
+    const removeProductRequest = this.catalog.removeProduct(id, token);
+    return removeProductRequest;
   }
 }

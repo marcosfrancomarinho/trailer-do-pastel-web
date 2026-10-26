@@ -13,7 +13,7 @@ export class RemoveAdditionUseCase {
     this.session = session;
   }
 
-  public execute(input: RemoveCatalogItemInput) {
+  public execute(input: RemoveCatalogItemInput): Promise<void> {
     const validatedInput = RemoveAddition.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -21,6 +21,7 @@ export class RemoveAdditionUseCase {
     }
     const token = currentSession.token;
     const id = validatedInput.id;
-    return this.catalog.removeAddition(id, token);
+    const removeAdditionRequest = this.catalog.removeAddition(id, token);
+    return removeAdditionRequest;
   }
 }

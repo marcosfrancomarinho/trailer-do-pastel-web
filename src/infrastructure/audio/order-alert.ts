@@ -23,8 +23,9 @@ export class OrderAlert {
     if (context.state !== 'running') return
 
     const now = context.currentTime
-    // Duas sequências de campainha, com ataque rápido e harmônicos.
-    for (const [index, frequency] of [880, 740, 880, 740, 1046, 880].entries()) {
+    // A sequência dura cerca de 2,2 segundos, com ataque rápido e harmônicos.
+    const notes = [880, 740, 880, 740, 1046, 880, 740, 880, 740, 1046, 880]
+    for (const [index, frequency] of notes.entries()) {
       const start = now + index * 0.2
       for (const [harmonic, gain] of [[1, 0.26], [2, 0.09]] as const) {
         const oscillator = context.createOscillator()

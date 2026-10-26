@@ -9,26 +9,27 @@ export function useStoreStatus() {
   useEffect(() => {
     let active = true;
 
-    const updateStatus = () => {
+    const updateStatus = async () => {
       if (document.visibilityState === 'hidden') return;
-      void useCases.store.getStatus
-        .execute()
-        .then((value) => {
-          if (active) setStoreState(value);
-        })
-        .catch(() => {});
+      try {
+        const currentStatus = await useCases.store.getStatus.execute();
+        if (active) setStoreState(currentStatus);
+      } catch {
+        // Mantém o último estado conhecido quando a consulta falha.
+      }
     };
 
-    updateStatus();
-    const timer = window.setInterval(updateStatus, 30_000);
-    window.addEventListener('focus', updateStatus);
+    const refreshStatus = () => { void updateStatus(); };
+    refreshStatus();
+    const timer = window.setInterval(refreshStatus, 30_000);
+    window.addEventListener('focus', refreshStatus);
 
     return () => {
       active = false;
       window.clearInterval(timer);
-      window.removeEventListener('focus', updateStatus);
+      window.removeEventListener('focus', refreshStatus);
     };
-  }, []);
+  }, [useCases]);
 
   return storeState;
 }

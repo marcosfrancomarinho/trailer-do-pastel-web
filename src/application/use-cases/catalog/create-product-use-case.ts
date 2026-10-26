@@ -13,7 +13,7 @@ export class CreateProductUseCase {
     this.session = session;
   }
 
-  public execute(input: CreateCatalogItemInput<ProductData>) {
+  public execute(input: CreateCatalogItemInput<ProductData>): Promise<void> {
     const validatedInput = CreateProduct.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -21,6 +21,7 @@ export class CreateProductUseCase {
     }
     const token = currentSession.token;
     const data = validatedInput.data;
-    return this.catalog.createProduct(token, data);
+    const createProductRequest = this.catalog.createProduct(token, data);
+    return createProductRequest;
   }
 }

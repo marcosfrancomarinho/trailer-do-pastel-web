@@ -1,3 +1,5 @@
-export type StoreState = { status: 'OPEN' | 'CLOSED'; updatedAt: string };
+export interface StoreState { status: 'OPEN' | 'CLOSED'; updatedAt: string }
 
-export type ChangeStoreStatusInput = { open: boolean };
+export interface ChangeStoreStatusInput { open: boolean }
+export type GetStoreStatusOutput = StoreState;
+export type ChangeStoreStatusOutput = StoreState;

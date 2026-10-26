@@ -1,7 +1,7 @@
 import { ListTableOrders } from '../../validation/tables/list-table-orders.ts';
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { TableGateway } from '../../gateways/table-gateway';
-import type { TableIdInput } from '../../dtos/tables';
+import type { TableIdInput, ListTableOrdersOutput } from '../../dtos/tables';
 import type { SessionGateway } from '../../gateways/session-gateway';
 
 export class ListTableOrdersUseCase {
@@ -13,13 +13,14 @@ export class ListTableOrdersUseCase {
     this.session = session;
   }
 
-  public execute(input: TableIdInput) {
+  public execute(input: TableIdInput): Promise<ListTableOrdersOutput> {
     const validatedInput = ListTableOrders.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.tableOrders(token, validatedInput.tableId);
+    const tableOrdersRequest = this.tables.tableOrders(token, validatedInput.tableId);
+    return tableOrdersRequest;
   }
 }

@@ -1,5 +1,6 @@
 import { RemoveSavedOrder } from '../../validation/orders/remove-saved-order.ts'
 import type { OrderHistoryGateway } from '../../gateways/order-history-gateway'
+import type { RemoveSavedOrderOutput } from '../../dtos/orders'
 
 export class RemoveSavedOrderUseCase {
   private history: OrderHistoryGateway
@@ -8,8 +9,9 @@ export class RemoveSavedOrderUseCase {
     this.history = history
   }
 
-  public execute(trackingToken: string) {
+  public execute(trackingToken: string): RemoveSavedOrderOutput {
     const validatedInput = RemoveSavedOrder.validate(trackingToken)
-    return this.history.remove(validatedInput)
+    const savedOrders = this.history.remove(validatedInput)
+    return savedOrders
   }
 }

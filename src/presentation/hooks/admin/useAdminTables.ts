@@ -4,7 +4,7 @@ import type { CartItem } from '../../../application/dtos/cart';
 import { brl } from '../../../shared/formatters/currency';
 import { useApplicationServices } from '../global/useApplicationServices';
 import { TableHasUnfinishedOrdersError } from '../../../application/errors/table-has-unfinished-orders-error.ts';
-import type { Addition, Product } from '../../../application/dtos/catalog';
+import type { Addition, Category, Product } from '../../../application/dtos/catalog';
 import type { RestaurantTable, TableOrders } from '../../../application/dtos/tables';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
@@ -13,10 +13,29 @@ const TABLE_ORDER_NAME = 'Trailer do Pastel';
 const TABLE_ORDER_PHONE = '99984636486';
 const PRODUCTS_PAGE_SIZE = 24;
 
-export function useAdminTables(products: Product[]) {
+export function useAdminTables() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
   const token = session?.token ?? '';
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catalogError, setCatalogError] = useState('');
+
+  const loadCatalog = useCallback(async () => {
+    setCatalogError('');
+    try {
+      const catalog = await useCases.catalog.listCatalog.execute();
+      setCategories(catalog.categories);
+      setProducts(catalog.products);
+    } catch (cause) {
+      setCatalogError(cause instanceof Error ? cause.message : 'Falha ao carregar o cardápio.');
+    }
+  }, [useCases]);
+
+  useEffect(() => {
+    void loadCatalog();
+  }, [loadCatalog]);
+
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [readyTables, setReadyTables] = useState<Set<string>>(new Set());
   const readyTablesRef = useRef(readyTables);
@@ -42,11 +61,11 @@ export function useAdminTables(products: Product[]) {
   const draftCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const filteredProducts = useMemo(() => {
     const searchTerm = search.toLowerCase();
-    return products.filter(
-      (item) =>
-        (category === 'all' || item.categoryId === category) &&
-        `${item.name} ${item.description}`.toLowerCase().includes(searchTerm),
-    );
+    return products.filter((item) => {
+      const matchesCategory = category === 'all' || item.categoryId === category;
+      const matchesSearch = `${item.name} ${item.description}`.toLowerCase().includes(searchTerm);
+      return matchesCategory && matchesSearch;
+    });
   }, [products, category, search]);
   const visibleProducts = filteredProducts.slice(0, visibleProductCount);
   const hasMoreProducts = visibleProductCount < filteredProducts.length;
@@ -54,20 +73,21 @@ export function useAdminTables(products: Product[]) {
   const [error, setError] = useState('');
   const { confirm, notify, dialog } = useActionDialog();
   const availableAdditions = additions.filter((item) => item.available);
-  const customProductPrice = product
-    ? quantity *
-      (Number(product.price) + additions.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0))
-    : 0;
+  const additionsPrice = additions.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0);
+  const customProductPrice = product ? quantity * (Number(product.price) + additionsPrice) : 0;
 
   const refresh = useCallback(
     async (tableId?: string | null) => {
-      const { tables, readyTableIds } = await useCases.tables.listOverview.execute(readyTablesRef.current);
-      setTables(tables);
-      readyTablesRef.current = readyTableIds;
-      setReadyTables(readyTableIds);
-      if (tableId) setDetails(await useCases.tables.listOrders.execute({ tableId: tableId }));
+      const overview = await useCases.tables.listOverview.execute(readyTablesRef.current);
+      setTables(overview.tables);
+      readyTablesRef.current = overview.readyTableIds;
+      setReadyTables(overview.readyTableIds);
+      if (tableId) {
+        const tableOrders = await useCases.tables.listOrders.execute({ tableId });
+        setDetails(tableOrders);
+      }
     },
-    [token],
+    [token, useCases],
   );
 
   useEffect(() => {
@@ -118,10 +138,10 @@ export function useAdminTables(products: Product[]) {
     setVisibleProductCount(PRODUCTS_PAGE_SIZE);
     setError('');
     try {
-      const result = await useCases.tables.listOrders.execute({ tableId: id });
+      const tableOrders = await useCases.tables.listOrders.execute({ tableId: id });
       if (selectionRequest.current === request) {
-        setDetails(result);
-        setTableView(result.orders.length ? 'orders' : 'new');
+        setDetails(tableOrders);
+        setTableView(tableOrders.orders.length ? 'orders' : 'new');
       }
     } catch (cause) {
       if (selectionRequest.current === request) {
@@ -171,7 +191,8 @@ export function useAdminTables(products: Product[]) {
     setAdditions([]);
     setAdditionsBusy(true);
     try {
-      setAdditions(await useCases.catalog.listProductAdditions.execute(item.id));
+      const productAdditions = await useCases.catalog.listProductAdditions.execute(item.id);
+      setAdditions(productAdditions);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao buscar adicionais.');
       setProduct(null);
@@ -190,17 +211,19 @@ export function useAdminTables(products: Product[]) {
 
   function addProduct() {
     if (!product || additionsBusy) return;
-    setCart((cart) => useCases.cart.addItem.execute({ cart, product, additions, amounts, quantity }));
+    setCart((currentCart) => {
+      const updatedCart = useCases.cart.addItem.execute({ cart: currentCart, product, additions, amounts, quantity });
+      return updatedCart;
+    });
     setProduct(null);
     setCartFocusRequest((value) => value + 1);
   }
 
   function changeItemQuantity(key: string, change: number) {
-    setCart((items) =>
-      items
-        .map((item) => (item.key === key ? { ...item, quantity: item.quantity + change } : item))
-        .filter((item) => item.quantity > 0),
-    );
+    setCart((items) => {
+      const updatedItems = items.map((item) => (item.key === key ? { ...item, quantity: item.quantity + change } : item));
+      return updatedItems.filter((item) => item.quantity > 0);
+    });
   }
 
   function removeItem(key: string) {
@@ -343,6 +366,9 @@ export function useAdminTables(products: Product[]) {
   }
 
   return {
+    categories,
+    catalogError,
+    loadCatalog,
     tables,
     readyTables,
     selected,

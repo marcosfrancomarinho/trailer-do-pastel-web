@@ -16,25 +16,28 @@ export function useOrderSessionId(tableId: string | null | undefined, orderId: s
       return;
     }
 
+    const currentTableId = tableId;
     let active = true;
     setSessionId(null);
     setLoading(true);
-    void useCases.tables.findOrderSession
-      .execute({ tableId, orderId })
-      .then((id) => {
-        if (active) setSessionId(id);
-      })
-      .catch(() => {
+
+    async function loadSessionId() {
+      try {
+        const foundSessionId = await useCases.tables.findOrderSession.execute({ tableId: currentTableId, orderId });
+        if (active) setSessionId(foundSessionId);
+      } catch {
         if (active) setSessionId(null);
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+
+    void loadSessionId();
 
     return () => {
       active = false;
     };
-  }, [token, tableId, orderId]);
+  }, [useCases, token, tableId, orderId]);
 
   return { sessionId, loading };
 }

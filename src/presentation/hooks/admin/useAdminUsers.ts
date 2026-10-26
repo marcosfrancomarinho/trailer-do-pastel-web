@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { RestaurantUser } from '../../../application/dtos/users';
 import { useActionDialog } from '../../components/shared/ActionDialog';
@@ -13,28 +13,28 @@ export function useAdminUsers() {
   const [error, setError] = useState('');
   const { confirm, notify, dialog } = useActionDialog();
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setError('');
     try {
-      setUsers(await useCases.users.list.execute());
+      const currentUsers = await useCases.users.list.execute();
+      setUsers(currentUsers);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao consultar usuários.');
     }
-  }
+  }, [useCases]);
+
   useEffect(() => {
     void refresh();
-  }, [token]);
+  }, [refresh, token]);
 
   async function remove(user: RestaurantUser) {
-    if (
-      !(await confirm({
-        title: 'Excluir usuário?',
-        message: 'O usuário ' + user.name + ' perderá acesso ao painel.',
-        confirmLabel: 'Excluir usuário',
-        tone: 'warning',
-      }))
-    )
-      return;
+    const approved = await confirm({
+      title: 'Excluir usuário?',
+      message: 'O usuário ' + user.name + ' perderá acesso ao painel.',
+      confirmLabel: 'Excluir usuário',
+      tone: 'warning',
+    });
+    if (!approved) return;
     setBusy(user.id);
     try {
       await useCases.users.remove.execute({ userId: user.id });

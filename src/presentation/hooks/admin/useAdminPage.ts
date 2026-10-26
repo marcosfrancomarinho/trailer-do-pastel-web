@@ -43,13 +43,17 @@ export function useAdminPage() {
   const [adminName, setAdminName] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminSection, setAdminSection] = useState<AdminSection>(
-    () => (location.state as { section?: string } | null)?.section === 'comandas' ? 'comandas' : 'orders',
+    () => {
+      const requestedSection = (location.state as { section?: string } | null)?.section;
+      return requestedSection === 'comandas' ? 'comandas' : 'orders';
+    },
   );
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminError, setAdminError] = useState('');
-  const navigationItems = adminRole === 'ADMIN' ? [ordersNavigation, ...adminNavigation] : [ordersNavigation];
+  const isAdmin = adminRole === 'ADMIN';
+  const navigationItems = isAdmin ? [ordersNavigation, ...adminNavigation] : [ordersNavigation];
   const profileInitials = adminDisplayName
     .trim()
     .split(/\s+/)
@@ -79,8 +83,8 @@ export function useAdminPage() {
     setAdminBusy(true);
     setAdminError('');
     try {
-      const logged = await useCases.auth.signIn.execute({ name: adminName, password: adminPassword });
-      setSession(logged);
+      const authenticatedSession = await useCases.auth.signIn.execute({ name: adminName, password: adminPassword });
+      setSession(authenticatedSession);
       setAdminPassword('');
       navigate('/mesas');
     } catch (cause) {

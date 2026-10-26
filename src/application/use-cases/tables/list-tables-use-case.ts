@@ -1,6 +1,7 @@
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { TableGateway } from '../../gateways/table-gateway';
 import type { SessionGateway } from '../../gateways/session-gateway';
+import type { ListTablesOutput } from '../../dtos/tables';
 
 export class ListTablesUseCase {
   private tables: TableGateway;
@@ -11,12 +12,13 @@ export class ListTablesUseCase {
     this.session = session;
   }
 
-  public execute() {
+  public execute(): Promise<ListTablesOutput> {
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.tables(token);
+    const tablesRequest = this.tables.tables(token);
+    return tablesRequest;
   }
 }

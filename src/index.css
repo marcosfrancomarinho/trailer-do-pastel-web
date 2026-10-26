@@ -2646,61 +2646,7 @@ body,
   }
 }
 
-/*Navegação do cliente no celular: acesso persistente ao cardápio e aos pedidos.*/
-
 @media (max-width: 639px) {
-  .mobile-shop-nav {
-    position: fixed;
-    z-index: 35;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 3px;
-    padding: 9px 9px calc(9px + env(safe-area-inset-bottom, 0px));
-    background: #071b2e;
-    border-top: 2px solid #47788f;
-    box-shadow: 0 -4px 16px #0007;
-  }
-  .mobile-shop-nav button {
-    position: relative;
-    display: flex;
-    min-height: 52px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    border-radius: 12px;
-    color: #e9f7fd;
-    font-size: 11px;
-    font-weight: 900;
-    line-height: 1.2;
-  }
-  .mobile-shop-nav button.mobile-shop-active {
-    background: #ffca28;
-    color: #09283b;
-  }
-  .mobile-shop-icon {
-    font-size: 22px;
-    line-height: 1;
-  }
-  .mobile-cart-count {
-    position: absolute;
-    top: 2px;
-    right: 12px;
-    display: grid;
-    place-items: center;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #f7ddd9;
-    color: #66232a;
-    font-size: 10px;
-  }
-  .restaurant-app {
-    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-  }
   .restaurant-app .product-customizer-modal {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -3014,5 +2960,85 @@ body,
   .restaurant-app .product-grid {
     grid-template-columns: repeat(4, minmax(0, 265px));
     justify-content: center;
+  }
+}
+
+/* Cabeçalho administrativo compacto para manter Mesas e Painel visíveis no celular. */
+.private-header .brand-symbol.anchor-brand,
+.private-header .anchor-logo {
+  width: 46px;
+  height: 46px;
+}
+
+.private-header .brand-letters {
+  font-size: 19px;
+}
+
+.public-header .brand-symbol.anchor-brand,
+.public-header .anchor-logo {
+  width: 46px;
+  height: 46px;
+}
+
+.public-header .brand-letters {
+  font-size: 19px;
+}
+
+.public-header nav button {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #eaf7ff;
+}
+
+.public-header nav button[aria-current='page'] {
+  background: #ffca28;
+  color: #102b40;
+}
+
+.public-header nav button:hover:not([aria-current='page']) {
+  background: #244b61;
+  color: #fff;
+}
+
+@media (max-width: 639px) {
+  .private-header .brand-mark {
+    gap: 8px;
+    padding: 0;
+  }
+
+  .private-header .brand-symbol.anchor-brand,
+  .private-header .anchor-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .private-header .brand-letters {
+    max-width: 165px;
+    font-size: 16px;
+  }
+
+  .private-header .brand-tagline,
+  .private-header-authenticated .brand-letters {
+    display: none;
+  }
+
+  .public-header .brand-mark {
+    gap: 0;
+    padding: 0;
+  }
+
+  .public-header .brand-symbol.anchor-brand,
+  .public-header .anchor-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .public-header .brand-letters {
+    display: none;
+  }
+
+  .public-header nav button {
+    padding: 8px 7px;
+    font-size: 12px;
   }
 }

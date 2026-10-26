@@ -7,7 +7,17 @@ import { orderAlert } from '../../../infrastructure/audio/order-alert';
 type PrivateView = 'admin' | 'tables' | 'comandas';
 type AlertOrder = PendingOrder | PreparingOrder;
 
-export function usePrivateNotifications(token: string, view: PrivateView) {
+export interface PrivateNotificationsState {
+  notificationsOn: boolean;
+  cancelAlerts: AlertOrder[];
+  pendingCount: number;
+  newPendingCount: number;
+  setOrdersVisible: (visible: boolean) => void;
+  acknowledgeCancellation: (id: string) => void;
+  dismissNew: () => void;
+}
+
+export function usePrivateNotifications(token: string, view: PrivateView): PrivateNotificationsState {
   const useCases = useApplicationServices();
   const [notificationsOn, setNotificationsOn] = useState(() => useCases.notifications.getSoundPreference.execute());
   const [cancelAlerts, setCancelAlerts] = useState<AlertOrder[]>([]);
@@ -28,7 +38,13 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
   const dismissNew = useCallback(() => setNewPendingCount(0), []);
 
   useEffect(() => {
-    const sync = () => {
+    if (newPendingCount === 0) return;
+    const dismissTimer = window.setTimeout(dismissNew, 4000);
+    return () => window.clearTimeout(dismissTimer);
+  }, [newPendingCount, dismissNew]);
+
+  useEffect(() => {
+    const syncSoundPreference = () => {
       const enabled = useCases.notifications.getSoundPreference.execute();
       setNotificationsOn(enabled);
       if (!enabled) {
@@ -36,13 +52,13 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
         setCancelAlerts([]);
       }
     };
-    window.addEventListener('admin-notification-preference', sync);
-    window.addEventListener('storage', sync);
+    window.addEventListener('admin-notification-preference', syncSoundPreference);
+    window.addEventListener('storage', syncSoundPreference);
     return () => {
-      window.removeEventListener('admin-notification-preference', sync);
-      window.removeEventListener('storage', sync);
+      window.removeEventListener('admin-notification-preference', syncSoundPreference);
+      window.removeEventListener('storage', syncSoundPreference);
     };
-  }, []);
+  }, [useCases]);
 
   useEffect(() => {
     if (!token) {
@@ -52,15 +68,15 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
       return;
     }
     let active = true;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const check = async () => {
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    const checkPendingOrders = async () => {
       try {
-        const results = await useCases.orders.listPending.execute({ date: RestaurantDate.today() });
+        const pendingOrders = await useCases.orders.listPending.execute({ date: RestaurantDate.today() });
         if (!active) return;
-        const ids = new Set(results.map((order) => order.id));
-        const seen = pendingSeenRef.current;
-        if (seen) {
-          const arrivals = results.filter((order) => !seen.has(order.id));
+        const pendingIds = new Set(pendingOrders.map((order) => order.id));
+        const seenIds = pendingSeenRef.current;
+        if (seenIds) {
+          const arrivals = pendingOrders.filter((order) => !seenIds.has(order.id));
           if (
             arrivals.length &&
             (view !== 'admin' || !ordersVisibleRef.current) &&
@@ -69,26 +85,27 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
             setNewPendingCount((count) => count + arrivals.length);
             orderAlert.play();
           }
-          results.forEach((order) => seen.add(order.id));
+          pendingOrders.forEach((order) => seenIds.add(order.id));
         } else {
-          pendingSeenRef.current = ids;
+          pendingSeenRef.current = pendingIds;
         }
-        setPendingCount(results.length);
+        setPendingCount(pendingOrders.length);
       } catch {
         // Falhas transitórias não devem disparar alertas falsos.
       } finally {
-        if (active)
-          timeout = setTimeout(() => {
-            void check();
+        if (active) {
+          refreshTimer = setTimeout(() => {
+            void checkPendingOrders();
           }, 5000);
+        }
       }
     };
-    void check();
+    void checkPendingOrders();
     return () => {
       active = false;
-      if (timeout) clearTimeout(timeout);
+      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
     };
-  }, [token, view]);
+  }, [token, view, useCases]);
 
   useEffect(() => {
     if (!token) {
@@ -97,9 +114,9 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
       return;
     }
     let active = true;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     let daySnapshot = '';
-    const check = async () => {
+    const checkCanceledOrders = async () => {
       try {
         const day = RestaurantDate.today();
         const [pending, ongoing, history] = await Promise.all([
@@ -108,39 +125,40 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
           useCases.orders.listHistory.execute({ date: day }),
         ]);
         if (!active) return;
-        const current = new Map([...pending, ...ongoing].map((order) => [order.id, order] as const));
+        const currentOrders = new Map([...pending, ...ongoing].map((order) => [order.id, order] as const));
         if (daySnapshot === day && preparationSnapshot.current) {
-          const matches = useCases.orders.findCanceledTableOrders.execute({
+          const canceledOrders = useCases.orders.findCanceledTableOrders.execute({
             previous: preparationSnapshot.current,
-            current,
+            current: currentOrders,
             history,
             acknowledgedIds: acknowledgedCancellationIds.current,
           });
-          if (matches.length && useCases.notifications.getSoundPreference.execute()) {
+          if (canceledOrders.length && useCases.notifications.getSoundPreference.execute()) {
             setCancelAlerts((previous) => {
-              const already = new Set(previous.map((order) => order.id));
-              return [...previous, ...matches.filter((order) => !already.has(order.id))];
+              const alertedIds = new Set(previous.map((order) => order.id));
+              return [...previous, ...canceledOrders.filter((order) => !alertedIds.has(order.id))];
             });
             orderAlert.playCancellation();
           }
         }
-        preparationSnapshot.current = current;
+        preparationSnapshot.current = currentOrders;
         daySnapshot = day;
       } catch {
         // Falha de consulta não redefine a referência, evitando falsos alertas.
       } finally {
-        if (active)
-          timeout = setTimeout(() => {
-            void check();
+        if (active) {
+          refreshTimer = setTimeout(() => {
+            void checkCanceledOrders();
           }, 5000);
+        }
       }
     };
-    void check();
+    void checkCanceledOrders();
     return () => {
       active = false;
-      if (timeout) clearTimeout(timeout);
+      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
     };
-  }, [token, view]);
+  }, [token, view, useCases]);
 
   useEffect(() => {
     if (!token) return;
@@ -154,7 +172,7 @@ export function usePrivateNotifications(token: string, view: PrivateView) {
       document.removeEventListener('pointerdown', unlock);
       document.removeEventListener('keydown', unlock);
     };
-  }, [token]);
+  }, [token, useCases]);
 
   return {
     notificationsOn,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { Addition, Category, Product } from '../../../application/dtos/catalog';
 import { usePublicContext } from '../global/usePublicContext';
@@ -19,23 +19,23 @@ export function useMenuPage() {
   const [quantity, setQuantity] = useState(1);
   const [cartToast, setCartToast] = useState<{ message: string; id: number } | null>(null);
 
-  async function loadCatalog() {
+  const loadCatalog = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const { categories: cats, products: prods } = await useCases.catalog.listCatalog.execute();
-      setCategories(cats);
-      setProducts(prods);
+      const catalog = await useCases.catalog.listCatalog.execute();
+      setCategories(catalog.categories);
+      setProducts(catalog.products);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao carregar o cardápio');
     } finally {
       setLoading(false);
     }
-  }
+  }, [useCases]);
 
   useEffect(() => {
     void loadCatalog();
-  }, []);
+  }, [loadCatalog]);
 
   useEffect(() => {
     if (!cartToast) return;
@@ -45,11 +45,13 @@ export function useMenuPage() {
 
   const visible = useMemo(() => {
     const searchTerm = search.toLowerCase();
-    return products.filter(
-      (product) =>
-        (filter === 'all' || product.categoryId === filter) &&
-        `${product.name} ${product.description}`.toLowerCase().includes(searchTerm),
-    );
+    const matchingProducts = products.filter((product) => {
+      const matchesCategory = filter === 'all' || product.categoryId === filter;
+      const nameAndDescription = `${product.name} ${product.description}`.toLowerCase();
+      const matchesSearch = nameAndDescription.includes(searchTerm);
+      return matchesCategory && matchesSearch;
+    });
+    return matchingProducts;
   }, [products, filter, search]);
 
   async function choose(product: Product) {
@@ -60,7 +62,8 @@ export function useMenuPage() {
     setQuantity(1);
     setExtrasBusy(true);
     try {
-      setExtras(await useCases.catalog.listProductAdditions.execute(product.id));
+      const productAdditions = await useCases.catalog.listProductAdditions.execute(product.id);
+      setExtras(productAdditions);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao carregar adicionais');
       setSelected(null);
@@ -71,7 +74,10 @@ export function useMenuPage() {
 
   function addItem() {
     if (!selected || extrasBusy) return;
-    setCart((cart) => useCases.cart.addItem.execute({ cart, product: selected, additions: extras, amounts, quantity }));
+    setCart((currentCart) => {
+      const nextCart = useCases.cart.addItem.execute({ cart: currentCart, product: selected, additions: extras, amounts, quantity });
+      return nextCart;
+    });
     setCartToast((previous) => ({
       message: quantity + '× ' + selected.name + ' adicionado ao carrinho!',
       id: (previous?.id ?? 0) + 1,

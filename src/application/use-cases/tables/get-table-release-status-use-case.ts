@@ -21,7 +21,8 @@ export class GetTableReleaseStatusUseCase {
     }
     const token = currentSession.token;
     const table = await this.tables.tableOrders(token, validatedInput.tableId);
-    const unfinishedCount = table.orders.filter((order) => ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)).length;
+    const unfinishedOrders = table.orders.filter((order) => ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status));
+    const unfinishedCount = unfinishedOrders.length;
     return { table, unfinishedCount };
   }
 }

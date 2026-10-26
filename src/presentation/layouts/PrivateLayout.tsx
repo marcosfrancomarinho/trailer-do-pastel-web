@@ -15,6 +15,10 @@ export default function PrivateLayout() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const view = path === '/mesas' ? 'tables' : path === '/comandas' ? 'comandas' : 'admin';
+  const activeNavigationPath = view === 'tables' ? '/mesas' : '/admin';
+  const headerClassName =
+    'site-header private-header fixed inset-x-0 top-0 z-30 border-b border-[#365f74] bg-[#112e43] text-white' +
+    (session ? ' private-header-authenticated' : '');
   const alerts = usePrivateNotifications(session?.token ?? '', view);
 
   useLayoutEffect(() => {
@@ -38,13 +42,16 @@ export default function PrivateLayout() {
   return (
     <PrivateContextProvider.Provider value={{ session, setSession, alerts }}>
     <div className='restaurant-app min-h-screen overflow-x-hidden'>
-      <header ref={headerRef} className='site-header fixed inset-x-0 top-0 z-30 border-b-4 border-[#ffca28] bg-[#112e43] text-white'>
-        <div className='mx-auto grid max-w-6xl grid-cols-1 gap-2 px-4 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+      <header
+        ref={headerRef}
+        className={headerClassName}
+      >
+        <div className='mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:px-4 sm:py-3'>
           <BrandMark />
           {session && (
             <nav
               aria-label='Navegação administrativa'
-              className='grid grid-cols-2 gap-2 sm:flex sm:justify-end'
+              className='inline-flex shrink-0 gap-1 rounded-xl border border-[#41687c] bg-[#0b2537] p-1'
             >
               {[
                 { path: '/mesas', label: 'Mesas' },
@@ -54,10 +61,12 @@ export default function PrivateLayout() {
                   key={link.path}
                   type='button'
                   onClick={() => go(link.path)}
-                  aria-current={path === link.path ? 'page' : undefined}
+                  aria-current={activeNavigationPath === link.path ? 'page' : undefined}
                   className={
-                    'min-h-11 min-w-0 rounded-xl px-3 py-2 text-center text-sm font-bold leading-tight ' +
-                    (path === link.path ? 'bg-[#ffca28] text-[#102b40]' : 'bg-[#244b61] text-white')
+                    'min-h-10 rounded-lg px-3 py-2 text-center text-sm font-bold leading-tight transition-colors sm:min-h-11 sm:px-4 ' +
+                    (activeNavigationPath === link.path
+                      ? 'bg-[#ffca28] text-[#102b40] shadow-sm'
+                      : 'text-slate-100 hover:bg-[#244b61]')
                   }
                 >
                   {link.label}
@@ -69,9 +78,11 @@ export default function PrivateLayout() {
             <button
               type='button'
               onClick={() => go('/')}
-              className='min-h-11 w-full rounded-xl border border-[#81a4b6] px-4 py-2 text-center text-sm font-bold text-white sm:w-auto'
+              aria-label='Voltar ao cardápio'
+              className='grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#81a4b6] text-lg font-bold text-white hover:bg-[#244b61] sm:flex sm:h-11 sm:w-auto sm:gap-2 sm:px-4 sm:text-sm'
             >
-              Voltar ao cardápio
+              <span aria-hidden='true'>←</span>
+              <span className='hidden sm:inline'>Voltar ao cardápio</span>
             </button>
           )}
         </div>

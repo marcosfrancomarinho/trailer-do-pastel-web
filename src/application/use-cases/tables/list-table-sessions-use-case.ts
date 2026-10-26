@@ -1,7 +1,7 @@
 import { ListTableSessions } from '../../validation/tables/list-table-sessions.ts';
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { TableGateway } from '../../gateways/table-gateway';
-import type { TableIdInput } from '../../dtos/tables';
+import type { TableIdInput, ListTableSessionsOutput } from '../../dtos/tables';
 import type { SessionGateway } from '../../gateways/session-gateway';
 
 export class ListTableSessionsUseCase {
@@ -13,13 +13,14 @@ export class ListTableSessionsUseCase {
     this.session = session;
   }
 
-  public execute(input: TableIdInput) {
+  public execute(input: TableIdInput): Promise<ListTableSessionsOutput> {
     const validatedInput = ListTableSessions.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.tables.tableSessions(token, validatedInput.tableId);
+    const tableSessionsRequest = this.tables.tableSessions(token, validatedInput.tableId);
+    return tableSessionsRequest;
   }
 }

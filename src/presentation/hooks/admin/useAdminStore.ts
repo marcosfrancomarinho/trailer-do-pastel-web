@@ -12,18 +12,21 @@ export function useAdminStore() {
 
   useEffect(() => {
     let active = true;
-    useCases.store.getStatus
-      .execute()
-      .then((result) => {
-        if (active) setStore(result);
-      })
-      .catch((cause) => {
+
+    async function loadStoreStatus() {
+      try {
+        const currentStore = await useCases.store.getStatus.execute();
+        if (active) setStore(currentStore);
+      } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Erro ao consultar loja.');
-      });
+      }
+    }
+
+    void loadStoreStatus();
     return () => {
       active = false;
     };
-  }, []);
+  }, [useCases]);
 
   async function change(open: boolean) {
     const approved = await confirm({
@@ -37,8 +40,8 @@ export function useAdminStore() {
     setBusy(true);
     setError('');
     try {
-      const next = await useCases.store.changeStatus.execute({ open });
-      setStore(next);
+      const updatedStore = await useCases.store.changeStatus.execute({ open });
+      setStore(updatedStore);
       notify({
         title: open ? 'Loja aberta' : 'Loja fechada',
         message: open ? 'Os clientes já podem fazer pedidos.' : 'Novos pedidos públicos foram bloqueados.',

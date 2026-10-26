@@ -11,8 +11,10 @@ export type PublicContext = {
 
 export const PublicContextProvider = createContext<PublicContext | null>(null);
 
-export function usePublicContext() {
+export function usePublicContext(): PublicContext {
   const context = useContext(PublicContextProvider);
-  if (!context) throw new Error('usePublicContext precisa estar dentro do layout público.');
+  if (!context) {
+    throw new Error('usePublicContext precisa estar dentro do layout público.');
+  }
   return context;
 }

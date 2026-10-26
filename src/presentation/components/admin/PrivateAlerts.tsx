@@ -5,11 +5,10 @@ type Props = {
   onSeeOrders: () => void;
 };
 
-export default function PrivateAlerts({
-  showNewPending = true,
-  onSeeOrders,
-}: Props) {
-  const { alerts: { notificationsOn, cancelAlerts, newPendingCount, acknowledgeCancellation, dismissNew } } = usePrivateContext();
+export default function PrivateAlerts({ showNewPending = true, onSeeOrders }: Props) {
+  const {
+    alerts: { notificationsOn, cancelAlerts, newPendingCount, acknowledgeCancellation, dismissNew },
+  } = usePrivateContext();
   if (!notificationsOn) return null;
 
   return (

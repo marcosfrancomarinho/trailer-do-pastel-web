@@ -13,7 +13,7 @@ export class UpdateAdditionUseCase {
     this.session = session;
   }
 
-  public execute(input: UpdateCatalogItemInput<AdditionData>) {
+  public execute(input: UpdateCatalogItemInput<AdditionData>): Promise<void> {
     const validatedInput = UpdateAddition.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -22,6 +22,7 @@ export class UpdateAdditionUseCase {
     const token = currentSession.token;
     const id = validatedInput.id;
     const data = validatedInput.data;
-    return this.catalog.updateAddition(id, token, data);
+    const updateAdditionRequest = this.catalog.updateAddition(id, token, data);
+    return updateAdditionRequest;
   }
 }

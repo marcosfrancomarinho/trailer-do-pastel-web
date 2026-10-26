@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { Addition, Category } from '../../../application/dtos/catalog';
@@ -30,21 +30,44 @@ export function useAdminRegisters(section: RegisterSection) {
   const [error, setError] = useState('');
   const { notify, dialog } = useActionDialog();
 
-  async function loadOptions() {
+  const loadOptions = useCallback(async () => {
     try {
-      const [cats, adds] = await Promise.all([
+      const [loadedCategories, loadedAdditions] = await Promise.all([
         useCases.catalog.listCategories.execute(),
         useCases.catalog.listAdditions.execute(),
       ]);
-      setCategories(cats);
-      setAdditions(adds);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar categorias e adicionais.');
+      setCategories(loadedCategories);
+      setAdditions(loadedAdditions);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar categorias e adicionais.');
     }
-  }
+  }, [useCases]);
+
   useEffect(() => {
     void loadOptions();
-  }, []);
+  }, [loadOptions]);
+
+  async function createRegistration() {
+    if (section === 'product') {
+      await useCases.catalog.createProduct.execute({
+        data: {
+          name: name.trim(),
+          description: description.trim(),
+          price,
+          categoryId,
+          imageUrl: imageUrl.trim() || null,
+          additionIds,
+          available,
+        },
+      });
+    } else if (section === 'addition') {
+      await useCases.catalog.createAddition.execute({ data: { name: name.trim(), price, available } });
+    } else if (section === 'category') {
+      await useCases.catalog.createCategory.execute({ data: { name: name.trim() } });
+    } else {
+      await useCases.users.create.execute({ name, password });
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,25 +75,7 @@ export function useAdminRegisters(section: RegisterSection) {
     setError('');
     setSuccess('');
     try {
-      if (section === 'product') {
-        await useCases.catalog.createProduct.execute({
-          data: {
-            name: name.trim(),
-            description: description.trim(),
-            price,
-            categoryId,
-            imageUrl: imageUrl.trim() || null,
-            additionIds,
-            available,
-          },
-        });
-      } else if (section === 'addition') {
-        await useCases.catalog.createAddition.execute({ data: { name: name.trim(), price, available } });
-      } else if (section === 'category') {
-        await useCases.catalog.createCategory.execute({ data: { name: name.trim() } });
-      } else {
-        await useCases.users.create.execute({ name, password });
-      }
+      await createRegistration();
       setSuccess(successMessages[section]);
       notify({ title: 'Cadastro realizado', message: 'As informações foram cadastradas com sucesso.', tone: 'success' });
       setName('');
@@ -81,8 +86,8 @@ export function useAdminRegisters(section: RegisterSection) {
       setAdditionIds([]);
       setAvailable(true);
       if (section === 'addition' || section === 'category') await loadOptions();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao realizar cadastro.';
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Erro ao realizar cadastro.';
       setError(message);
       notify({ title: 'Cadastro não realizado', message, tone: 'error' });
     } finally {

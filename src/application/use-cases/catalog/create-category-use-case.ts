@@ -13,7 +13,7 @@ export class CreateCategoryUseCase {
     this.session = session;
   }
 
-  public execute(input: CreateCatalogItemInput<CategoryData>) {
+  public execute(input: CreateCatalogItemInput<CategoryData>): Promise<void> {
     const validatedInput = CreateCategory.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
@@ -21,6 +21,7 @@ export class CreateCategoryUseCase {
     }
     const token = currentSession.token;
     const data = validatedInput.data;
-    return this.catalog.createCategory(token, data);
+    const createCategoryRequest = this.catalog.createCategory(token, data);
+    return createCategoryRequest;
   }
 }

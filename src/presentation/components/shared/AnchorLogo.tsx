@@ -1,5 +1,8 @@
 /** Símbolo náutico do Trailer do Pastel: âncora em medalhão. */
-export default function AnchorLogo({ className = '' }: { className?: string }) {
+export default function AnchorLogo({ className = '', idPrefix = 'anchor' }: { className?: string; idPrefix?: string }) {
+  const goldGradientId = `${idPrefix}-medal-gold`;
+  const navyGradientId = `${idPrefix}-navy`;
+
   return (
     <svg
       className={className}
@@ -12,25 +15,25 @@ export default function AnchorLogo({ className = '' }: { className?: string }) {
       aria-label='Âncora do Trailer do Pastel'
     >
       <defs>
-        <linearGradient id='anchor-medal-gold' x1='8' y1='4' x2='71' y2='78' gradientUnits='userSpaceOnUse'>
+        <linearGradient id={goldGradientId} x1='8' y1='4' x2='71' y2='78' gradientUnits='userSpaceOnUse'>
           <stop stopColor='#FFE899' />
           <stop offset='.48' stopColor='#FFCB39' />
           <stop offset='1' stopColor='#E79817' />
         </linearGradient>
-        <linearGradient id='anchor-navy' x1='19' y1='16' x2='61' y2='71' gradientUnits='userSpaceOnUse'>
+        <linearGradient id={navyGradientId} x1='19' y1='16' x2='61' y2='71' gradientUnits='userSpaceOnUse'>
           <stop stopColor='#124E6B' />
           <stop offset='1' stopColor='#061E34' />
         </linearGradient>
       </defs>
       <circle cx='40' cy='40' r='37' fill='#062136' />
-      <circle cx='40' cy='40' r='33.5' fill='url(#anchor-medal-gold)' stroke='#FFEFC0' strokeWidth='1.5' />
+      <circle cx='40' cy='40' r='33.5' fill={`url(#${goldGradientId})`} stroke='#FFEFC0' strokeWidth='1.5' />
       <circle cx='40' cy='40' r='28.5' stroke='#865119' strokeOpacity='.45' strokeWidth='1' />
-      <circle cx='40' cy='19.5' r='6.4' fill='#FFF6D7' stroke='url(#anchor-navy)' strokeWidth='4.2' />
-      <path d='M40 26.5V62' stroke='url(#anchor-navy)' strokeWidth='7' strokeLinecap='round' />
-      <path d='M25 37.5H55' stroke='url(#anchor-navy)' strokeWidth='7' strokeLinecap='round' />
+      <circle cx='40' cy='19.5' r='6.4' fill='#FFF6D7' stroke={`url(#${navyGradientId})`} strokeWidth='4.2' />
+      <path d='M40 26.5V62' stroke={`url(#${navyGradientId})`} strokeWidth='7' strokeLinecap='round' />
+      <path d='M25 37.5H55' stroke={`url(#${navyGradientId})`} strokeWidth='7' strokeLinecap='round' />
       <path
         d='M18.5 49.5C20.2 59.7 28.7 67.8 40 67.8C51.3 67.8 59.8 59.7 61.5 49.5'
-        stroke='url(#anchor-navy)'
+        stroke={`url(#${navyGradientId})`}
         strokeWidth='7'
         strokeLinecap='round'
       />

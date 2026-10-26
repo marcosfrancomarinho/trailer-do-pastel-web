@@ -1,4 +1,5 @@
-import type { CustomerInfo, CustomerInfoGateway } from '../../application/gateways/customer-info-gateway';
+import type { CustomerInfo } from '../../application/dtos/customer';
+import type { CustomerInfoGateway } from '../../application/gateways/customer-info-gateway';
 
 export class CustomerInfoStorageAdapter implements CustomerInfoGateway {
   private key = 'trailer-pastel-customer-info';

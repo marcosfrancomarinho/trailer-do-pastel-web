@@ -1,4 +1,4 @@
-export type CustomerInfo = { name: string; phone: string }
+import type { CustomerInfo } from '../dtos/customer'
 
 export interface CustomerInfoGateway {
   get(): CustomerInfo

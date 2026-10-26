@@ -21,6 +21,11 @@ export class FindOrderSessionUseCase {
     }
     const token = currentSession.token;
     const result = await this.tables.tableSessions(token, validatedInput.tableId);
-    return result.sessions.find((session) => session.orders.some((order) => order.id === validatedInput.orderId))?.id ?? null;
+    const matchingSession = result.sessions.find((session) => {
+      const hasOrder = session.orders.some((order) => order.id === validatedInput.orderId);
+      return hasOrder;
+    });
+    const sessionId = matchingSession?.id ?? null;
+    return sessionId;
   }
 }

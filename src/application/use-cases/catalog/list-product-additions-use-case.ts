@@ -1,5 +1,6 @@
 import { ListProductAdditions } from '../../validation/catalog/list-product-additions.ts';
 import type { CatalogGateway } from '../../gateways/catalog-gateway';
+import type { ListProductAdditionsOutput } from '../../dtos/catalog';
 
 export class ListProductAdditionsUseCase {
   private catalog: CatalogGateway;
@@ -8,8 +9,9 @@ export class ListProductAdditionsUseCase {
     this.catalog = catalog;
   }
 
-  public execute(productId: string) {
+  public execute(productId: string): Promise<ListProductAdditionsOutput> {
     const validatedInput = ListProductAdditions.validate(productId);
-    return this.catalog.additions(validatedInput);
+    const additionsRequest = this.catalog.additions(validatedInput);
+    return additionsRequest;
   }
 }

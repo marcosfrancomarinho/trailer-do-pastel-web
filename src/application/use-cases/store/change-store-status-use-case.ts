@@ -1,7 +1,7 @@
 import { ChangeStoreStatus } from '../../validation/store/change-store-status.ts';
 import { AdminSessionNotFoundError } from '../../errors/admin-session-not-found-error.ts';
 import type { StoreGateway } from '../../gateways/store-gateway';
-import type { ChangeStoreStatusInput } from '../../dtos/store';
+import type { ChangeStoreStatusInput, ChangeStoreStatusOutput } from '../../dtos/store';
 import type { SessionGateway } from '../../gateways/session-gateway';
 
 export class ChangeStoreStatusUseCase {
@@ -13,13 +13,14 @@ export class ChangeStoreStatusUseCase {
     this.session = session;
   }
 
-  public execute(input: ChangeStoreStatusInput) {
+  public execute(input: ChangeStoreStatusInput): Promise<ChangeStoreStatusOutput> {
     const validatedInput = ChangeStoreStatus.validate(input);
     const currentSession = this.session.get();
     if (!currentSession) {
       throw new AdminSessionNotFoundError();
     }
     const token = currentSession.token;
-    return this.store.setStoreOpen(token, validatedInput.open);
+    const statusRequest = this.store.setStoreOpen(token, validatedInput.open);
+    return statusRequest;
   }
 }

@@ -1,5 +1,5 @@
-export type Category = { id: string; name: string };
-export type Product = {
+export interface Category { id: string; name: string }
+export interface Product {
   id: string;
   name: string;
   description: string;
@@ -7,10 +7,10 @@ export type Product = {
   price: string;
   imageUrl?: string | null;
   available: boolean;
-};
-export type Addition = { id: string; name: string; price: string; available: boolean };
+}
+export interface Addition { id: string; name: string; price: string; available: boolean }
 
-export type ProductData = {
+export interface ProductData {
   name: string;
   description: string;
   price: string;
@@ -18,12 +18,16 @@ export type ProductData = {
   imageUrl: string | null;
   additionIds: string[];
   available: boolean;
-};
+}
 
-export type AdditionData = { name: string; price: string; available: boolean };
-export type CategoryData = { name: string };
+export interface AdditionData { name: string; price: string; available: boolean }
+export interface CategoryData { name: string }
 
-export type CreateCatalogItemInput<T> = { data: T };
+export interface CreateCatalogItemInput<T> { data: T }
 export type UpdateCatalogItemInput<T> = CreateCatalogItemInput<T> & { id: string };
-export type RemoveCatalogItemInput = { id: string };
-export type ListCatalogOutput = { categories: Category[]; products: Product[] };
+export interface RemoveCatalogItemInput { id: string }
+export interface ListCatalogOutput { categories: Category[]; products: Product[] }
+export type ListCategoriesOutput = Category[];
+export type ListProductsOutput = Product[];
+export type ListAdditionsOutput = Addition[];
+export type ListProductAdditionsOutput = Addition[];

@@ -8,6 +8,7 @@ export class GetSoundPreferenceUseCase {
   }
 
   public execute(): boolean {
-    return this.preference.isSoundEnabled()
+    const soundEnabled = this.preference.isSoundEnabled()
+    return soundEnabled
   }
 }
