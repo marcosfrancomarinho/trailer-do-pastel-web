@@ -319,7 +319,7 @@ export default function AdminTables() {
                             </span>
                             <span className='min-w-0 flex-1'>
                               <strong className='block text-sm'>
-                                {order.status === 'COMPLETED' ? '✓ Pronto · ' : ''}Pedido #{order.id.slice(0, 8)}
+                                {order.status === 'COMPLETED' ? '✓ Pronto · ' : ''}Pedido <CopyId id={order.id} label={'#' + order.id.slice(0, 8)} className='hover:text-cyan-200' />
                               </strong>
                               <span className='block truncate text-xs text-slate-200'>
                                 {order.items.reduce((sum, item) => sum + item.quantity, 0)} itens ·{' '}
