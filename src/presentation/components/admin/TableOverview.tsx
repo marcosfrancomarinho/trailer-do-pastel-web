@@ -1,6 +1,6 @@
 import { CartTotal } from '../../../application/utils/cart-total.ts';
 import { brl } from '../../../shared/formatters/currency';
-import { useAdminTables } from '../../hooks/admin/useAdminTables';
+import { useTableOverview } from '../../hooks/admin/useTableOverview';
 import TableReceipt from './TableReceipt';
 import CopyId from '../shared/CopyId';
 
@@ -24,7 +24,7 @@ function tableAppearance(status: string, hasReadyOrders: boolean) {
   return { color: 'border-[#ffce56] bg-[#544221]', label: 'Em andamento' };
 }
 
-export default function AdminTables() {
+export default function TableOverview() {
   const {
     categories,
     catalogError,
@@ -77,7 +77,7 @@ export default function AdminTables() {
     changeItemQuantity,
     removeItem,
     changeAdditionAmount,
-  } = useAdminTables();
+  } = useTableOverview();
 
   const sortedTables = [...tables].sort((first, second) => first.number - second.number);
 

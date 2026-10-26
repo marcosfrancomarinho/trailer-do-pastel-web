@@ -3,9 +3,9 @@ import PublicLayout from './layouts/PublicLayout';
 import PrivateLayout from './layouts/PrivateLayout';
 import MenuPage from './pages/MenuPage';
 import CartPage from './pages/CartPage';
-import OrdersPage from './pages/OrdersPage';
-import AdminPage from './pages/AdminPage';
-import TablesPage from './pages/TablesPage';
+import CustomerOrdersPage from './pages/CustomerOrdersPage';
+import DashboardPage from './pages/DashboardPage';
+import TableManagementPage from './pages/TableManagementPage';
 
 export default function App() {
   return (
@@ -13,12 +13,11 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path='/' element={<MenuPage />} />
         <Route path='/carrinho' element={<CartPage />} />
-        <Route path='/pedidos' element={<OrdersPage />} />
+        <Route path='/pedidos' element={<CustomerOrdersPage />} />
       </Route>
       <Route element={<PrivateLayout />}>
-        <Route path='/admin' element={<AdminPage />} />
-        <Route path='/mesas' element={<TablesPage />} />
-        <Route path='/comandas' element={<Navigate to='/admin' state={{ section: 'comandas' }} replace />} />
+        <Route path='/admin' element={<DashboardPage />} />
+        <Route path='/mesas' element={<TableManagementPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>

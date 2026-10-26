@@ -12,7 +12,7 @@ const headings: Record<ManageKind, string> = {
   category: 'Categorias',
 };
 
-export function useAdminManage(kind: ManageKind) {
+export function useCatalogEditor(kind: ManageKind) {
   const useCases = useApplicationServices();
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

@@ -4,7 +4,7 @@ import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import type { PendingOrder, PreparingOrder } from '../../../application/dtos/orders';
 import { orderAlert } from '../../../infrastructure/audio/order-alert';
 
-type PrivateView = 'admin' | 'tables' | 'comandas';
+type PrivateView = 'admin' | 'tables';
 type AlertOrder = PendingOrder | PreparingOrder;
 
 export interface PrivateNotificationsState {

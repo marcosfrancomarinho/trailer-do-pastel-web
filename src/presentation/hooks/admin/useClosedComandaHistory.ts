@@ -12,7 +12,7 @@ function historyErrorMessage(cause: unknown): string {
     : message;
 }
 
-export function useAdminComandaHistory() {
+export function useClosedComandaHistory() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
   const token = session?.token ?? '';

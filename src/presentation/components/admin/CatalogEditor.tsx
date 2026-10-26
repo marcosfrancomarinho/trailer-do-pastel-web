@@ -1,11 +1,11 @@
 import { brl } from '../../../shared/formatters/currency';
-import { useAdminManage, type ManageKind } from '../../hooks/admin/useAdminManage';
+import { useCatalogEditor, type ManageKind } from '../../hooks/admin/useCatalogEditor';
 
 type Props = { kind: ManageKind };
 const inputClass = 'mt-2 min-h-12 w-full rounded-xl border border-[#8eaec0] bg-white px-4 py-3 text-[#102b40]';
 const labelClass = 'block min-w-0 text-sm font-semibold text-white';
 
-export default function AdminManage({ kind }: Props) {
+export default function CatalogEditor({ kind }: Props) {
   const {
     items,
     categories,
@@ -34,7 +34,7 @@ export default function AdminManage({ kind }: Props) {
     startEdit,
     save,
     remove,
-  } = useAdminManage(kind);
+  } = useCatalogEditor(kind);
 
   return (
     <section className='rounded-2xl border border-[#365b70] bg-[#112e43] p-4 text-white sm:p-6'>

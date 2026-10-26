@@ -1,10 +1,10 @@
-import { useAdminUsers } from '../../hooks/admin/useAdminUsers';
+import { useUserList } from '../../hooks/admin/useUserList';
 import { usePrivateContext } from '../../hooks/global/usePrivateContext';
 
-export default function AdminUsers() {
+export default function UserList() {
   const { session } = usePrivateContext();
   const currentUserName = session?.name ?? '';
-  const { users, busy, error, remove, dialog } = useAdminUsers();
+  const { users, busy, error, remove, dialog } = useUserList();
 
   return (
     <section className='space-y-4 text-white'>

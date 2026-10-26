@@ -163,7 +163,7 @@ function CustomerOrderDetails({
   );
 }
 
-export default function CustomerOrders({ orders, statuses, onRemove }: Props) {
+export default function CustomerOrderList({ orders, statuses, onRemove }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const { confirm, notify, dialog } = useActionDialog();
   const selected = orders.find((order) => order.trackingToken === selectedToken);

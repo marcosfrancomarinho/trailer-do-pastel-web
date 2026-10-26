@@ -1,4 +1,4 @@
-import { useAdminOrders, type Order, type Tab } from '../../hooks/admin/useAdminOrders';
+import { useOrderBoard, type Order, type Tab } from '../../hooks/admin/useOrderBoard';
 import { brl } from '../../../shared/formatters/currency';
 import OrderDetails from './OrderDetails';
 import OrderReceipt from './OrderReceipt';
@@ -241,7 +241,7 @@ function OrderCard({
   );
 }
 
-export default function AdminOrders() {
+export default function OrderBoard() {
   const {
     tab,
     setTab,
@@ -274,7 +274,7 @@ export default function AdminOrders() {
     changeStatus,
     selectedOrder,
     printOrder,
-  } = useAdminOrders();
+  } = useOrderBoard();
 
   return (
     <section className='space-y-4' aria-label='Painel de pedidos'>

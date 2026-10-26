@@ -1,4 +1,4 @@
-import { useAdminRegisters, type RegisterSection } from '../../hooks/admin/useAdminRegisters';
+import { useRegistrationForm, type RegisterSection } from '../../hooks/admin/useRegistrationForm';
 
 type Props = { section: RegisterSection };
 const sectionLabels: Record<RegisterSection, string> = {
@@ -11,7 +11,7 @@ const inputClass =
   'mt-2 block min-h-12 w-full min-w-0 rounded-xl border border-[#9ec9d9] bg-white px-4 py-3 text-[#092438] outline-cyan-400';
 const labelClass = 'block min-w-0 text-sm font-bold text-white';
 
-export default function AdminRegisters({ section }: Props) {
+export default function RegistrationForm({ section }: Props) {
   const {
     categories,
     additions,
@@ -36,7 +36,7 @@ export default function AdminRegisters({ section }: Props) {
     error,
     dialog,
     handleSubmit,
-  } = useAdminRegisters(section);
+  } = useRegistrationForm(section);
 
   return (
     <section className='admin-register-panel mt-0 min-w-0 rounded-3xl border border-[#37637b] bg-[#112e43] p-5 shadow-sm sm:p-8'>

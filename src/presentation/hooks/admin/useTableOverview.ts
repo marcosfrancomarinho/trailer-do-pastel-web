@@ -13,7 +13,7 @@ const TABLE_ORDER_NAME = 'Trailer do Pastel';
 const TABLE_ORDER_PHONE = '99984636486';
 const PRODUCTS_PAGE_SIZE = 24;
 
-export function useAdminTables() {
+export function useTableOverview() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
   const token = session?.token ?? '';

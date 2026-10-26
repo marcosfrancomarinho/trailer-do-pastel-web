@@ -1,7 +1,7 @@
-import { useAdminStore } from '../../hooks/admin/useAdminStore';
+import { useStoreControls } from '../../hooks/admin/useStoreControls';
 
-export default function AdminStore() {
-  const { store, busy, error, change, dialog } = useAdminStore();
+export default function StoreControls() {
+  const { store, busy, error, change, dialog } = useStoreControls();
 
   return (
     <section className='space-y-5 rounded-2xl border border-[#47778b] bg-[#112e43] p-5 text-white'>

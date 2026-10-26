@@ -13,7 +13,7 @@ const successMessages: Record<RegisterSection, string> = {
   category: 'Categoria cadastrada com sucesso!',
 };
 
-export function useAdminRegisters(section: RegisterSection) {
+export function useRegistrationForm(section: RegisterSection) {
   const useCases = useApplicationServices();
   const [categories, setCategories] = useState<Category[]>([]);
   const [additions, setAdditions] = useState<Addition[]>([]);

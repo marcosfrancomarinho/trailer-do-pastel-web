@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useApplicationServices } from '../global/useApplicationServices';
 import { usePrivateContext } from '../global/usePrivateContext';
 
@@ -32,9 +32,8 @@ const adminNavigation = [
 
 const ordersNavigation = { key: 'orders', icon: '📋', label: 'Pedidos' } as const;
 
-export function useAdminPage() {
+export function useDashboardPage() {
   const useCases = useApplicationServices();
-  const location = useLocation();
   const navigate = useNavigate();
   const { session, setSession, alerts } = usePrivateContext();
   const adminToken = session?.token ?? '';
@@ -42,12 +41,7 @@ export function useAdminPage() {
   const adminDisplayName = session?.name ?? '';
   const [adminName, setAdminName] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [adminSection, setAdminSection] = useState<AdminSection>(
-    () => {
-      const requestedSection = (location.state as { section?: string } | null)?.section;
-      return requestedSection === 'comandas' ? 'comandas' : 'orders';
-    },
-  );
+  const [adminSection, setAdminSection] = useState<AdminSection>('orders');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [adminBusy, setAdminBusy] = useState(false);
@@ -60,7 +54,6 @@ export function useAdminPage() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('');
-  const currentSectionLabel = navigationItems.find((item) => item.key === adminSection)?.label ?? 'Pedidos';
   const { notificationsOn, pendingCount, setOrdersVisible, dismissNew } = alerts;
 
   useEffect(() => {
@@ -136,7 +129,6 @@ export function useAdminPage() {
     adminError,
     navigationItems,
     profileInitials,
-    currentSectionLabel,
     notificationsOn,
     pendingCount,
     login,

@@ -3,7 +3,7 @@ import { useApplicationServices } from '../global/useApplicationServices';
 import type { StoreState } from '../../../application/dtos/store';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 
-export function useAdminStore() {
+export function useStoreControls() {
   const useCases = useApplicationServices();
   const [store, setStore] = useState<StoreState | null>(null);
   const [busy, setBusy] = useState(false);

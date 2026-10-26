@@ -24,7 +24,7 @@ function matchesOrderSearch(order: Order, search: string, phoneDigits: string): 
   return matchesName || matchesPhone || matchesPhoneDigits || matchesId || matchesTable;
 }
 
-export function useAdminOrders() {
+export function useOrderBoard() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
   const token = session?.token ?? '';

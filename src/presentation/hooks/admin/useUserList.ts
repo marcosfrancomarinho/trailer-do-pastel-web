@@ -4,7 +4,7 @@ import type { RestaurantUser } from '../../../application/dtos/users';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
 
-export function useAdminUsers() {
+export function useUserList() {
   const useCases = useApplicationServices();
   const { session } = usePrivateContext();
   const token = session?.token ?? '';

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { brl } from '../../../shared/formatters/currency';
 import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import { PrintComandaReport } from '../../../infrastructure/print/print-comanda-report';
-import { useAdminComandaHistory } from '../../hooks/admin/useAdminComandaHistory';
+import { useClosedComandaHistory } from '../../hooks/admin/useClosedComandaHistory';
 import BrazilianDateInput from '../shared/BrazilianDateInput';
 import CopyId from '../shared/CopyId';
 
@@ -13,7 +13,7 @@ const dateTime = (value: string) =>
     timeStyle: 'short',
   });
 
-export default function AdminComandaHistory() {
+export default function ClosedComandaHistory() {
   const {
     date,
     setDate,
@@ -29,7 +29,7 @@ export default function AdminComandaHistory() {
     visibleComandas,
     total,
     completedOrders,
-  } = useAdminComandaHistory();
+  } = useClosedComandaHistory();
   const [dateValid, setDateValid] = useState(true);
 
   return (

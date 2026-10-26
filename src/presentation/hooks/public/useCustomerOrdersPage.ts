@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { SavedCustomerOrder } from '../../../application/dtos/orders';
 
-export function useOrdersPage() {
+export function useCustomerOrdersPage() {
   const useCases = useApplicationServices();
   const [orders, setOrders] = useState<SavedCustomerOrder[]>(() => useCases.orders.listSaved.execute());
   const [statuses, setStatuses] = useState<Record<string, string>>({});

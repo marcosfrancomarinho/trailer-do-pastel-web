@@ -1,13 +1,13 @@
-import AdminOrders from '../components/admin/AdminOrders';
+import OrderBoard from '../components/admin/OrderBoard';
 import PrivateAlerts from '../components/admin/PrivateAlerts';
-import AdminStore from '../components/admin/AdminStore';
-import AdminUsers from '../components/admin/AdminUsers';
-import AdminManage from '../components/admin/AdminManage';
-import AdminRegisters from '../components/admin/AdminRegisters';
-import AdminComandaHistory from '../components/admin/AdminComandaHistory';
-import { useAdminPage } from '../hooks/admin/useAdminPage';
+import StoreControls from '../components/admin/StoreControls';
+import UserList from '../components/admin/UserList';
+import CatalogEditor from '../components/admin/CatalogEditor';
+import RegistrationForm from '../components/admin/RegistrationForm';
+import ClosedComandaHistory from '../components/admin/ClosedComandaHistory';
+import { useDashboardPage } from '../hooks/admin/useDashboardPage';
 
-export default function AdminPage() {
+export default function DashboardPage() {
   const {
     adminToken,
     adminRole,
@@ -31,7 +31,7 @@ export default function AdminPage() {
     pendingCount,
     login,
     onSeeOrders,
-  } = useAdminPage();
+  } = useDashboardPage();
 
   return (
     <main className='inner-page mx-auto max-w-5xl px-4 py-5 sm:py-7'>
@@ -179,22 +179,22 @@ export default function AdminPage() {
             </aside>
             <section className='min-w-0 pb-20'>
               {adminRole !== 'ADMIN' || adminSection === 'orders' ? (
-                <AdminOrders />
+                <OrderBoard />
               ) : adminSection === 'comandas' ? (
-                <AdminComandaHistory />
+                <ClosedComandaHistory />
               ) : adminSection === 'store' ? (
-                <AdminStore />
+                <StoreControls />
               ) : adminSection === 'users-list' ? (
-                <AdminUsers />
+                <UserList />
               ) : adminSection.startsWith('manage-') ? (
-                <AdminManage
+                <CatalogEditor
                   key={adminSection}
                   kind={
                     adminSection === 'manage-products' ? 'product' : adminSection === 'manage-additions' ? 'addition' : 'category'
                   }
                 />
               ) : (
-                <AdminRegisters key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} />
+                <RegistrationForm key={adminSection} section={adminSection as 'product' | 'addition' | 'category' | 'user'} />
               )}
             </section>
           </div>
