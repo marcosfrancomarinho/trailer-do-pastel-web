@@ -327,7 +327,6 @@ export default function AdminOrders() {
                 <path d='M20 4v7h-7' />
               </svg>
             </button>
-          )}
         </div>
       </div>
 
