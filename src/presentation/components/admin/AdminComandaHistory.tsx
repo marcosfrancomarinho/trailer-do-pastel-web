@@ -4,6 +4,7 @@ import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import { PrintComandaReport } from '../../../infrastructure/print/print-comanda-report';
 import { useAdminComandaHistory } from '../../hooks/admin/useAdminComandaHistory';
 import BrazilianDateInput from '../shared/BrazilianDateInput';
+import CopyId from '../shared/CopyId';
 
 const dateTime = (value: string) =>
   new Date(value).toLocaleString('pt-BR', {
@@ -164,7 +165,7 @@ export default function AdminComandaHistory() {
                 </button>
                 {expanded === session.id && (
                   <div className='space-y-3 border-t border-[#426b80] p-3 text-sm'>
-                    <p className='break-all text-slate-200'>ID da comanda: {session.id.slice(0, 8).toUpperCase()}</p>
+                    <p className='break-all text-slate-200'>ID da comanda: <CopyId id={session.id} /></p>
                     <p className='text-slate-300'>Abertura: {dateTime(session.openedAt)}</p>
                     {(origin === 'ONLINE' || tableNumber == null) &&
                       session.orders.map((order) => (
@@ -216,7 +217,7 @@ export default function AdminComandaHistory() {
                                     }
                                   >
                                     <div className='flex flex-wrap justify-between gap-2'>
-                                      <strong>Pedido #{order.id.slice(0, 8).toUpperCase()}</strong>
+                                      <strong>Pedido <CopyId id={order.id} label={'#' + order.id.slice(0, 8).toUpperCase()} /></strong>
                                       <strong>{brl(order.total)}</strong>
                                     </div>
                                     <p className={'mt-1 text-xs font-bold ' + group.heading}>
