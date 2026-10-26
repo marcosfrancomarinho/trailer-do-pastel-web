@@ -34,18 +34,13 @@ export default function PrivateLayout() {
     return () => observer.disconnect();
   }, [view, session]);
 
-  async function toggleNotifications() {
+  function toggleNotifications() {
     if (alerts.notificationsOn) {
       useCases.notifications.setSoundPreference.execute(false);
       orderAlert.close();
       return;
     }
-    try {
-      await orderAlert.enable();
-      useCases.notifications.setSoundPreference.execute(true);
-    } catch {
-      window.alert('Não foi possível ativar o som. Verifique as permissões do navegador.');
-    }
+    useCases.notifications.setSoundPreference.execute(true);
   }
 
   function reloadCurrentView() {
@@ -99,7 +94,7 @@ export default function PrivateLayout() {
             <div className='flex shrink-0 items-center gap-1.5'>
               <button
                 type='button'
-                onClick={() => void toggleNotifications()}
+                onClick={toggleNotifications}
                 aria-pressed={alerts.notificationsOn}
                 aria-label={alerts.notificationsOn ? 'Desativar som e notificações' : 'Ativar som e notificações'}
                 title={alerts.notificationsOn ? 'Desativar notificações' : 'Ativar notificações'}
@@ -108,8 +103,14 @@ export default function PrivateLayout() {
               >
                 <svg aria-hidden='true' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.9'
                   strokeLinecap='round' strokeLinejoin='round' className='h-5 w-5'>
-                  <path d='M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4' />
-                  {!alerts.notificationsOn && <path d='M3 3 21 21' />}
+                  {alerts.notificationsOn ? (
+                    <path d='M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4' />
+                  ) : (
+                    <>
+                      <path d='M9.17 4.17A6 6 0 0 1 18 9c0 1.42.12 2.49.35 3.33M6.26 6.26A6 6 0 0 0 6 8c0 7-3 7-3 9h14M10 21h4' />
+                      <path d='M3 3 21 21' />
+                    </>
+                  )}
                 </svg>
                 {alerts.pendingCount > 0 && (
                   <span className='absolute -right-1 -top-1 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-4 text-white'>
