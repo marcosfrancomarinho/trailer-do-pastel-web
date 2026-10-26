@@ -233,6 +233,7 @@ function OrderCard({
             >
               <span aria-hidden='true'>✕</span>
             </button>
+          )}
         </div>
       </div>
     </article>
