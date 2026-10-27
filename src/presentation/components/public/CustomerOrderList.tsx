@@ -7,6 +7,8 @@ type Props = {
   orders: SavedCustomerOrder[];
   statuses: Record<string, string>;
   onRemove: (token: string) => void;
+  notificationPermission: NotificationPermission | 'unsupported';
+  onEnableNotifications: () => Promise<void>;
 };
 
 const labels: Record<string, string> = {
@@ -163,7 +165,7 @@ function CustomerOrderDetails({
   );
 }
 
-export default function CustomerOrderList({ orders, statuses, onRemove }: Props) {
+export default function CustomerOrderList({ orders, statuses, onRemove, notificationPermission, onEnableNotifications }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const { confirm, notify, dialog } = useActionDialog();
   const selected = orders.find((order) => order.trackingToken === selectedToken);
@@ -184,7 +186,23 @@ export default function CustomerOrderList({ orders, statuses, onRemove }: Props)
     <main className='customer-orders-page mx-auto max-w-3xl px-4 py-8 sm:py-12'>
       <p className='customer-eyebrow'>ACOMPANHAMENTO</p>
       <h1>Meus pedidos</h1>
-      <p className='customer-orders-subtitle'>O status é consultado automaticamente a cada 5 segundos.</p>
+      <p className='customer-orders-subtitle'>O status é atualizado automaticamente quando o pedido muda.</p>
+      {orders.some((order) => !['COMPLETED', 'CANCELED'].includes(statuses[order.trackingToken] ?? order.status)) &&
+        notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+        <div role='status' className='mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-400/50 bg-[#403722] p-3 text-sm text-amber-50'>
+          <span className='min-w-0 flex-1'>
+            {notificationPermission === 'denied'
+              ? 'Notificações bloqueadas. Permita as notificações nas configurações do site para receber o aviso de pedido pronto.'
+              : 'Receba um aviso do navegador quando seu pedido estiver pronto para retirada.'}
+          </span>
+          {notificationPermission === 'default' && (
+            <button type='button' onClick={() => void onEnableNotifications()}
+              className='rounded-lg bg-amber-300 px-3 py-2 font-bold text-[#32270f]'>
+              Permitir notificações
+            </button>
+          )}
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div className='customer-empty'>Nenhum pedido salvo neste dispositivo.</div>
