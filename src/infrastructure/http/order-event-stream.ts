@@ -1,4 +1,4 @@
-import { invalidateOrderQueries } from '../query/order-query-cache';
+import { invalidateOrderQueries } from '../query/order-query-cache.ts';
 
 export const ORDER_EVENT = 'trailer:order-event';
 export const ORDER_STREAM_READY = 'trailer:order-stream-ready';
