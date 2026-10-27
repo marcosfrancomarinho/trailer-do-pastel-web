@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { StoreState } from '../../../application/dtos/store';
 import { useActionDialog } from '../../components/shared/ActionDialog';
+import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
 
 export function useStoreControls() {
   const useCases = useApplicationServices();
@@ -23,8 +24,19 @@ export function useStoreControls() {
     }
 
     void loadStoreStatus();
+    const onChange = (event: Event) => {
+      if (event.type === ORDER_STREAM_READY || (event instanceof CustomEvent && ['STORE_OPENED', 'STORE_CLOSED'].includes(event.detail?.type))) {
+        void loadStoreStatus();
+      }
+    };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
+    window.addEventListener('focus', loadStoreStatus);
     return () => {
       active = false;
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
+      window.removeEventListener('focus', loadStoreStatus);
     };
   }, [useCases]);
 
