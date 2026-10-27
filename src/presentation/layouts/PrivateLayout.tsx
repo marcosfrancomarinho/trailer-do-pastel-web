@@ -5,6 +5,8 @@ import { useApplicationServices } from '../hooks/global/useApplicationServices';
 import { usePrivateNotifications } from '../hooks/admin/usePrivateNotifications';
 import { PrivateContextProvider } from '../hooks/global/usePrivateContext';
 import BrandMark from '../components/shared/BrandMark';
+import { useEffect } from 'react';
+import { connectOrderEvents } from '../../infrastructure/http/order-event-stream';
 
 export default function PrivateLayout() {
   const useCases = useApplicationServices();
@@ -20,6 +22,8 @@ export default function PrivateLayout() {
     'site-header private-header fixed inset-x-0 top-0 z-30 border-b border-[#365f74] bg-[#112e43] text-white' +
     (session ? ' private-header-authenticated' : '');
   const alerts = usePrivateNotifications(session?.token ?? '', view);
+
+  useEffect(() => connectOrderEvents(session?.token ?? ''), [session?.token]);
 
   useLayoutEffect(() => {
     const header = headerRef.current;
