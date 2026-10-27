@@ -1,3 +1,5 @@
+import { invalidateOrderQueries } from '../query/order-query-cache';
+
 export const ORDER_EVENT = 'trailer:order-event';
 export const ORDER_STREAM_READY = 'trailer:order-stream-ready';
 
@@ -56,7 +58,10 @@ export function connectOrderEvents(token: string): () => void {
             .map((line) => line.slice(5).trimStart()).join('\n');
           if (data) {
             const event = decodeOrderEvent(data);
-            if (event) window.dispatchEvent(new CustomEvent<OrderEvent>(ORDER_EVENT, { detail: event }));
+            if (event) {
+              void invalidateOrderQueries();
+              window.dispatchEvent(new CustomEvent<OrderEvent>(ORDER_EVENT, { detail: event }));
+            }
           }
           boundary = buffer.indexOf('\n\n');
         }
