@@ -8,7 +8,6 @@ export function useCustomerOrdersPage() {
   const [orders, setOrders] = useState<SavedCustomerOrder[]>(() => useCases.orders.listSaved.execute());
   const [statuses, setStatuses] = useState<Record<string, string>>({});
   const completedTokensRef = useRef(new Set<string>());
-  const lastStatusesRef = useRef(new Map<string, string>());
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
@@ -69,32 +68,7 @@ export function useCustomerOrdersPage() {
           signal: controller.signal,
         });
         if (!active || controller.signal.aborted) return;
-        const previousStatus = lastStatusesRef.current.get(order.trackingToken) ?? order.status;
-        lastStatusesRef.current.set(order.trackingToken, current.status);
         setStatuses((old) => ({ ...old, [order.trackingToken]: current.status }));
-        if (previousStatus !== 'COMPLETED' && current.status === 'COMPLETED' &&
-            typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          try {
-            const options = {
-              body: 'Seu pedido #' + order.id.slice(0, 8) + ' está pronto para retirada.',
-              tag: 'trailer-pedido-' + order.id,
-            };
-            if ('serviceWorker' in navigator) {
-              const registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
-              if (registration) {
-                await registration.showNotification('Trailer do Pastel — Pedido pronto!', options);
-              } else {
-                const notification = new Notification('Trailer do Pastel — Pedido pronto!', options);
-                notification.onclick = () => { window.location.assign('/pedidos'); notification.close(); };
-              }
-            } else {
-              const notification = new Notification('Trailer do Pastel — Pedido pronto!', options);
-              notification.onclick = () => { window.location.assign('/pedidos'); notification.close(); };
-            }
-          } catch {
-            // Navegadores podem impedir notificações mesmo com permissão.
-          }
-        }
         if (current.status === 'COMPLETED' || current.status === 'CANCELED') {
           completedTokensRef.current.add(order.trackingToken);
           const stream = streams.find((source) => source.url.endsWith(
@@ -131,7 +105,6 @@ export function useCustomerOrdersPage() {
 
   function removeSavedOrder(token: string) {
     completedTokensRef.current.delete(token);
-    lastStatusesRef.current.delete(token);
     void unsubscribeOrderPush(token).catch(() => {});
     setOrders(useCases.orders.removeSaved.execute(token));
     setStatuses((previous) => {
