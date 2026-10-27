@@ -185,6 +185,42 @@ export default function CustomerOrderList({ orders, statuses, onRemove }: Props)
       <p className='customer-eyebrow'>ACOMPANHAMENTO</p>
       <h1>Meus pedidos</h1>
       <p className='customer-orders-subtitle'>O status é atualizado automaticamente quando o pedido muda.</p>
+      {orders.length === 0 ? (
+        <div className='customer-empty'>Nenhum pedido salvo neste dispositivo.</div>
+      ) : (
+        <div className='customer-orders-grid'>
+          {orders.map((order) => {
+            const status = statuses[order.trackingToken] ?? order.status;
+            const quantity = order.details?.items.reduce((sum, item) => sum + item.quantity, 0);
+            return (
+              <article key={order.trackingToken} className={'customer-order-card ' + (statusClasses[status]?.card ?? '')}>
+                <button
+                  type='button'
+                  onClick={() => setSelectedToken(order.trackingToken)}
+                  className='customer-card-open'
+                  aria-label={'Abrir detalhes do pedido ' + order.id.slice(0, 8)}
+                >
+                  <div className='customer-card-top'>
+                    <span className='customer-order-number'>Pedido #{order.id.slice(0, 8)}</span>
+                    <span className='customer-card-chevron' aria-hidden='true'>
+                      ›
+                    </span>
+                  </div>
+                  <span className={'customer-order-status ' + (statusClasses[status]?.badge ?? '')}>
+                    {status === 'COMPLETED'
+                      ? '✓ Pronto para retirada'
+                      : status === 'CANCELED'
+                        ? '✕ Pedido cancelado'
+                        : (labels[status] ?? status)}
+                  </span>
+                  {status === 'COMPLETED' && (
+                    <span className='customer-ready-hint'>Seu pedido está pronto! Vá ao Trailer do Pastel retirar.</span>
+                  )}
+                  {status === 'CANCELED' && (
+                    <span className='customer-canceled-hint'>
+                      Este pedido foi cancelado e não estará disponível para retirada.
+                    </span>
+                  )}
                   <div className='customer-card-bottom'>
                     <strong>{brl(order.total)}</strong>
                     <span>{quantity === undefined ? 'Ver detalhes' : quantity + (quantity === 1 ? ' item' : ' itens')}</span>
