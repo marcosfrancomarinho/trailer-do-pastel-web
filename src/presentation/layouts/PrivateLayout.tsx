@@ -14,30 +14,6 @@ export default function PrivateLayout() {
   const location = useLocation();
   const [session, setSession] = useState<AdminSession | null>(() => useCases.auth.getSession.execute());
   const headerRef = useRef<HTMLElement>(null);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
-    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
-  );
-  useEffect(() => {
-    const syncPermission = () => setNotificationPermission(
-      typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
-    );
-    window.addEventListener('focus', syncPermission);
-    document.addEventListener('visibilitychange', syncPermission);
-    return () => {
-      window.removeEventListener('focus', syncPermission);
-      document.removeEventListener('visibilitychange', syncPermission);
-    };
-  }, []);
-
-  async function authorizeNotifications() {
-    if (typeof Notification === 'undefined') return;
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-    } catch {
-      setNotificationPermission(Notification.permission);
-    }
-  }
   const [headerHeight, setHeaderHeight] = useState(0);
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const view = path === '/mesas' ? 'tables' : 'panel';
