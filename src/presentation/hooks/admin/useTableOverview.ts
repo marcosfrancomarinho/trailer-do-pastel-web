@@ -21,6 +21,30 @@ export function useTableOverview() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [catalogError, setCatalogError] = useState('');
+  const [storeClosed, setStoreClosed] = useState(false);
+
+  const syncStoreStatus = useCallback(async () => {
+    const store = await useCases.store.getStatus.execute();
+    setStoreClosed(store.status === 'CLOSED');
+    return store.status === 'CLOSED';
+  }, [useCases]);
+
+  useEffect(() => {
+    void syncStoreStatus().catch(() => {});
+    const onEvent = (event: Event) => {
+      if (event.type === ORDER_STREAM_READY || (event instanceof CustomEvent && ['STORE_OPENED', 'STORE_CLOSED'].includes(event.detail?.type))) {
+        void syncStoreStatus().catch(() => {});
+      }
+    };
+    window.addEventListener(ORDER_EVENT, onEvent);
+    window.addEventListener(ORDER_STREAM_READY, onEvent);
+    window.addEventListener('focus', syncStoreStatus);
+    return () => {
+      window.removeEventListener(ORDER_EVENT, onEvent);
+      window.removeEventListener(ORDER_STREAM_READY, onEvent);
+      window.removeEventListener('focus', syncStoreStatus);
+    };
+  }, [syncStoreStatus]);
 
   const loadCatalog = useCallback(async () => {
     setCatalogError('');
@@ -269,6 +293,10 @@ export function useTableOverview() {
     setBusy(true);
     setError('');
     try {
+      if (await syncStoreStatus()) {
+        notify({ title: 'Loja fechada', message: 'Abra a loja na administração antes de enviar pedidos de mesa.', tone: 'error' });
+        return;
+      }
       await useCases.orders.createForTable.execute({
         tableId: selected,
         customerName: TABLE_ORDER_NAME,
@@ -286,7 +314,10 @@ export function useTableOverview() {
         setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar a mesa.');
       });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Falha ao lançar pedido.');
+      const message = cause instanceof Error ? cause.message : 'Falha ao lançar pedido.';
+      setError(message);
+      notify({ title: 'Pedido não enviado', message, tone: 'error' });
+      void syncStoreStatus().catch(() => {});
     } finally {
       setBusy(false);
     }
@@ -398,6 +429,7 @@ export function useTableOverview() {
   return {
     categories,
     catalogError,
+    storeClosed,
     loadCatalog,
     tables,
     readyTables,
