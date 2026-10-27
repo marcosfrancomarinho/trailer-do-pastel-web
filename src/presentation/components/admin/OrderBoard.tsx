@@ -441,6 +441,12 @@ export default function OrderBoard() {
               completed: 'bg-emerald-300',
               canceled: 'bg-rose-300',
             };
+            const countColor: Record<Tab, string> = {
+              pending: 'bg-amber-300 text-[#102b40]',
+              preparing: 'bg-cyan-300 text-[#102b40]',
+              completed: 'bg-emerald-300 text-[#102b40]',
+              canceled: 'bg-rose-400 text-[#102b40]',
+            };
             return (
               <button
                 key={option.id}
@@ -468,7 +474,7 @@ export default function OrderBoard() {
                 <strong
                   className={
                     'shrink-0 rounded-lg px-2.5 py-1.5 text-lg font-black tabular-nums sm:text-xl ' +
-                    (selected ? 'bg-amber-300 text-[#102b40]' : 'bg-[#284c61] text-white')
+                    countColor[option.id]
                   }
                   aria-hidden='true'
                 >
