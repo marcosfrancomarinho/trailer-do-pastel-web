@@ -13,17 +13,46 @@ export function pushSupported(): boolean {
     'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+let pendingSubscription: Promise<PushSubscription> | null = null;
+
+async function getPushSubscription(publicKey: string): Promise<PushSubscription> {
+  if (pendingSubscription) return pendingSubscription;
+  const attempt = (async () => {
+    const registration = await navigator.serviceWorker.register('/push-sw.js');
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) {
+      const currentKey = existing.options.applicationServerKey;
+      const expected = decodeKey(publicKey);
+      if (currentKey && new Uint8Array(currentKey).every((byte, index) => byte === expected[index]) &&
+          currentKey.byteLength === expected.byteLength) {
+        return existing;
+      }
+      await existing.unsubscribe();
+    }
+    try {
+      return await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeKey(publicKey),
+      });
+    } catch (error) {
+      if (error instanceof Error && /push service error|registration failed/i.test(error.message)) {
+        throw new Error('O serviço de notificações do Chrome não respondeu. Confira a conexão com a internet e tente novamente. Se persistir, atualize o Chrome e desative temporariamente VPN ou DNS privado.');
+      }
+      throw error;
+    }
+  })();
+  pendingSubscription = attempt;
+  try { return await attempt; }
+  finally { if (pendingSubscription === attempt) pendingSubscription = null; }
+}
+
 export async function registerOrderPush(tokens: string[]): Promise<void> {
   if (!pushSupported() || Notification.permission !== 'granted' || tokens.length === 0) return;
   const response = await fetch(API_URL + '/push/vapid-public-key');
   if (!response.ok) throw new Error('Web Push indisponível');
   const { publicKey } = await response.json() as { publicKey: string | null };
   if (!publicKey) throw new Error('Web Push ainda não foi configurado na loja.');
-  const registration = await navigator.serviceWorker.register('/push-sw.js');
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: decodeKey(publicKey),
-  });
+  const subscription = await getPushSubscription(publicKey);
   const payload = subscription.toJSON();
   await Promise.all(tokens.map(async (token) => {
     const saved = await fetch(API_URL + '/orders/tracking/' + encodeURIComponent(token) + '/push', {
