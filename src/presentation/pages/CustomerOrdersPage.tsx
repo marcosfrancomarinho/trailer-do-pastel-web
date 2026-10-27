@@ -3,9 +3,7 @@ import CustomerOrderList from '../components/public/CustomerOrderList';
 import { useCustomerOrdersPage } from '../hooks/public/useCustomerOrdersPage';
 
 export default function CustomerOrdersPage() {
-  const location = useLocation();
-  const justOrdered = Boolean((location.state as { justOrdered?: boolean } | null)?.justOrdered);
-  const { orders, statuses, removeSavedOrder, notificationPermission, enableNotifications, pushError } = useCustomerOrdersPage();
+  const { orders, statuses, removeSavedOrder } = useCustomerOrdersPage();
 
-  return <CustomerOrderList orders={orders} statuses={statuses} onRemove={removeSavedOrder} notificationPermission={notificationPermission} onEnableNotifications={enableNotifications} pushError={pushError} justOrdered={justOrdered} />;
+  return <CustomerOrderList orders={orders} statuses={statuses} onRemove={removeSavedOrder} />;
 }
