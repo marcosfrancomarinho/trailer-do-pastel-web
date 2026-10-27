@@ -3,6 +3,7 @@ import { useApplicationServices } from '../global/useApplicationServices';
 import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import type { PendingOrder, PreparingOrder } from '../../../application/dtos/orders';
 import { orderAlert } from '../../../infrastructure/audio/order-alert';
+import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
 
 type PrivateView = 'panel' | 'tables';
 type AlertOrder = PendingOrder | PreparingOrder;
@@ -68,7 +69,6 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
       return;
     }
     let active = true;
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     const checkPendingOrders = async () => {
       try {
         const pendingOrders = await useCases.orders.listPending.execute({ date: RestaurantDate.today() });
@@ -92,18 +92,18 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
         setPendingCount(pendingOrders.length);
       } catch {
         // Falhas transitórias não devem disparar alertas falsos.
-      } finally {
-        if (active) {
-          refreshTimer = setTimeout(() => {
-            void checkPendingOrders();
-          }, 5000);
-        }
       }
     };
     void checkPendingOrders();
+    const onChange = () => { void checkPendingOrders(); };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
+    window.addEventListener('focus', onChange);
     return () => {
       active = false;
-      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
+      window.removeEventListener('focus', onChange);
     };
   }, [token, view, useCases]);
 
@@ -114,7 +114,6 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
       return;
     }
     let active = true;
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     let daySnapshot = '';
     const checkCanceledOrders = async () => {
       try {
@@ -145,18 +144,18 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
         daySnapshot = day;
       } catch {
         // Falha de consulta não redefine a referência, evitando falsos alertas.
-      } finally {
-        if (active) {
-          refreshTimer = setTimeout(() => {
-            void checkCanceledOrders();
-          }, 5000);
-        }
       }
     };
     void checkCanceledOrders();
+    const onChange = () => { void checkCanceledOrders(); };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
+    window.addEventListener('focus', onChange);
     return () => {
       active = false;
-      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
+      window.removeEventListener('focus', onChange);
     };
   }, [token, view, useCases]);
 
