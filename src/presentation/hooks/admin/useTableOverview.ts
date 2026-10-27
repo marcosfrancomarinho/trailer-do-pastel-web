@@ -86,14 +86,14 @@ export function useTableOverview() {
 
   const refresh = useCallback(
     async (tableId?: string | null) => {
-      const overview = await useCases.tables.listOverview.execute(readyTablesRef.current);
+      const [overview, tableOrders] = await Promise.all([
+        useCases.tables.listOverview.execute(readyTablesRef.current),
+        tableId ? useCases.tables.listOrders.execute({ tableId }) : Promise.resolve(null),
+      ]);
       setTables(overview.tables);
       readyTablesRef.current = overview.readyTableIds;
       setReadyTables(overview.readyTableIds);
-      if (tableId) {
-        const tableOrders = await useCases.tables.listOrders.execute({ tableId });
-        setDetails(tableOrders);
-      }
+      if (tableOrders) setDetails(tableOrders);
     },
     [token, useCases],
   );
@@ -265,9 +265,13 @@ export function useTableOverview() {
       });
       setCart([]);
       setObservation('');
-      await refresh(selected);
+      // A criação já foi confirmada: mostre a aba de pedidos sem esperar dois GETs.
       setTableView('orders');
       notify({ title: 'Pedido lançado', message: 'Os produtos foram vinculados à mesa.', tone: 'success' });
+      // Atualiza os dados em segundo plano; o SSE também notifica outros operadores.
+      void refresh(selected).catch((cause) => {
+        setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar a mesa.');
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao lançar pedido.');
     } finally {
