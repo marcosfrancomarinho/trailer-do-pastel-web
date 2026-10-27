@@ -43,6 +43,7 @@ export default function TableOverview() {
   const {
     categories,
     catalogError,
+    storeClosed,
     loadCatalog,
     tables,
     readyTables,
@@ -423,6 +424,11 @@ export default function TableOverview() {
                                 {draftCount} itens
                               </span>
                             </div>
+                            {storeClosed && (
+                              <p role='alert' className='rounded-lg border border-amber-400/60 bg-[#493820] px-3 py-2 text-sm font-semibold text-amber-100 sm:col-span-2'>
+                                Loja fechada. Abra a loja na Administração para lançar pedidos nesta mesa.
+                              </p>
+                            )}
                             <div className='space-y-2 sm:col-span-2'>
                               {cart.map((item, index) => (
                                 <div key={item.key} className='rounded-lg border border-[#4f7286] bg-[#102c40] p-3'>
@@ -486,7 +492,7 @@ export default function TableOverview() {
                               <span className='font-black'>Total do pedido</span>
                               <strong className='text-lg text-amber-200'>{brl(CartTotal.calculate(cart))}</strong>
                             </div>
-                            <button disabled={busy || cart.length === 0} className={button + ' sm:col-span-2'} type='submit'>
+                            <button disabled={busy || cart.length === 0 || storeClosed} className={button + ' sm:col-span-2'} type='submit'>
                               {busy ? 'Salvando...' : 'Enviar pedido à mesa ' + details.number}
                             </button>
                           </form>
