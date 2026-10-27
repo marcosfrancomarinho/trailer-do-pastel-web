@@ -71,5 +71,12 @@ export function useCustomerOrdersPage() {
     });
   }
 
-  return { orders, statuses, removeSavedOrder };
+  function removeAllSavedOrders() {
+    for (const order of orders) useCases.orders.removeSaved.execute(order.trackingToken);
+    completedTokensRef.current.clear();
+    setStatuses({});
+    setOrders([]);
+  }
+
+  return { orders, statuses, removeSavedOrder, removeAllSavedOrders };
 }
