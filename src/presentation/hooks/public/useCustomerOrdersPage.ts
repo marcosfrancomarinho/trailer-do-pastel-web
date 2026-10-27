@@ -10,84 +10,55 @@ export function useCustomerOrdersPage() {
 
   useEffect(() => {
     if (orders.length === 0) return;
-    const needsTracking = (order: SavedCustomerOrder) =>
-      order.status !== 'COMPLETED' && !completedTokensRef.current.has(order.trackingToken);
     let active = true;
-    let pageHidden = false;
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-    let currentRequest: AbortController | null = null;
+    const controllers = new Map<string, AbortController>();
+    const streams: EventSource[] = [];
+    const baseUrl = (import.meta.env.VITE_API_URL || 'https://trailer-do-pastel.onrender.com').replace(/\/$/, '');
 
-    const stop = () => {
-      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
-      refreshTimer = undefined;
-      currentRequest?.abort();
-      currentRequest = null;
-    };
-    const refresh = async () => {
-      if (!active || pageHidden || document.visibilityState !== 'visible' || currentRequest) return;
-      const ordersToTrack = orders.filter(needsTracking);
-      if (ordersToTrack.length === 0) return;
-
-      const request = new AbortController();
-      currentRequest = request;
+    const refresh = async (order: SavedCustomerOrder) => {
+      if (!active || completedTokensRef.current.has(order.trackingToken)) return;
+      const previous = controllers.get(order.trackingToken);
+      previous?.abort();
+      const controller = new AbortController();
+      controllers.set(order.trackingToken, controller);
       try {
-        const trackingRequests = ordersToTrack.map((order) =>
-          useCases.orders.track.execute({ trackingToken: order.trackingToken, signal: request.signal }),
-        );
-        const responses = await Promise.allSettled(trackingRequests);
-        const canApplyResults = active && !pageHidden && !request.signal.aborted && document.visibilityState === 'visible';
-        if (canApplyResults) {
-          const next: Record<string, string> = {};
-          responses.forEach((response, index) => {
-            if (response.status !== 'fulfilled') return;
-            const trackingToken = ordersToTrack[index].trackingToken;
-            next[trackingToken] = response.value.status;
-            if (response.value.status === 'COMPLETED') completedTokensRef.current.add(trackingToken);
-          });
-          setStatuses((previous) => ({ ...previous, ...next }));
+        const current = await useCases.orders.track.execute({
+          trackingToken: order.trackingToken,
+          signal: controller.signal,
+        });
+        if (!active || controller.signal.aborted) return;
+        setStatuses((old) => ({ ...old, [order.trackingToken]: current.status }));
+        if (current.status === 'COMPLETED' || current.status === 'CANCELED') {
+          completedTokensRef.current.add(order.trackingToken);
+          const stream = streams.find((source) => source.url.endsWith(
+            '/orders/tracking/' + encodeURIComponent(order.trackingToken) + '/events',
+          ));
+          stream?.close();
         }
+      } catch {
+        // Ao reconectar, EventSource torna a disparar onopen e sincroniza.
       } finally {
-        if (currentRequest === request) {
-          currentRequest = null;
-          const hasOrdersToTrack = orders.some(needsTracking);
-          if (active && !pageHidden && document.visibilityState === 'visible' && hasOrdersToTrack) {
-            refreshTimer = setTimeout(() => {
-              void refresh();
-            }, 5000);
-          }
-        }
+        if (controllers.get(order.trackingToken) === controller) controllers.delete(order.trackingToken);
       }
     };
-    const resume = () => {
-      if (!active || pageHidden || document.visibilityState !== 'visible') return;
-      if (refreshTimer !== undefined) clearTimeout(refreshTimer);
-      refreshTimer = undefined;
-      if (!currentRequest) void refresh();
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') stop();
-      else resume();
-    };
-    const onPageHide = () => {
-      pageHidden = true;
-      stop();
-    };
-    const onPageShow = () => {
-      pageHidden = false;
-      resume();
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('pagehide', onPageHide);
-    window.addEventListener('pageshow', onPageShow);
-    window.addEventListener('focus', resume);
-    resume();
+
+    for (const order of orders) {
+      if (order.status === 'COMPLETED' || order.status === 'CANCELED' ||
+          completedTokensRef.current.has(order.trackingToken)) continue;
+      const stream = new EventSource(baseUrl + '/orders/tracking/' +
+        encodeURIComponent(order.trackingToken) + '/events');
+      streams.push(stream);
+      stream.onopen = () => { void refresh(order); };
+      stream.onmessage = () => { void refresh(order); };
+      void refresh(order);
+    }
+    const onFocus = () => { for (const order of orders) void refresh(order); };
+    window.addEventListener('focus', onFocus);
     return () => {
       active = false;
-      stop();
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('pagehide', onPageHide);
-      window.removeEventListener('pageshow', onPageShow);
-      window.removeEventListener('focus', resume);
+      streams.forEach((stream) => stream.close());
+      controllers.forEach((controller) => controller.abort());
+      window.removeEventListener('focus', onFocus);
     };
   }, [orders, useCases]);
 
