@@ -75,11 +75,22 @@ export function useCustomerOrdersPage() {
         if (previousStatus !== 'COMPLETED' && current.status === 'COMPLETED' &&
             typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           try {
-            const notification = new Notification('Trailer do Pastel — Pedido pronto!', {
+            const options = {
               body: 'Seu pedido #' + order.id.slice(0, 8) + ' está pronto para retirada.',
               tag: 'trailer-pedido-' + order.id,
-            });
-            notification.onclick = () => { window.focus(); notification.close(); };
+            };
+            if ('serviceWorker' in navigator) {
+              const registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
+              if (registration) {
+                await registration.showNotification('Trailer do Pastel — Pedido pronto!', options);
+              } else {
+                const notification = new Notification('Trailer do Pastel — Pedido pronto!', options);
+                notification.onclick = () => { window.location.assign('/pedidos'); notification.close(); };
+              }
+            } else {
+              const notification = new Notification('Trailer do Pastel — Pedido pronto!', options);
+              notification.onclick = () => { window.location.assign('/pedidos'); notification.close(); };
+            }
           } catch {
             // Navegadores podem impedir notificações mesmo com permissão.
           }
