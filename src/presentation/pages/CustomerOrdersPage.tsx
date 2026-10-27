@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router';
 import CustomerOrderList from '../components/public/CustomerOrderList';
 import { useCustomerOrdersPage } from '../hooks/public/useCustomerOrdersPage';
 
