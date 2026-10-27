@@ -43,6 +43,9 @@ export function useTableOverview() {
   const [selected, setSelected] = useState<string | null>(null);
   const [tableView, setTableView] = useState<'orders' | 'new'>('orders');
   const selectionRequest = useRef(0);
+  const selectedRef = useRef<string | null>(null);
+  selectedRef.current = selected;
+  const refreshInFlight = useRef<Promise<void> | null>(null);
   const cartPanelRef = useRef<HTMLElement | null>(null);
   const [cartFocusRequest, setCartFocusRequest] = useState(0);
   const [details, setDetails] = useState<TableOrders | null>(null);
@@ -85,15 +88,25 @@ export function useTableOverview() {
   const customProductPrice = product ? quantity * (Number(product.price) + additionsPrice) : 0;
 
   const refresh = useCallback(
-    async (tableId?: string | null) => {
-      const [overview, tableOrders] = await Promise.all([
-        useCases.tables.listOverview.execute(readyTablesRef.current),
-        tableId ? useCases.tables.listOrders.execute({ tableId }) : Promise.resolve(null),
-      ]);
-      setTables(overview.tables);
-      readyTablesRef.current = overview.readyTableIds;
-      setReadyTables(overview.readyTableIds);
-      if (tableOrders) setDetails(tableOrders);
+    (tableId?: string | null): Promise<void> => {
+      // Deduplica GETs quando o POST e o SSE disparam atualizações ao mesmo tempo.
+      if (refreshInFlight.current) return refreshInFlight.current;
+      const request = (async () => {
+        const currentTableId = tableId ?? selectedRef.current;
+        const [overview, tableOrders] = await Promise.all([
+          useCases.tables.listOverview.execute(readyTablesRef.current),
+          currentTableId ? useCases.tables.listOrders.execute({ tableId: currentTableId }) : Promise.resolve(null),
+        ]);
+        setTables(overview.tables);
+        readyTablesRef.current = overview.readyTableIds;
+        setReadyTables(overview.readyTableIds);
+        if (tableOrders && selectedRef.current === currentTableId) setDetails(tableOrders);
+      })();
+      refreshInFlight.current = request;
+      void request.finally(() => {
+        if (refreshInFlight.current === request) refreshInFlight.current = null;
+      }).catch(() => {});
+      return request;
     },
     [token, useCases],
   );
