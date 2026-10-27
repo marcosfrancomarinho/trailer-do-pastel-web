@@ -34,7 +34,8 @@ export function useCartPage() {
       await useCases.orders.create.execute(orderInput);
       setCart([]);
       setObservation('');
-      go('tracking');
+      navigate('/pedidos', { state: { justOrdered: true } });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível concluir o pedido');
     } finally {
