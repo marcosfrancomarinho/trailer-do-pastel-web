@@ -68,9 +68,9 @@ function OrderCard({
   onPrint: (order: Order) => void;
 }) {
   const orderCardColor: Record<string, string> = {
-    PENDING: 'border-amber-300/35 bg-[#1e3542]',
-    CONFIRMED: 'border-cyan-300/30 bg-[#173746]',
-    PREPARING: 'border-cyan-300/30 bg-[#173746]',
+    PENDING: 'border-sky-300/40 bg-[#19364b]',
+    CONFIRMED: 'border-amber-300/40 bg-[#3b3425]',
+    PREPARING: 'border-amber-300/40 bg-[#3b3425]',
     COMPLETED: 'border-emerald-300/30 bg-[#193a39]',
     CANCELED: 'border-rose-300/30 bg-[#392f3c]',
   };
@@ -443,20 +443,20 @@ export default function OrderBoard() {
             const selected = tab === option.id;
             const count = tabCounts[option.id];
             const dotColor: Record<Tab, string> = {
-              pending: 'bg-amber-300',
-              preparing: 'bg-cyan-300',
+              pending: 'bg-sky-300',
+              preparing: 'bg-amber-300',
               completed: 'bg-emerald-300',
               canceled: 'bg-rose-300',
             };
             const cardColor: Record<Tab, string> = {
-              pending: 'border-amber-400/40 bg-[#39351f] hover:bg-[#453f24]',
-              preparing: 'border-cyan-400/35 bg-[#173c4c] hover:bg-[#204959]',
+              pending: 'border-sky-400/40 bg-[#19384d] hover:bg-[#20475d]',
+              preparing: 'border-amber-400/40 bg-[#3d3627] hover:bg-[#4b412b]',
               completed: 'border-emerald-400/35 bg-[#173f37] hover:bg-[#1d4c42]',
               canceled: 'border-rose-400/35 bg-[#432b36] hover:bg-[#50323e]',
             };
             const countColor: Record<Tab, string> = {
-              pending: 'bg-amber-300 text-[#102b40]',
-              preparing: 'bg-cyan-300 text-[#102b40]',
+              pending: 'bg-sky-300 text-[#102b40]',
+              preparing: 'bg-amber-300 text-[#102b40]',
               completed: 'bg-emerald-300 text-[#102b40]',
               canceled: 'bg-rose-400 text-[#102b40]',
             };
