@@ -6,6 +6,7 @@ import { orderAlert } from '../../../infrastructure/audio/order-alert';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
 import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
+import { getPendingOrders, getPreparingOrders, getOrderHistory } from '../../../infrastructure/query/order-query-cache';
 
 export type Tab = 'pending' | 'preparing' | 'completed' | 'canceled';
 export type Order = PendingOrder | PreparingOrder | OrderHistoryItem;
@@ -195,13 +196,13 @@ export function useOrderBoard() {
       const filterKey = token + '|' + currentTab + '|' + date;
 
       if (currentTab === 'pending') {
-        const result = await useCases.orders.listPending.execute({ date });
+        const result = await getPendingOrders(useCases, token, date);
         if (currentFilterRef.current === filterKey) receivePending(result, date);
       } else if (currentTab === 'preparing') {
-        const result = await useCases.orders.listPreparing.execute({ date });
+        const result = await getPreparingOrders(useCases, token, date);
         if (currentFilterRef.current === filterKey) setPreparing(ordersFromDate(result, date));
       } else {
-        const result = await useCases.orders.listHistory.execute({ date });
+        const result = await getOrderHistory(useCases, token, date);
         if (currentFilterRef.current === filterKey) setHistory(ordersFromDate(result, date));
       }
     },
@@ -214,14 +215,14 @@ export function useOrderBoard() {
     const load = async () => {
       try {
         if (tab === 'pending') {
-          const result = await useCases.orders.listPending.execute({ date: visibleDate });
+          const result = await getPendingOrders(useCases, token, visibleDate);
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate) receivePending(result, visibleDate);
         } else if (tab === 'preparing') {
-          const result = await useCases.orders.listPreparing.execute({ date: visibleDate });
+          const result = await getPreparingOrders(useCases, token, visibleDate);
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate)
             setPreparing(ordersFromDate(result, visibleDate));
         } else {
-          const result = await useCases.orders.listHistory.execute({ date: visibleDate });
+          const result = await getOrderHistory(useCases, token, visibleDate);
           if (active && currentFilterRef.current === token + '|' + tab + '|' + visibleDate)
             setHistory(ordersFromDate(result, visibleDate));
         }
@@ -263,7 +264,7 @@ export function useOrderBoard() {
     let active = true;
     const check = async () => {
       try {
-        const orders = await useCases.orders.listPending.execute({ date: todayKey });
+        const orders = await getPendingOrders(useCases, token, todayKey);
         if (active) receivePending(orders, todayKey);
       } catch {
         // Conserva o último estado em falhas transitórias.
@@ -288,9 +289,9 @@ export function useOrderBoard() {
       // impede que o card continue exibindo dados anteriores.
       if (debouncedSearch) {
         const [allPending, allPreparing, allHistory] = await Promise.all([
-          useCases.orders.listPending.execute({ date: visibleDate }),
-          useCases.orders.listPreparing.execute({ date: visibleDate }),
-          useCases.orders.listHistory.execute({ date: visibleDate }),
+          getPendingOrders(useCases, token, visibleDate),
+          getPreparingOrders(useCases, token, visibleDate),
+          getOrderHistory(useCases, token, visibleDate),
         ]);
         setSearchResults(ordersFromDate([...allPending, ...allPreparing, ...allHistory], visibleDate));
       }
@@ -348,9 +349,9 @@ export function useOrderBoard() {
     setSearchLoading(true);
     setSearchError('');
     void Promise.all([
-      useCases.orders.listPending.execute({ date: visibleDate }),
-      useCases.orders.listPreparing.execute({ date: visibleDate }),
-      useCases.orders.listHistory.execute({ date: visibleDate }),
+      getPendingOrders(useCases, token, visibleDate),
+      getPreparingOrders(useCases, token, visibleDate),
+      getOrderHistory(useCases, token, visibleDate),
     ])
       .then(([allPending, allPreparing, allHistory]) => {
         if (!active) return;
