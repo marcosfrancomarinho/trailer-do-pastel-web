@@ -17,10 +17,12 @@ export function decodeOrderEvent(payload: string): OrderEvent | null {
     const record = value as Record<string, unknown>;
     const lifecycle = ['TABLE_CREATED', 'TABLE_ARCHIVED', 'TABLE_RELEASED', 'STORE_OPENED', 'STORE_CLOSED'];
     if (!lifecycle.includes(String(record.type)) && (typeof record.orderId !== 'string' || typeof record.status !== 'string')) return null;
+    if (typeof record.type === 'string' && lifecycle.includes(record.type)) {
+      return { type: record.type, tableId: typeof record.tableId === 'string' ? record.tableId : null };
+    }
     return {
-      orderId: typeof record.orderId === 'string' ? record.orderId : undefined,
-      status: typeof record.status === 'string' ? record.status : undefined,
-      type: typeof record.type === 'string' ? record.type : undefined,
+      orderId: record.orderId as string,
+      status: record.status as string,
       tableId: typeof record.tableId === 'string' ? record.tableId : null,
     };
   } catch {
