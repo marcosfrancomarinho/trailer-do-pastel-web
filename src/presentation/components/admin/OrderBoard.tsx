@@ -271,11 +271,9 @@ export default function OrderBoard() {
     soundEnabled,
     newOrderCount,
     setNewOrderCount,
-    soundReady,
     dialog,
     toggleSound,
     refresh,
-    unlockSound,
     visibleDate,
     filteredOrders,
     tabCounts,
@@ -339,18 +337,6 @@ export default function OrderBoard() {
             </button>
         </div>
       </div>
-
-      {soundEnabled && !soundReady && (
-        <button
-          type='button'
-          onClick={() => {
-            void unlockSound();
-          }}
-          className='w-full rounded-xl border border-amber-300 bg-[#4b3d1b] px-4 py-3 text-left text-sm font-bold text-white'
-        >
-          🔇 Som ainda não liberado pelo navegador. Toque aqui para liberar o áudio.
-        </button>
-      )}
 
       {newOrderCount > 0 && (
         <div
