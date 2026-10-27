@@ -25,3 +25,11 @@ test('eventos identificam somente invalidação; UI consulta a API', () => {
   assert.equal(ORDER_EVENT, 'trailer:order-event');
   assert.equal(ORDER_STREAM_READY, 'trailer:order-stream-ready');
 });
+
+test('aceita eventos de loja e mesas para invalidar GETs', () => {
+  for (const type of ['STORE_OPENED', 'STORE_CLOSED', 'TABLE_CREATED', 'TABLE_ARCHIVED', 'TABLE_RELEASED']) {
+    assert.deepEqual(decodeOrderEvent(JSON.stringify({ type, tableId: 'mesa-1' })), {
+      type, tableId: 'mesa-1',
+    });
+  }
+});
