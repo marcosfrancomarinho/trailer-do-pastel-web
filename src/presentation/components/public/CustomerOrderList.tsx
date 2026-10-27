@@ -8,6 +8,7 @@ type Props = {
   statuses: Record<string, string>;
   onRemove: (token: string) => void;
   notificationPermission: NotificationPermission | 'unsupported';
+  pushError: string;
   onEnableNotifications: () => Promise<void>;
 };
 
@@ -165,7 +166,7 @@ function CustomerOrderDetails({
   );
 }
 
-export default function CustomerOrderList({ orders, statuses, onRemove, notificationPermission, onEnableNotifications }: Props) {
+export default function CustomerOrderList({ orders, statuses, onRemove, notificationPermission, onEnableNotifications, pushError }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const { confirm, notify, dialog } = useActionDialog();
   const selected = orders.find((order) => order.trackingToken === selectedToken);
@@ -204,6 +205,7 @@ export default function CustomerOrderList({ orders, statuses, onRemove, notifica
         </div>
       )}
 
+      {pushError && <p role='alert' className='mb-3 rounded-lg border border-rose-300 bg-[#4a3035] p-3 text-sm text-white'>{pushError}</p>}
       {orders.length === 0 ? (
         <div className='customer-empty'>Nenhum pedido salvo neste dispositivo.</div>
       ) : (
