@@ -6,7 +6,7 @@ import { orderAlert } from '../../../infrastructure/audio/order-alert';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
 import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
-import { getPendingOrders, getPreparingOrders, getOrderHistory } from '../../../infrastructure/query/order-query-cache';
+import { getPendingOrders, getPreparingOrders, getOrderHistory, invalidateOrderQueries } from '../../../infrastructure/query/order-query-cache';
 
 export type Tab = 'pending' | 'preparing' | 'completed' | 'canceled';
 export type Order = PendingOrder | PreparingOrder | OrderHistoryItem;
@@ -320,7 +320,6 @@ export function useOrderBoard() {
   }, [tab, token, todayKey, receivePending, useCases]);
 
   const refresh = async () => {
-    setLoading(true);
     try {
       await fetchTab(tab, visibleDate);
       // A busca usa uma lista própria; atualizá-la após alterar o status
@@ -336,8 +335,6 @@ export function useOrderBoard() {
       setError('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar os pedidos.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -365,7 +362,24 @@ export function useOrderBoard() {
     setBusyId(id);
     try {
       await useCases.orders.updateStatus.execute({ orderId: id, status });
-      await refresh();
+      // Apenas o pedido alterado muda imediatamente no estado local.
+      const wasPending = pending.some((order) => order.id === id);
+      const wasPreparing = preparing.some((order) => order.id === id);
+      setPending((previous) => previous.filter((order) => order.id !== id));
+      if (status === 'COMPLETED' || status === 'CANCELED') {
+        setPreparing((previous) => previous.filter((order) => order.id !== id));
+      }
+      setTabCounts((previous) => ({
+        ...previous,
+        pending: previous.pending == null ? null : Math.max(0, previous.pending - (wasPending ? 1 : 0)),
+        preparing: previous.preparing == null ? null : Math.max(0, previous.preparing - (wasPreparing && (status === 'COMPLETED' || status === 'CANCELED') ? 1 : 0)),
+        completed: previous.completed == null ? null : previous.completed + (status === 'COMPLETED' ? 1 : 0),
+        canceled: previous.canceled == null ? null : previous.canceled + (status === 'CANCELED' ? 1 : 0),
+      }));
+      setSelectedId(null);
+      await invalidateOrderQueries();
+      // Reconcilia em segundo plano, sem loading geral.
+      void refresh();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Falha ao alterar status.';
       setError(message);
