@@ -14,6 +14,30 @@ export default function PrivateLayout() {
   const location = useLocation();
   const [session, setSession] = useState<AdminSession | null>(() => useCases.auth.getSession.execute());
   const headerRef = useRef<HTMLElement>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
+  );
+  useEffect(() => {
+    const syncPermission = () => setNotificationPermission(
+      typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
+    );
+    window.addEventListener('focus', syncPermission);
+    document.addEventListener('visibilitychange', syncPermission);
+    return () => {
+      window.removeEventListener('focus', syncPermission);
+      document.removeEventListener('visibilitychange', syncPermission);
+    };
+  }, []);
+
+  async function authorizeNotifications() {
+    if (typeof Notification === 'undefined') return;
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+    } catch {
+      setNotificationPermission(Notification.permission);
+    }
+  }
   const [headerHeight, setHeaderHeight] = useState(0);
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const view = path === '/mesas' ? 'tables' : 'panel';
@@ -88,6 +112,24 @@ export default function PrivateLayout() {
           </div>
         </header>
         <div aria-hidden='true' style={{ height: headerHeight }} />
+        {session && notificationPermission !== 'granted' && (
+          <div role='status' className='mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-3 rounded-xl border border-amber-400/50 bg-[#433723] px-4 py-3 text-sm text-amber-50'>
+            <span className='min-w-0 flex-1'>
+              <strong className='block'>Notificações do navegador desativadas</strong>
+              {notificationPermission === 'default'
+                ? 'Autorize para receber avisos do navegador sobre novos pedidos.'
+                : notificationPermission === 'denied'
+                  ? 'Permissão bloqueada. Abra as configurações do site no navegador e permita as notificações.'
+                  : 'Este navegador não oferece suporte às notificações do sistema.'}
+            </span>
+            {notificationPermission === 'default' && (
+              <button type='button' onClick={() => void authorizeNotifications()}
+                className='min-h-10 rounded-lg bg-amber-300 px-4 font-bold text-[#302714]'>
+                Permitir notificações
+              </button>
+            )}
+          </div>
+        )}
         <Outlet />
       </div>
     </PrivateContextProvider.Provider>
