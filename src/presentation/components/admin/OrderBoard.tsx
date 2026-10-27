@@ -441,6 +441,12 @@ export default function OrderBoard() {
               completed: 'bg-emerald-300',
               canceled: 'bg-rose-300',
             };
+            const cardColor: Record<Tab, string> = {
+              pending: 'border-amber-400/40 bg-[#39351f] hover:bg-[#453f24]',
+              preparing: 'border-cyan-400/35 bg-[#173c4c] hover:bg-[#204959]',
+              completed: 'border-emerald-400/35 bg-[#173f37] hover:bg-[#1d4c42]',
+              canceled: 'border-rose-400/35 bg-[#432b36] hover:bg-[#50323e]',
+            };
             const countColor: Record<Tab, string> = {
               pending: 'bg-amber-300 text-[#102b40]',
               preparing: 'bg-cyan-300 text-[#102b40]',
@@ -457,9 +463,7 @@ export default function OrderBoard() {
                 aria-label={option.label + ': ' + (count === null ? 'carregando' : count + ' pedidos')}
                 className={
                   'group flex min-h-[68px] min-w-0 items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left shadow-sm transition-colors sm:min-h-[76px] sm:px-4 ' +
-                  (selected
-                    ? 'border-amber-300 bg-[#22475b] text-white ring-1 ring-amber-300/30'
-                    : 'border-[#365f74] bg-[#16374b] text-slate-100 hover:border-[#7097a9] hover:bg-[#21485c]')
+                  cardColor[option.id] + (selected ? ' text-white ring-2 ring-white/45' : ' text-slate-100')
                 }
               >
                 <span className='flex min-w-0 flex-col gap-1.5'>
