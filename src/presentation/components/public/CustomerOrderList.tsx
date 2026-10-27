@@ -7,6 +7,7 @@ type Props = {
   orders: SavedCustomerOrder[];
   statuses: Record<string, string>;
   onRemove: (token: string) => void;
+  onRemoveAll: () => void;
 };
 
 const labels: Record<string, string> = {
@@ -163,7 +164,7 @@ function CustomerOrderDetails({
   );
 }
 
-export default function CustomerOrderList({ orders, statuses, onRemove }: Props) {
+export default function CustomerOrderList({ orders, statuses, onRemove, onRemoveAll }: Props) {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const { confirm, notify, dialog } = useActionDialog();
   const selected = orders.find((order) => order.trackingToken === selectedToken);
@@ -180,11 +181,32 @@ export default function CustomerOrderList({ orders, statuses, onRemove }: Props)
     notify({ title: 'Pedido removido', message: 'O pedido foi removido deste dispositivo.', tone: 'success' });
   }
 
+  async function removeAll() {
+    const approved = await confirm({
+      title: 'Excluir todos os pedidos salvos?',
+      message: 'Os pedidos serão removidos somente deste dispositivo. Nenhum pedido será cancelado na pastelaria.',
+      confirmLabel: 'Excluir todos',
+      tone: 'warning',
+    });
+    if (!approved) return;
+    onRemoveAll();
+    setSelectedToken(null);
+    notify({ title: 'Pedidos removidos', message: 'Todos os pedidos salvos foram removidos deste dispositivo.', tone: 'success' });
+  }
+
   return (
     <main className='customer-orders-page mx-auto max-w-3xl px-4 py-8 sm:py-12'>
       <p className='customer-eyebrow'>ACOMPANHAMENTO</p>
       <h1>Meus pedidos</h1>
       <p className='customer-orders-subtitle'>O status é atualizado automaticamente quando o pedido muda.</p>
+      {orders.length > 0 && (
+        <div className='mb-5 flex justify-end'>
+          <button type='button' onClick={() => void removeAll()}
+            className='rounded-lg border border-red-400/60 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15'>
+            Excluir todos os pedidos
+          </button>
+        </div>
+      )}
       {orders.length === 0 ? (
         <div className='customer-empty'>Nenhum pedido salvo neste dispositivo.</div>
       ) : (
