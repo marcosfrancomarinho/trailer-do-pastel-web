@@ -88,24 +88,7 @@ export default function PrivateLayout() {
           </div>
         </header>
         <div aria-hidden='true' style={{ height: headerHeight }} />
-        {session && notificationPermission !== 'granted' && (
-          <div role='status' className='mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-3 rounded-xl border border-amber-400/50 bg-[#433723] px-4 py-3 text-sm text-amber-50'>
-            <span className='min-w-0 flex-1'>
-              <strong className='block'>Notificações do navegador desativadas</strong>
-              {notificationPermission === 'default'
-                ? 'Autorize para receber avisos do navegador sobre novos pedidos.'
-                : notificationPermission === 'denied'
-                  ? 'Permissão bloqueada. Abra as configurações do site no navegador e permita as notificações.'
-                  : 'Este navegador não oferece suporte às notificações do sistema.'}
-            </span>
-            {notificationPermission === 'default' && (
-              <button type='button' onClick={() => void authorizeNotifications()}
-                className='min-h-10 rounded-lg bg-amber-300 px-4 font-bold text-[#302714]'>
-                Permitir notificações
-              </button>
-            )}
-          </div>
-        )}
+
         <Outlet />
       </div>
     </PrivateContextProvider.Provider>
