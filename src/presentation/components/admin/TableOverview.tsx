@@ -16,12 +16,27 @@ const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#0928
 
 function tableAppearance(status: string, hasReadyOrders: boolean) {
   if (status === 'FREE') {
-    return { color: 'border-[#60dcaa] bg-[#164734]', label: 'Livre' };
+    return {
+      color: 'border-[#376477] bg-[#17394b] hover:border-[#57cda1]',
+      dot: 'bg-[#67e5aa]',
+      label: 'Livre',
+      statusColor: 'text-[#a3f3ca]',
+    };
   }
   if (hasReadyOrders) {
-    return { color: 'border-[#61c7fa] bg-[#174b73]', label: 'Pedidos prontos' };
+    return {
+      color: 'border-[#427998] bg-[#183e58] hover:border-[#70cfff]',
+      dot: 'bg-[#78d3ff]',
+      label: 'Pedido pronto',
+      statusColor: 'text-[#a8e5ff]',
+    };
   }
-  return { color: 'border-[#ffce56] bg-[#544221]', label: 'Em andamento' };
+  return {
+    color: 'border-[#806a3e] bg-[#403a2a] hover:border-[#ffce56]',
+    dot: 'bg-[#ffce56]',
+    label: 'Em andamento',
+    statusColor: 'text-[#ffe6a0]',
+  };
 }
 
 export default function TableOverview() {
@@ -143,31 +158,40 @@ export default function TableOverview() {
         </p>
       )}
       {sortedTables.length > 0 && (
-        <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+        <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
           {sortedTables.map((table) => {
             const appearance = tableAppearance(table.status, readyTables.has(table.id));
+            const isSelected = selected === table.id;
 
             return (
               <button
                 key={table.id}
                 type='button'
                 onClick={() => void openTable(table.id)}
-                aria-expanded={selected === table.id}
+                aria-expanded={isSelected}
                 aria-haspopup='dialog'
+                aria-label={`Mesa ${table.number}, ${appearance.label}, total ${brl(table.totalSpent)}`}
                 className={
-                  'flex min-h-20 flex-col justify-center gap-1 rounded-xl border px-4 py-3 text-left text-white transition-all duration-200 ' +
+                  'group flex min-w-0 min-h-[116px] flex-col justify-between rounded-2xl border p-3 text-left text-white shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffca28] sm:min-h-[124px] sm:p-4 ' +
                   appearance.color +
-                  (selected === table.id ? ' ring-2 ring-[#ffca28] shadow-lg' : ' hover:-translate-y-0.5')
+                  (isSelected ? ' ring-2 ring-[#ffca28] shadow-lg shadow-black/20' : ' hover:-translate-y-0.5 hover:shadow-md')
                 }
               >
-                <span className='flex w-full items-center justify-between gap-1'>
-                  <strong className='text-base'>Mesa {table.number}</strong>
-                  <span className='text-xs' aria-hidden='true'>
+                <span className='flex w-full items-center justify-between gap-2'>
+                  <span className='grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-base font-black text-white sm:h-10 sm:w-10'>
+                    {table.number}
+                  </span>
+                  <span className='text-lg text-slate-300 transition-transform group-hover:translate-x-0.5' aria-hidden='true'>
                     ↗
                   </span>
                 </span>
-                <span className='text-xs font-semibold'>
-                  {appearance.label} · {brl(table.totalSpent)}
+                <span className='mt-2 block min-w-0'>
+                  <span className='block text-sm font-extrabold'>Mesa {table.number}</span>
+                  <span className={'mt-1 flex items-center gap-1.5 text-[11px] font-bold leading-snug ' + appearance.statusColor}>
+                    <span className={'h-2 w-2 shrink-0 rounded-full ' + appearance.dot} aria-hidden='true' />
+                    {appearance.label}
+                  </span>
+                  <span className='mt-1 block truncate text-xs font-semibold text-slate-200'>{brl(table.totalSpent)}</span>
                 </span>
               </button>
             );
