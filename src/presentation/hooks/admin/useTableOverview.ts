@@ -8,6 +8,7 @@ import type { Addition, Category, Product } from '../../../application/dtos/cata
 import type { RestaurantTable, TableOrders } from '../../../application/dtos/tables';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
+import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
 
 const TABLE_ORDER_NAME = 'Trailer do Pastel';
 const TABLE_ORDER_PHONE = '99984636486';
@@ -106,12 +107,17 @@ export function useTableOverview() {
       });
     };
     update();
-    const interval = window.setInterval(update, 15_000);
-    document.addEventListener('visibilitychange', update);
+    const onVisibility = () => { if (document.visibilityState === 'visible') update(); };
+    window.addEventListener(ORDER_EVENT, update);
+    window.addEventListener(ORDER_STREAM_READY, update);
+    window.addEventListener('focus', update);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       active = false;
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', update);
+      window.removeEventListener(ORDER_EVENT, update);
+      window.removeEventListener(ORDER_STREAM_READY, update);
+      window.removeEventListener('focus', update);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [refresh]);
 
