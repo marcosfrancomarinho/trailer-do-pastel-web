@@ -17,22 +17,22 @@ const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#0928
 function tableAppearance(status: string, hasReadyOrders: boolean) {
   if (status === 'FREE') {
     return {
-      color: 'border-[#376477] bg-[#17394b] hover:border-[#57cda1]',
-      dot: 'bg-[#67e5aa]',
+      color: 'border-[#486476] bg-[#20394a] hover:border-[#91acbd]',
+      dot: 'bg-[#b8c9d5]',
       label: 'Livre',
-      statusColor: 'text-[#a3f3ca]',
+      statusColor: 'text-[#d7e3ed]',
     };
   }
   if (hasReadyOrders) {
     return {
-      color: 'border-[#427998] bg-[#183e58] hover:border-[#70cfff]',
-      dot: 'bg-[#78d3ff]',
+      color: 'border-[#45b987] bg-[#173e37] hover:border-[#70efb0]',
+      dot: 'bg-[#62e6a2]',
       label: 'Pedido pronto',
-      statusColor: 'text-[#a8e5ff]',
+      statusColor: 'text-[#a6f5ce]',
     };
   }
   return {
-    color: 'border-[#806a3e] bg-[#403a2a] hover:border-[#ffce56]',
+    color: 'border-[#846c43] bg-[#343b3f] hover:border-[#ffce56]',
     dot: 'bg-[#ffce56]',
     label: 'Em andamento',
     statusColor: 'text-[#ffe6a0]',
