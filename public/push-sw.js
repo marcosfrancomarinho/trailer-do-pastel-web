@@ -14,15 +14,24 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = new URL('/pedidos', self.location.origin).href;
+  const destination = new URL('/pedidos', self.location.origin).href;
   event.waitUntil((async () => {
-    const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const existing = windows.find((client) => client.url.startsWith(self.location.origin));
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const existing = windows.find((client) => {
+      try { return new URL(client.url).origin === self.location.origin; }
+      catch { return false; }
+    });
     if (existing) {
-      await existing.navigate(url);
-      await existing.focus();
-    } else {
-      await clients.openWindow(url);
+      try {
+        const navigated = await existing.navigate(destination);
+        if (navigated) {
+          await navigated.focus();
+          return;
+        }
+      } catch {
+        // Alguns navegadores móveis não permitem navegar uma janela existente.
+      }
     }
+    await self.clients.openWindow(destination);
   })());
 });
