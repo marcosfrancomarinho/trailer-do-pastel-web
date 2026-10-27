@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { orderAlert } from '../../../infrastructure/audio/order-alert';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useApplicationServices } from '../global/useApplicationServices';
@@ -73,6 +74,11 @@ export function usePainelAdminPage() {
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (adminBusy) return;
+    // Desbloqueia o Web Audio ainda no gesto de login, antes da chamada HTTP.
+    // Assim o alerta também toca quando a primeira tela aberta é Mesas.
+    if (useCases.notifications.getSoundPreference.execute()) {
+      void orderAlert.enable().catch(() => {});
+    }
     setAdminBusy(true);
     setAdminError('');
     try {
