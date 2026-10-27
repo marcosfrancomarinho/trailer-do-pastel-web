@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApplicationServices } from '../global/useApplicationServices';
 import type { SavedCustomerOrder } from '../../../application/dtos/orders';
+import { pushSupported, registerOrderPush, unsubscribeOrderPush } from '../../../infrastructure/http/customer-push';
 
 export function useCustomerOrdersPage() {
   const useCases = useApplicationServices();
@@ -12,14 +13,33 @@ export function useCustomerOrdersPage() {
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
 
+  const [pushError, setPushError] = useState('');
   async function enableNotifications() {
-    if (typeof Notification === 'undefined') return;
+    if (!pushSupported()) return;
     try {
-      setNotificationPermission(await Notification.requestPermission());
-    } catch {
-      setNotificationPermission(Notification.permission);
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        setPushError('');
+        await registerOrderPush(orders.filter((order) =>
+          !['COMPLETED', 'CANCELED'].includes(statuses[order.trackingToken] ?? order.status),
+        ).map((order) => order.trackingToken));
+      }
+    } catch (error) {
+      setPushError(error instanceof Error ? error.message : 'Não foi possível ativar as notificações.');
     }
   }
+
+  useEffect(() => {
+    if (!pushSupported() || Notification.permission !== 'granted') return;
+    const tokens = orders.filter((order) =>
+      !['COMPLETED', 'CANCELED'].includes(statuses[order.trackingToken] ?? order.status),
+    ).map((order) => order.trackingToken);
+    void registerOrderPush(tokens).catch((error: unknown) =>
+      setPushError(error instanceof Error ? error.message : 'Web Push indisponível'),
+    );
+    // O registro é refeito quando a lista de pedidos muda.
+  }, [orders, statuses]);
 
   useEffect(() => {
     const syncPermission = () => setNotificationPermission(
@@ -101,6 +121,7 @@ export function useCustomerOrdersPage() {
   function removeSavedOrder(token: string) {
     completedTokensRef.current.delete(token);
     lastStatusesRef.current.delete(token);
+    void unsubscribeOrderPush(token).catch(() => {});
     setOrders(useCases.orders.removeSaved.execute(token));
     setStatuses((previous) => {
       const next = { ...previous };
@@ -109,5 +130,5 @@ export function useCustomerOrdersPage() {
     });
   }
 
-  return { orders, statuses, removeSavedOrder, notificationPermission, enableNotifications };
+  return { orders, statuses, removeSavedOrder, notificationPermission, enableNotifications, pushError };
 }
