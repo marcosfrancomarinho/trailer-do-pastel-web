@@ -5,6 +5,7 @@ import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import { orderAlert } from '../../../infrastructure/audio/order-alert';
 import { useActionDialog } from '../../components/shared/ActionDialog';
 import { usePrivateContext } from '../global/usePrivateContext';
+import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
 
 export type Tab = 'pending' | 'preparing' | 'completed' | 'canceled';
 export type Order = PendingOrder | PreparingOrder | OrderHistoryItem;
@@ -210,8 +211,6 @@ export function useOrderBoard() {
   // Apenas Pendentes usa polling. As demais abas consultam quando abertas.
   useEffect(() => {
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
     const load = async () => {
       try {
         if (tab === 'pending') {
@@ -234,11 +233,7 @@ export function useOrderBoard() {
       } finally {
         if (active) {
           setLoading(false);
-          if (tab === 'pending') {
-            timer = setTimeout(() => {
-              void load();
-            }, 5000);
-          }
+
         }
       }
     };
@@ -250,36 +245,38 @@ export function useOrderBoard() {
     setSelectedId(null);
     setPrintId(null);
     void load();
-
+    const onChange = () => { void load(); };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
+    window.addEventListener('focus', onChange);
     return () => {
       active = false;
-      if (timer !== undefined) clearTimeout(timer);
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
+      window.removeEventListener('focus', onChange);
     };
   }, [token, tab, visibleDate, receivePending, useCases]);
 
-  // Continua monitorando novos pedidos mesmo nas demais abas do painel.
+  // SSE só sinaliza mudanças; a lista real sempre vem da API.
   useEffect(() => {
-    if (tab === 'pending') return;
+    if (tab === 'pending' || !token) return;
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     const check = async () => {
       try {
         const orders = await useCases.orders.listPending.execute({ date: todayKey });
         if (active) receivePending(orders, todayKey);
       } catch {
-        // A tela atual mantém seu próprio tratamento de erro.
-      } finally {
-        if (active) {
-          timer = setTimeout(() => {
-            void check();
-          }, 5000);
-        }
+        // Conserva o último estado em falhas transitórias.
       }
     };
     void check();
+    const onChange = () => { void check(); };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
     return () => {
       active = false;
-      if (timer !== undefined) clearTimeout(timer);
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
     };
   }, [tab, token, todayKey, receivePending, useCases]);
 
