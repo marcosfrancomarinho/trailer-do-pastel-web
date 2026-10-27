@@ -67,6 +67,13 @@ function OrderCard({
   onOpen: (order: Order) => void;
   onPrint: (order: Order) => void;
 }) {
+  const orderCardColor: Record<string, string> = {
+    PENDING: 'border-amber-300/35 bg-[#1e3542]',
+    CONFIRMED: 'border-cyan-300/30 bg-[#173746]',
+    PREPARING: 'border-cyan-300/30 bg-[#173746]',
+    COMPLETED: 'border-emerald-300/30 bg-[#193a39]',
+    CANCELED: 'border-rose-300/30 bg-[#392f3c]',
+  };
   const action = nextAction(order.status);
   const itemsCount = order.items.reduce((total, item) => total + item.quantity, 0);
   const hasObservation = Boolean(order.observation?.trim());
@@ -80,7 +87,7 @@ function OrderCard({
     : 'border-cyan-300 bg-cyan-300/10 text-cyan-100';
 
   return (
-    <article className='flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#37637b] bg-[#112e43] shadow-sm'>
+    <article className={'flex min-w-0 flex-col overflow-hidden rounded-xl border shadow-sm ' + (orderCardColor[order.status] ?? 'border-[#37637b] bg-[#112e43]')}>
       <div className='flex flex-wrap items-center justify-between gap-2 border-b border-[#31566e] px-2.5 py-1.5'>
         <CopyId id={order.id} label={'#' + order.id.slice(0, 8)} className='text-sm font-extrabold tracking-wider text-cyan-200' />
         <div className='flex items-center gap-1.5'>
