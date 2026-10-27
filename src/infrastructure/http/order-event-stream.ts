@@ -4,8 +4,9 @@ export const ORDER_EVENT = 'trailer:order-event';
 export const ORDER_STREAM_READY = 'trailer:order-stream-ready';
 
 export interface OrderEvent {
-  orderId: string;
-  status: string;
+  orderId?: string;
+  status?: string;
+  type?: string;
   tableId?: string | null;
 }
 
@@ -14,10 +15,12 @@ export function decodeOrderEvent(payload: string): OrderEvent | null {
     const value: unknown = JSON.parse(payload);
     if (!value || typeof value !== 'object') return null;
     const record = value as Record<string, unknown>;
-    if (typeof record.orderId !== 'string' || typeof record.status !== 'string') return null;
+    const lifecycle = ['TABLE_CREATED', 'TABLE_ARCHIVED', 'TABLE_RELEASED', 'STORE_OPENED', 'STORE_CLOSED'];
+    if (!lifecycle.includes(String(record.type)) && (typeof record.orderId !== 'string' || typeof record.status !== 'string')) return null;
     return {
-      orderId: record.orderId,
-      status: record.status,
+      orderId: typeof record.orderId === 'string' ? record.orderId : undefined,
+      status: typeof record.status === 'string' ? record.status : undefined,
+      type: typeof record.type === 'string' ? record.type : undefined,
       tableId: typeof record.tableId === 'string' ? record.tableId : null,
     };
   } catch {
