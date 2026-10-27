@@ -21,12 +21,20 @@ export function useStoreStatus() {
 
     const refreshStatus = () => { void updateStatus(); };
     refreshStatus();
-    const timer = window.setInterval(refreshStatus, 30_000);
+    const baseUrl = (import.meta.env.VITE_API_URL || 'https://trailer-do-pastel.onrender.com').replace(/\/$/, '');
+    const stream = new EventSource(baseUrl + '/store/events');
+    stream.onopen = refreshStatus;
+    stream.onmessage = refreshStatus;
+    // Polling is a fallback only when SSE is disconnected.
+    const timer = window.setInterval(() => {
+      if (stream.readyState !== EventSource.OPEN) refreshStatus();
+    }, 30_000);
     window.addEventListener('focus', refreshStatus);
 
     return () => {
       active = false;
       window.clearInterval(timer);
+      stream.close();
       window.removeEventListener('focus', refreshStatus);
     };
   }, [useCases]);
