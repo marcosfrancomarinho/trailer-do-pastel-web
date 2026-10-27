@@ -38,7 +38,7 @@ export function useUserList() {
     setBusy(user.id);
     try {
       await useCases.users.remove.execute({ userId: user.id });
-      await refresh();
+      setUsers((previous) => previous.filter((item) => item.id !== user.id));
       notify({ title: 'Usuário excluído', message: user.name + ' foi removido.', tone: 'success' });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao excluir usuário.');
