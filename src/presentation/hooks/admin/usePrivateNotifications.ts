@@ -4,6 +4,7 @@ import { RestaurantDate } from '../../../application/utils/order-date.ts';
 import type { PendingOrder, PreparingOrder } from '../../../application/dtos/orders';
 import { orderAlert } from '../../../infrastructure/audio/order-alert';
 import { ORDER_EVENT, ORDER_STREAM_READY } from '../../../infrastructure/http/order-event-stream';
+import { getPendingOrders, getPreparingOrders, getOrderHistory } from '../../../infrastructure/query/order-query-cache';
 
 type PrivateView = 'panel' | 'tables';
 type AlertOrder = PendingOrder | PreparingOrder;
@@ -71,7 +72,7 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
     let active = true;
     const checkPendingOrders = async () => {
       try {
-        const pendingOrders = await useCases.orders.listPending.execute({ date: RestaurantDate.today() });
+        const pendingOrders = await getPendingOrders(useCases, token, RestaurantDate.today());
         if (!active) return;
         const pendingIds = new Set(pendingOrders.map((order) => order.id));
         const seenIds = pendingSeenRef.current;
@@ -119,9 +120,9 @@ export function usePrivateNotifications(token: string, view: PrivateView): Priva
       try {
         const day = RestaurantDate.today();
         const [pending, ongoing, history] = await Promise.all([
-          useCases.orders.listPending.execute({ date: day }),
-          useCases.orders.listPreparing.execute({ date: day }),
-          useCases.orders.listHistory.execute({ date: day }),
+          getPendingOrders(useCases, token, day),
+          getPreparingOrders(useCases, token, day),
+          getOrderHistory(useCases, token, day),
         ]);
         if (!active) return;
         const currentOrders = new Map([...pending, ...ongoing].map((order) => [order.id, order] as const));
