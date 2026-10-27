@@ -71,6 +71,13 @@ export function useTableOverview() {
   const hasMoreProducts = visibleProductCount < filteredProducts.length;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  // Avisos temporários não devem ocupar permanentemente o mapa de mesas.
+  useEffect(() => {
+    if (!error) return;
+    const timeout = window.setTimeout(() => setError(''), 5_000);
+    return () => window.clearTimeout(timeout);
+  }, [error]);
   const { confirm, notify, dialog } = useActionDialog();
   const availableAdditions = additions.filter((item) => item.available);
   const additionsPrice = additions.reduce((total, extra) => total + Number(extra.price) * (amounts[extra.id] || 0), 0);
