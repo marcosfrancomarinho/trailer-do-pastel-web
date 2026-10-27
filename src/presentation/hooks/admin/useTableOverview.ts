@@ -44,7 +44,7 @@ export function useTableOverview() {
   const [tableView, setTableView] = useState<'orders' | 'new'>('orders');
   const selectionRequest = useRef(0);
   const selectedRef = useRef<string | null>(null);
-  selectedRef.current = selected;
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
   const refreshInFlight = useRef<Promise<void> | null>(null);
   const cartPanelRef = useRef<HTMLElement | null>(null);
   const [cartFocusRequest, setCartFocusRequest] = useState(0);
