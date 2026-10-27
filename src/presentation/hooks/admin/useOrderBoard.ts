@@ -39,6 +39,7 @@ export function useOrderBoard() {
   const [pending, setPending] = useState<PendingOrder[]>([]);
   const [preparing, setPreparing] = useState<PreparingOrder[]>([]);
   const [history, setHistory] = useState<OrderHistoryItem[]>([]);
+  const [tabCounts, setTabCounts] = useState<Record<Tab, number | null>>({ pending: null, preparing: null, completed: null, canceled: null });
   const [busyId, setBusyId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -258,6 +259,43 @@ export function useOrderBoard() {
     };
   }, [token, tab, visibleDate, receivePending, useCases]);
 
+  // Contadores da data selecionada: três GETs compartilhados com as outras telas via TanStack Query.
+  // Os eventos SSE apenas invalidam as consultas; os números vêm sempre da API.
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    const loadCounts = async () => {
+      try {
+        const [pendingOrders, preparingOrders, historyOrders] = await Promise.all([
+          getPendingOrders(useCases, token, visibleDate),
+          getPreparingOrders(useCases, token, visibleDate),
+          getOrderHistory(useCases, token, visibleDate),
+        ]);
+        if (!active) return;
+        setTabCounts({
+          pending: ordersFromDate(pendingOrders, visibleDate).length,
+          preparing: ordersFromDate(preparingOrders, visibleDate).length,
+          completed: ordersFromDate(historyOrders, visibleDate).filter(order => order.status === 'COMPLETED').length,
+          canceled: ordersFromDate(historyOrders, visibleDate).filter(order => order.status === 'CANCELED').length,
+        });
+      } catch {
+        // Não transforma uma falha temporária em zero pedidos.
+      }
+    };
+    setTabCounts({ pending: null, preparing: null, completed: null, canceled: null });
+    void loadCounts();
+    const onChange = () => { void loadCounts(); };
+    window.addEventListener(ORDER_EVENT, onChange);
+    window.addEventListener(ORDER_STREAM_READY, onChange);
+    window.addEventListener('focus', onChange);
+    return () => {
+      active = false;
+      window.removeEventListener(ORDER_EVENT, onChange);
+      window.removeEventListener(ORDER_STREAM_READY, onChange);
+      window.removeEventListener('focus', onChange);
+    };
+  }, [token, visibleDate, useCases]);
+
   // SSE só sinaliza mudanças; a lista real sempre vem da API.
   useEffect(() => {
     if (tab === 'pending' || !token) return;
@@ -410,6 +448,7 @@ export function useOrderBoard() {
     unlockSound,
     visibleDate,
     filteredOrders,
+    tabCounts,
     changeStatus,
     selectedOrder,
     printOrder,
