@@ -1,23 +1,35 @@
 /** Alerta forte de novos pedidos, sintetizado localmente pelo Web Audio API. */
 export class OrderAlert {
   private context: AudioContext | null = null
+  private resuming: Promise<void> | null = null
 
   public isReady(): boolean {
     return this.context?.state === 'running'
   }
 
-  public async enable(): Promise<void> {
-    const context = this.context ?? new AudioContext()
+  public enable(): Promise<void> {
+    if (this.isReady()) return Promise.resolve()
+    if (this.resuming) return this.resuming
+
+    // A primeira chamada deve acontecer durante um gesto do usuário.
+    // Reutilizar o AudioContext evita bloqueios por recriações desnecessárias.
+    const context = this.context && this.context.state !== 'closed' ? this.context : new AudioContext()
     this.context = context
-    await context.resume()
-    if (context.state !== 'running') throw new Error('O navegador bloqueou o áudio.')
+    const attempt = context.resume().then(() => {
+      if (context.state !== 'running') throw new Error('O navegador bloqueou o áudio.')
+    })
+    this.resuming = attempt
+    void attempt.finally(() => {
+      if (this.resuming === attempt) this.resuming = null
+    }).catch(() => {})
+    return attempt
   }
 
   public play(): void {
     const context = this.context
     if (!context) return
     if (context.state === 'suspended') {
-      void context.resume().then(() => { if (this.context === context && context.state === 'running') this.play() }).catch(() => {})
+      void this.enable().then(() => { if (this.context === context) this.play() }).catch(() => {})
       return
     }
     if (context.state !== 'running') return
@@ -46,7 +58,12 @@ export class OrderAlert {
   /** Três sinais graves descendentes para distinguir cancelamento de pedido novo. */
   public playCancellation(): void {
     const context = this.context
-    if (!context || context.state !== 'running') return
+    if (!context) return
+    if (context.state === 'suspended') {
+      void this.enable().then(() => { if (this.context === context) this.playCancellation() }).catch(() => {})
+      return
+    }
+    if (context.state !== 'running') return
     const now = context.currentTime
     for (const [index, frequency] of [660, 440, 330].entries()) {
       const start = now + index * 0.3
