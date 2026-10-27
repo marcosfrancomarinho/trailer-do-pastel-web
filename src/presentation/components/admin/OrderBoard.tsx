@@ -271,6 +271,7 @@ export default function OrderBoard() {
     unlockSound,
     visibleDate,
     filteredOrders,
+    tabCounts,
     changeStatus,
     selectedOrder,
     printOrder,
@@ -431,24 +432,51 @@ export default function OrderBoard() {
 
       {!debouncedSearch && (
         <div className='grid grid-cols-2 gap-2 sm:grid-cols-4' role='tablist' aria-label='Situação dos pedidos'>
-          {tabs.map((option) => (
-            <button
-              key={option.id}
-              type='button'
-              role='tab'
-              aria-selected={tab === option.id}
-              onClick={() => setTab(option.id)}
-              className={
-                'min-h-12 min-w-0 rounded-lg border px-2 py-2 text-center text-xs font-bold leading-tight sm:px-3 sm:text-sm ' +
-                (tab === option.id
-                  ? 'border-[#ffca28] bg-[#ffca28] text-[#082739]'
-                  : 'border-[#34637c] bg-[#173b51] text-white hover:bg-[#24536c]')
-              }
-            >
-              <span className='block'>{option.label}</span>
-              {tab === option.id && <strong className='block text-sm sm:text-lg'>{filteredOrders.length}</strong>}
-            </button>
-          ))}
+          {tabs.map((option) => {
+            const selected = tab === option.id;
+            const count = tabCounts[option.id];
+            const dotColor: Record<Tab, string> = {
+              pending: 'bg-amber-300',
+              preparing: 'bg-cyan-300',
+              completed: 'bg-emerald-300',
+              canceled: 'bg-rose-300',
+            };
+            return (
+              <button
+                key={option.id}
+                type='button'
+                role='tab'
+                aria-selected={selected}
+                onClick={() => setTab(option.id)}
+                aria-label={option.label + ': ' + (count === null ? 'carregando' : count + ' pedidos')}
+                className={
+                  'group flex min-h-[68px] min-w-0 items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left shadow-sm transition-colors sm:min-h-[76px] sm:px-4 ' +
+                  (selected
+                    ? 'border-amber-300 bg-[#22475b] text-white ring-1 ring-amber-300/30'
+                    : 'border-[#365f74] bg-[#16374b] text-slate-100 hover:border-[#7097a9] hover:bg-[#21485c]')
+                }
+              >
+                <span className='flex min-w-0 flex-col gap-1.5'>
+                  <span className='flex items-center gap-2'>
+                    <span className={'h-2.5 w-2.5 shrink-0 rounded-full ' + dotColor[option.id]} aria-hidden='true' />
+                    <span className='truncate text-xs font-semibold sm:text-sm'>{option.label}</span>
+                  </span>
+                  <span className='pl-[18px] text-[10px] text-slate-300 sm:text-xs'>
+                    {selected ? 'Exibindo pedidos' : 'Ver pedidos'}
+                  </span>
+                </span>
+                <strong
+                  className={
+                    'shrink-0 rounded-lg px-2.5 py-1.5 text-lg font-black tabular-nums sm:text-xl ' +
+                    (selected ? 'bg-amber-300 text-[#102b40]' : 'bg-[#284c61] text-white')
+                  }
+                  aria-hidden='true'
+                >
+                  {count === null ? '–' : count}
+                </strong>
+              </button>
+            );
+          })}
         </div>
       )}
 
