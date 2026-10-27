@@ -384,7 +384,8 @@ export function useTableOverview() {
       await useCases.tables.archive.execute({ tableId });
       setSelected(null);
       setDetails(null);
-      await refresh();
+      setTables((previous) => previous.filter((table) => table.id !== tableId));
+      // SSE atualiza as outras sessões; não recarrega o mapa inteiro aqui.
       notify({
         title: 'Mesa retirada de uso',
         message: 'A mesa ' + tableNumber + ' foi arquivada com sucesso. O histórico foi preservado.',
