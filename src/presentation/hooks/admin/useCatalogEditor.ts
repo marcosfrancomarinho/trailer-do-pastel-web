@@ -19,6 +19,7 @@ export function useCatalogEditor(kind: ManageKind) {
   const [additions, setAdditions] = useState<Addition[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [sortOrder, setSortOrder] = useState(0);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -69,6 +70,7 @@ export function useCatalogEditor(kind: ManageKind) {
     setError('');
     setMessage('');
     setName(item.name);
+    if ('sortOrder' in item) setSortOrder(item.sortOrder);
     setAdditionIds([]);
     if ('price' in item) {
       setPrice(item.price);
@@ -95,7 +97,7 @@ export function useCatalogEditor(kind: ManageKind) {
     setError('');
     try {
       if (kind === 'category') {
-        await useCases.catalog.updateCategory.execute({ id: editing, data: { name } });
+        await useCases.catalog.updateCategory.execute({ id: editing, data: { name, sortOrder } });
       } else if (kind === 'addition') {
         await useCases.catalog.updateAddition.execute({ id: editing, data: { name, price, available } });
       } else {
@@ -152,6 +154,8 @@ export function useCatalogEditor(kind: ManageKind) {
     setEditing,
     name,
     setName,
+    sortOrder,
+    setSortOrder,
     description,
     setDescription,
     price,
