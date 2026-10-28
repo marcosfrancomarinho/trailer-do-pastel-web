@@ -1,4 +1,4 @@
-export interface Category { id: string; name: string; sortOrder: number }
+export interface Category { id: string; name: string }
 export interface Product {
   id: string;
   name: string;
@@ -21,7 +21,7 @@ export interface ProductData {
 }
 
 export interface AdditionData { name: string; price: string; available: boolean }
-export interface CategoryData { name: string; sortOrder?: number }
+export interface CategoryData { name: string }
 
 export interface CreateCatalogItemInput<T> { data: T }
 export type UpdateCatalogItemInput<T> = CreateCatalogItemInput<T> & { id: string };
