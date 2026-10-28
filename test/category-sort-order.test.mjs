@@ -9,6 +9,8 @@ test('categoria aceita ordem numérica no cadastro e edição', () => {
   const updated = UpdateCategory.validate({ id: 'cat1', data: { name: ' Água ', sortOrder: 3 } });
   assert.equal(created.data.sortOrder, 1);
   assert.equal(updated.data.sortOrder, 3);
+  assert.throws(() => CreateCategory.validate({ data: { name: 'Água', sortOrder: -1 } }), ValidationError);
+  assert.throws(() => UpdateCategory.validate({ id: 'cat1', data: { name: 'Água', sortOrder: 1.5 } }), ValidationError);
 });
 
 test('integração mantém ordenação da categoria na listagem pública', async () => {
