@@ -17,6 +17,8 @@ export default function RegistrationForm({ section }: Props) {
     additions,
     name,
     setName,
+    sortOrder,
+    setSortOrder,
     description,
     setDescription,
     price,
@@ -57,7 +59,11 @@ export default function RegistrationForm({ section }: Props) {
                 : 'Nome do produto'}
           <input className={inputClass} required value={name} onChange={(e) => setName(e.target.value)} placeholder='Nome' />
         </label>
-        {section === 'category' ? null : section === 'user' ? (
+        {section === 'category' ? (
+          <label className={labelClass}>Ordem no cardápio
+            <input className={inputClass} type='number' min='0' step='1' required value={sortOrder} onChange={e => setSortOrder(Number(e.target.value))} />
+          </label>
+        ) : section === 'user' ? (
           <>
             <label className={labelClass}>
               Senha
