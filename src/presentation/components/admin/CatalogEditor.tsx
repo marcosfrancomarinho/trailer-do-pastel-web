@@ -14,8 +14,6 @@ export default function CatalogEditor({ kind }: Props) {
     setEditing,
     name,
     setName,
-    sortOrder,
-    setSortOrder,
     description,
     setDescription,
     price,
@@ -63,7 +61,6 @@ export default function CatalogEditor({ kind }: Props) {
           >
             <div className='min-w-0 flex-1'>
               <h3 className='break-words text-base font-extrabold text-white'>{item.name}</h3>
-              {'sortOrder' in item && <p className='mt-1 text-sm text-slate-200'>Ordem: {item.sortOrder}</p>}
               {'price' in item && (
                 <p className='mt-1 text-sm text-slate-200'>
                   {brl(item.price)} · {item.available ? 'Disponível' : 'Indisponível'}
@@ -140,11 +137,6 @@ export default function CatalogEditor({ kind }: Props) {
                     />
                   </label>
 
-                  {kind === 'category' && (
-                    <label className={labelClass}>Ordem no cardápio
-                      <input type='number' min='0' step='1' required className={inputClass} value={sortOrder} onChange={e => setSortOrder(Number(e.target.value))} />
-                    </label>
-                  )}
                   {kind !== 'category' && (
                     <>
                       <label className={labelClass}>
