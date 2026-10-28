@@ -18,7 +18,6 @@ export function useRegistrationForm(section: RegisterSection) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [additions, setAdditions] = useState<Addition[]>([]);
   const [name, setName] = useState('');
-  const [sortOrder, setSortOrder] = useState(0);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -64,7 +63,7 @@ export function useRegistrationForm(section: RegisterSection) {
     } else if (section === 'addition') {
       await useCases.catalog.createAddition.execute({ data: { name: name.trim(), price, available } });
     } else if (section === 'category') {
-      await useCases.catalog.createCategory.execute({ data: { name: name.trim(), sortOrder } });
+      await useCases.catalog.createCategory.execute({ data: { name: name.trim() } });
     } else {
       await useCases.users.create.execute({ name, password });
     }
@@ -80,7 +79,6 @@ export function useRegistrationForm(section: RegisterSection) {
       setSuccess(successMessages[section]);
       notify({ title: 'Cadastro realizado', message: 'As informações foram cadastradas com sucesso.', tone: 'success' });
       setName('');
-      setSortOrder(0);
       setPassword('');
       setPrice('');
       setDescription('');
@@ -102,8 +100,6 @@ export function useRegistrationForm(section: RegisterSection) {
     additions,
     name,
     setName,
-    sortOrder,
-    setSortOrder,
     description,
     setDescription,
     price,
