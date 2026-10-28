@@ -16,9 +16,6 @@ export class CreateCategory {
     if (!data.name.trim()) {
       throw new ValidationError('data.name', 'Nome da categoria é obrigatório.');
     }
-    if (data.sortOrder !== undefined && (!Number.isSafeInteger(data.sortOrder) || data.sortOrder < 0)) {
-      throw new ValidationError('data.sortOrder', 'A ordem deve ser um inteiro não negativo.');
-    }
     return { ...input, data: { ...data, name: data.name.trim() } };
   }
 }
