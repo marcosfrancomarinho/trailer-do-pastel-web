@@ -14,7 +14,7 @@ const orderStatusLabels: Record<string, string> = {
 const field = 'min-h-11 w-full rounded-xl border border-[#63899a] bg-[#edf8fc] px-3 py-2 text-[#102c40]';
 const button = 'min-h-11 rounded-xl bg-[#ffca28] px-4 py-2 font-bold text-[#09283b] disabled:opacity-50';
 
-function tableAppearance(status: string, hasReadyOrders: boolean) {
+function tableAppearance(status: string, hasReadyOrders: boolean, orderStatus?: 'PENDING' | 'PREPARING' | 'COMPLETED') {
   if (status === 'FREE') {
     return {
       color: 'border-[#486476] bg-[#20394a] hover:border-[#91acbd]',
@@ -23,7 +23,7 @@ function tableAppearance(status: string, hasReadyOrders: boolean) {
       statusColor: 'text-[#d7e3ed]',
     };
   }
-  if (hasReadyOrders) {
+  if (orderStatus === 'COMPLETED' || (hasReadyOrders && !orderStatus)) {
     return {
       color: 'border-[#45b987] bg-[#173e37] hover:border-[#70efb0]',
       dot: 'bg-[#62e6a2]',
@@ -31,10 +31,18 @@ function tableAppearance(status: string, hasReadyOrders: boolean) {
       statusColor: 'text-[#a6f5ce]',
     };
   }
+  if (orderStatus === 'PENDING') {
+    return {
+      color: 'border-[#528fcb] bg-[#1c3b54] hover:border-[#86bdf0]',
+      dot: 'bg-[#78bdf5]',
+      label: 'Pendente',
+      statusColor: 'text-[#b7deff]',
+    };
+  }
   return {
     color: 'border-[#846c43] bg-[#343b3f] hover:border-[#ffce56]',
     dot: 'bg-[#ffce56]',
-    label: 'Em andamento',
+    label: 'Em preparo',
     statusColor: 'text-[#ffe6a0]',
   };
 }
@@ -47,6 +55,7 @@ export default function TableOverview() {
     loadCatalog,
     tables,
     readyTables,
+    tableOrderStatuses,
     selected,
     tableView,
     setTableView,
@@ -161,7 +170,7 @@ export default function TableOverview() {
       {sortedTables.length > 0 && (
         <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
           {sortedTables.map((table) => {
-            const appearance = tableAppearance(table.status, readyTables.has(table.id));
+            const appearance = tableAppearance(table.status, readyTables.has(table.id), tableOrderStatuses.get(table.id));
             const isSelected = selected === table.id;
 
             return (
