@@ -35,7 +35,7 @@ export interface ListClosedComandasInput { date?: string }
 export interface ReleaseTableOutput { id: string; status: 'FREE'; closedTotal: string }
 export interface TableReleaseStatusOutput { table: TableOrders; unfinishedCount: number }
 export type ListTablesOutput = RestaurantTable[];
-export interface ListTableOverviewOutput { tables: RestaurantTable[]; readyTableIds: Set<string> }
+export interface ListTableOverviewOutput { tables: RestaurantTable[]; readyTableIds: Set<string>; tableOrderStatuses: Map<string, 'PENDING' | 'PREPARING' | 'COMPLETED'> }
 export type CreateTableOutput = RestaurantTable;
 export type ListTableOrdersOutput = TableOrders;
 export type ListTableSessionsOutput = TableSessions;
