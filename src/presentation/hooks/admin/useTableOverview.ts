@@ -63,6 +63,7 @@ export function useTableOverview() {
 
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [readyTables, setReadyTables] = useState<Set<string>>(new Set());
+  const [tableOrderStatuses, setTableOrderStatuses] = useState<Map<string, 'PENDING' | 'PREPARING' | 'COMPLETED'>>(new Map());
   const readyTablesRef = useRef(readyTables);
   const [selected, setSelected] = useState<string | null>(null);
   const [tableView, setTableView] = useState<'orders' | 'new'>('orders');
@@ -124,6 +125,7 @@ export function useTableOverview() {
         setTables(overview.tables);
         readyTablesRef.current = overview.readyTableIds;
         setReadyTables(overview.readyTableIds);
+        setTableOrderStatuses(overview.tableOrderStatuses);
         if (tableOrders && selectedRef.current === currentTableId) setDetails(tableOrders);
       })();
       refreshInFlight.current = request;
@@ -434,6 +436,7 @@ export function useTableOverview() {
     loadCatalog,
     tables,
     readyTables,
+    tableOrderStatuses,
     selected,
     tableView,
     setTableView,
