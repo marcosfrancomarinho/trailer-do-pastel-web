@@ -34,6 +34,7 @@ export default function CatalogEditor({ kind }: Props) {
     startEdit,
     save,
     remove,
+    moveCategory,
   } = useCatalogEditor(kind);
 
   return (
@@ -54,7 +55,7 @@ export default function CatalogEditor({ kind }: Props) {
       )}
 
       <div className='grid gap-3'>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <article
             key={item.id}
             className='flex min-w-0 flex-wrap items-center justify-between gap-4 rounded-xl border border-[#37637b] bg-[#19394f] p-4 sm:p-5'
@@ -68,6 +69,16 @@ export default function CatalogEditor({ kind }: Props) {
               )}
             </div>
             <div className='flex w-full gap-2 sm:w-auto'>
+              {kind === 'category' && (
+                <div className='flex gap-1' aria-label={'Ordenar ' + item.name}>
+                  <button type='button' aria-label={'Subir ' + item.name} disabled={busy || index === 0}
+                    onClick={() => void moveCategory(item as import('../../../application/dtos/catalog').Category, -1)}
+                    className='min-h-11 min-w-11 rounded-xl border border-[#7a9bab] text-white disabled:opacity-40'>↑</button>
+                  <button type='button' aria-label={'Descer ' + item.name} disabled={busy || index === items.length - 1}
+                    onClick={() => void moveCategory(item as import('../../../application/dtos/catalog').Category, 1)}
+                    className='min-h-11 min-w-11 rounded-xl border border-[#7a9bab] text-white disabled:opacity-40'>↓</button>
+                </div>
+              )}
               <button
                 type='button'
                 disabled={busy}
