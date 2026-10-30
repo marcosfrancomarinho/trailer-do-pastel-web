@@ -24,7 +24,7 @@ export function useMenuPage() {
     setError('');
     try {
       const catalog = await useCases.catalog.listCatalog.execute();
-      setCategories(catalog.categories);
+      setCategories([...catalog.categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'pt-BR')));
       setProducts(catalog.products);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Falha ao carregar o cardápio');
@@ -51,8 +51,12 @@ export function useMenuPage() {
       const matchesSearch = nameAndDescription.includes(searchTerm);
       return matchesCategory && matchesSearch;
     });
-    return matchingProducts;
-  }, [products, filter, search]);
+    const position = new Map(categories.map((category, index) => [category.id, index]));
+    return matchingProducts.sort((a, b) =>
+      (position.get(a.categoryId) ?? Number.MAX_SAFE_INTEGER) - (position.get(b.categoryId) ?? Number.MAX_SAFE_INTEGER)
+      || a.name.localeCompare(b.name, 'pt-BR'),
+    );
+  }, [products, categories, filter, search]);
 
   async function choose(product: Product) {
     if (!product.available) return;
