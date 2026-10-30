@@ -378,8 +378,18 @@ export function useOrderBoard() {
       }));
       setSelectedId(null);
       await invalidateOrderQueries();
-      // Reconcilia em segundo plano, sem loading geral.
-      void refresh();
+      // Ao iniciar o preparo, abre a aba correspondente para o pedido continuar visível.
+      // Conclusões e cancelamentos preservam a aba atual.
+      if (status === 'PREPARING' || status === 'CONFIRMED') {
+        if (debouncedSearch || search) {
+          setSearch('');
+          setDebouncedSearch('');
+        }
+        setTab('preparing');
+      } else {
+        // Reconcilia em segundo plano, sem loading geral.
+        void refresh();
+      }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Falha ao alterar status.';
       setError(message);
