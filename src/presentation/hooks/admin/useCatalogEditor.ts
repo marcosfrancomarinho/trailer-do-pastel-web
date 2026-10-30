@@ -117,6 +117,33 @@ export function useCatalogEditor(kind: ManageKind) {
     }
   }
 
+  async function moveCategory(item: Category, direction: -1 | 1) {
+    if (busy || kind !== 'category') return;
+    const ordered = [...(items as Category[])].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'pt-BR'));
+    const index = ordered.findIndex((category) => category.id === item.id);
+    const destination = index + direction;
+    if (index < 0 || destination < 0 || destination >= ordered.length) return;
+    [ordered[index], ordered[destination]] = [ordered[destination], ordered[index]];
+    setBusy(true);
+    setError('');
+    try {
+      // Persist all positions so newly created categories and legacy ties receive stable positions.
+      for (let position = 0; position < ordered.length; position += 1) {
+        const category = ordered[position];
+        await useCases.catalog.updateCategory.execute({ id: category.id, data: { name: category.name, sortOrder: position + 1 } });
+      }
+      await reload();
+      setMessage('Ordem das categorias atualizada.');
+    } catch (cause) {
+      const detail = cause instanceof Error ? cause.message : 'Falha ao alterar a ordem.';
+      setError(detail);
+      notify({ title: 'Erro ao ordenar', message: detail, tone: 'error' });
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function remove(item: Item) {
     const approved = await confirm({
       title: 'Excluir cadastro?',
@@ -172,5 +199,6 @@ export function useCatalogEditor(kind: ManageKind) {
     startEdit,
     save,
     remove,
+    moveCategory,
   };
 }
